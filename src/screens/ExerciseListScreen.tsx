@@ -1,38 +1,30 @@
 import React, { useState } from 'react';
-import { 
-  StyleSheet, View, Text, FlatList, ActivityIndicator, 
-  TouchableOpacity, Modal, TextInput, Alert 
-} from 'react-native';
-import { QueryClient, QueryClientProvider, useQuery, useMutation } from '@tanstack/react-query';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { theme } from './src/theme';
-import { getExercises, createExercise } from './src/api/exercises'; // Import from new file
+import { StyleSheet, View, Text, FlatList, ActivityIndicator, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../theme'; // Import the hook
+import { getExercises, createExercise } from '../api/exercises';
 
-// ... (Client setup remains)
-
-function ExerciseListScreen() {
+export default function ExerciseListScreen() {
+  const theme = useTheme(); // Call hook INSIDE the component
   const [isModalVisible, setModalVisible] = useState(false);
   const [name, setName] = useState('');
   const [increment, setIncrement] = useState('2.5');
 
-  // 1. Fetch Query
-  const { data, isLoading, refetch } = useQuery({
+  // Queries
+  const { data, isLoading, refetch, error } = useQuery({
     queryKey: ['exercises'],
     queryFn: getExercises,
   });
 
-  // 2. Mutation (The POST request)
   const mutation = useMutation({
     mutationFn: createExercise,
     onSuccess: () => {
-      // Close modal, clear form, and refresh list
       setModalVisible(false);
       setName('');
-      refetch(); // Reloads the list from backend!
+      refetch();
     },
-    onError: (error) => {
-      Alert.alert("Error", (error as Error).message);
-    }
+    onError: (err) => Alert.alert("Error", (err as Error).message)
   });
 
   const handleSave = () => {
@@ -40,36 +32,56 @@ function ExerciseListScreen() {
     mutation.mutate({
       name,
       default_increment: parseFloat(increment),
-      unit: 'kg' // hardcoded for now
+      unit: 'kg'
     });
   };
 
-  if (isLoading) return <ActivityIndicator size="large" style={styles.center} />;
+  if (isLoading) {
+    return (
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
+        <Text style={{ color: theme.colors.text }}>Unable to load exercises</Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Gym Progress</Text>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+      <Text style={[styles.header, { color: theme.colors.text }]}>My Exercises</Text>
       
       <FlatList
         data={data}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 100 }} // Space for FAB
         renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>{item.name}</Text>
-            <Text style={styles.cardSubtitle}>+{item.default_increment} {item.unit}</Text>
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+            <View style={styles.cardHeader}>
+              <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
+              {item.is_custom && <View style={[styles.badge, { backgroundColor: theme.colors.primary }]} />}
+            </View>
+            <Text style={[styles.cardSubtitle, { color: theme.colors.textSecondary }]}>
+              Next increment: +{item.default_increment} {item.unit}
+            </Text>
           </View>
         )}
       />
 
-      {/* Floating Action Button (FAB) */}
+      {/* FAB */}
       <TouchableOpacity 
-        style={styles.fab} 
+        style={[styles.fab, { backgroundColor: theme.colors.primary }]} 
         onPress={() => setModalVisible(true)}
       >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
 
-      {/* Add Exercise Modal */}
+      {/* Modal */}
       <Modal
         visible={isModalVisible}
         animationType="slide"
@@ -77,20 +89,21 @@ function ExerciseListScreen() {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalHeader}>New Exercise</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.modalHeader, { color: theme.colors.text }]}>New Exercise</Text>
             
             <TextInput 
-              style={styles.input}
-              placeholder="Exercise Name (e.g. Squat)"
+              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+              placeholder="Name"
+              placeholderTextColor={theme.colors.textSecondary}
               value={name}
               onChangeText={setName}
-              autoFocus
             />
             
             <TextInput 
-              style={styles.input}
-              placeholder="Increment (e.g. 2.5)"
+              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+              placeholder="Increment"
+              placeholderTextColor={theme.colors.textSecondary}
               value={increment}
               onChangeText={setIncrement}
               keyboardType="numeric"
@@ -98,51 +111,78 @@ function ExerciseListScreen() {
 
             <View style={styles.modalButtons}>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text style={styles.cancelText}>Cancel</Text>
+                <Text style={{ color: theme.colors.textSecondary }}>Cancel</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.saveButton} 
-                onPress={handleSave}
-                disabled={mutation.isPending}
-              >
-                <Text style={styles.saveText}>
-                  {mutation.isPending ? "Saving..." : "Save"}
-                </Text>
+              <TouchableOpacity onPress={handleSave}>
+                <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>Save</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
-// ... (App export remains the same)
-
-// ADD THESE STYLES
+// Static Styles (We inject colors via inline styles above where needed)
 const styles = StyleSheet.create({
-  // ... existing styles ...
+  safeArea: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginVertical: 16,
+  },
+  card: {
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  cardSubtitle: {
+    fontSize: 14,
+  },
+  badge: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
   fab: {
     position: 'absolute',
     bottom: 24,
     right: 24,
-    backgroundColor: theme.colors.primary,
     width: 56,
     height: 56,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
   },
   fabText: {
     color: 'white',
     fontSize: 32,
-    marginTop: -4, // visual adjustment
+    marginTop: -4,
   },
   modalOverlay: {
     flex: 1,
@@ -151,7 +191,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: 'white',
     borderRadius: 12,
     padding: 20,
   },
@@ -162,7 +201,6 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
@@ -171,21 +209,6 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    alignItems: 'center',
     gap: 16,
   },
-  saveButton: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  saveText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  cancelText: {
-    color: theme.colors.textSecondary,
-    fontSize: 16,
-  }
 });
