@@ -10,6 +10,7 @@ import { View, Text } from 'react-native';
 import ActiveWorkoutScreen from '../screens/ActiveWorkoutScreen';
 import ExerciseListScreen from '../screens/ExerciseListScreen';
 import HomeScreen from '../screens/HomeScreen';
+import HistoryScreen from '../screens/HistoryScreen';
 
 
 const WorkoutStack = createNativeStackNavigator();
@@ -53,10 +54,10 @@ export default function RootNavigator() {
                     name="Workout"
                     component={WorkoutStackNavigator}
                 />
-                <Tab.Screen
-                    name="History"
-                    children={() => <PlaceholderScreen name="History Log" />}
-                />
+                    <Tab.Screen 
+                    name="History" 
+                    component={HistoryScreen} 
+                    />
                 <Tab.Screen
                     name="Exercises"
                     component={ExerciseListScreen}

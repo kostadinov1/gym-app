@@ -1,82 +1,190 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, FlatList, ActivityIndicator, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { 
+  StyleSheet, View, Text, FlatList, ActivityIndicator, 
+  TouchableOpacity, Modal, TextInput, Alert 
+} from 'react-native';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../theme'; // Import the hook
-import { getExercises, createExercise } from '../api/exercises';
+import { useTheme } from '../theme'; 
+// --- NEW: Added updateExercise to imports ---
+import { getExercises, createExercise, deleteExercise, updateExercise } from '../api/exercises';
 
 export default function ExerciseListScreen() {
-  const theme = useTheme(); // Call hook INSIDE the component
+  const theme = useTheme(); 
   const [isModalVisible, setModalVisible] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  
+  // --- NEW: State to track which ID we are editing (null = Create Mode) ---
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Form State
   const [name, setName] = useState('');
   const [increment, setIncrement] = useState('2.5');
 
-  // Queries
-  const { data, isLoading, refetch, error } = useQuery({
+  // 1. Fetch Exercises
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['exercises'],
     queryFn: getExercises,
   });
 
-  const mutation = useMutation({
-    mutationFn: createExercise,
+  // 2. Search Logic
+  const filteredData = useMemo(() => {
+    if (!data) return [];
+    if (!searchText) return data;
+    return data.filter(ex => 
+      ex.name.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }, [data, searchText]);
+
+  // --- NEW: Helper to close modal and reset form ---
+  const closeModal = () => {
+    setModalVisible(false);
+    setEditingId(null); // Reset to "Create Mode"
+    setName('');
+    setIncrement('2.5');
+  };
+
+  // --- NEW: Update Mutation ---
+  const updateMutation = useMutation({
+    mutationFn: (data: { id: string, payload: any }) => updateExercise(data.id, data.payload),
     onSuccess: () => {
-      setModalVisible(false);
-      setName('');
+      closeModal();
       refetch();
     },
     onError: (err) => Alert.alert("Error", (err as Error).message)
   });
 
+  // Create Mutation
+  const createMutation = useMutation({
+    mutationFn: createExercise,
+    onSuccess: () => {
+      closeModal();
+      refetch();
+    },
+    onError: (err) => Alert.alert("Error", (err as Error).message)
+  });
+
+  // Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteExercise,
+    onSuccess: () => refetch(),
+    onError: (err) => Alert.alert("Error", "Could not delete. It might be in use.")
+  });
+
+  // --- NEW: Handle "Edit" Press ---
+  const handleEditPress = (item: any) => {
+    setEditingId(item.id);               // Set ID so we know we are updating
+    setName(item.name);                  // Pre-fill name
+    setIncrement(String(item.default_increment)); // Pre-fill increment
+    setModalVisible(true);               // Open Modal
+  };
+
+  const handleDelete = (id: string, exName: string) => {
+    Alert.alert(
+      "Delete Exercise",
+      `Are you sure you want to delete "${exName}"?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => deleteMutation.mutate(id) }
+      ]
+    );
+  };
+
+  // --- NEW: Handle Save (Decides between Create or Update) ---
   const handleSave = () => {
     if (!name) return;
-    mutation.mutate({
-      name,
-      default_increment: parseFloat(increment),
-      unit: 'kg'
-    });
+    
+    if (editingId) {
+      // UPDATE MODE
+      updateMutation.mutate({
+        id: editingId,
+        payload: {
+          name,
+          default_increment: parseFloat(increment) || 2.5
+        }
+      });
+    } else {
+      // CREATE MODE
+      createMutation.mutate({
+        name,
+        default_increment: parseFloat(increment) || 2.5,
+        unit: 'kg'
+      });
+    }
   };
 
   if (isLoading) {
-    return (
-      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
-        <Text style={{ color: theme.colors.text }}>Unable to load exercises</Text>
-      </View>
-    );
+    return <ActivityIndicator style={{ flex: 1, backgroundColor: theme.colors.background }} />;
   }
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
-      <Text style={[styles.header, { color: theme.colors.text }]}>My Exercises</Text>
+      <Text style={[styles.header, { color: theme.colors.text }]}>Exercise Library</Text>
       
+      {/* SEARCH BAR */}
+      <View style={[styles.searchContainer, { backgroundColor: theme.colors.inputBackground }]}>
+        <Text style={{ fontSize: 18, marginRight: 8 }}>🔍</Text>
+        <TextInput 
+            style={{ flex: 1, color: theme.colors.text, fontSize: 16 }}
+            placeholder="Search exercises..."
+            placeholderTextColor={theme.colors.textSecondary}
+            value={searchText}
+            onChangeText={setSearchText}
+        />
+        {searchText.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchText('')}>
+                <Text style={{ color: theme.colors.textSecondary }}>✕</Text>
+            </TouchableOpacity>
+        )}
+      </View>
+
       <FlatList
-        data={data}
+        data={filteredData}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 100 }} // Space for FAB
+        contentContainerStyle={{ paddingBottom: 100 }}
         renderItem={({ item }) => (
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
-            <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
-              {item.is_custom && <View style={[styles.badge, { backgroundColor: theme.colors.primary }]} />}
+            <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
+                    {item.is_custom && (
+                        <View style={{ backgroundColor: theme.colors.primary, borderRadius: 4, paddingHorizontal: 4 }}>
+                            <Text style={{ fontSize: 10, color: 'white', fontWeight: 'bold' }}>CUSTOM</Text>
+                        </View>
+                    )}
+                </View>
+                <Text style={[styles.cardSubtitle, { color: theme.colors.textSecondary }]}>
+                Increment: {item.default_increment} {item.unit}
+                </Text>
             </View>
-            <Text style={[styles.cardSubtitle, { color: theme.colors.textSecondary }]}>
-              Next increment: +{item.default_increment} {item.unit}
-            </Text>
+
+            {/* ACTION BUTTONS (Only for Custom) */}
+            {item.is_custom && (
+              <View style={{ flexDirection: 'row', gap: 16 }}>
+                {/* --- NEW: Edit Button --- */}
+                <TouchableOpacity onPress={() => handleEditPress(item)}>
+                   <Text style={{ fontSize: 18 }}>✏️</Text>
+                </TouchableOpacity>
+
+                {/* Delete Button */}
+                <TouchableOpacity onPress={() => handleDelete(item.id, item.name)}>
+                    <Text style={{ fontSize: 18 }}>🗑️</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         )}
       />
 
-      {/* FAB */}
+      {/* FAB - Opens Create Mode */}
       <TouchableOpacity 
         style={[styles.fab, { backgroundColor: theme.colors.primary }]} 
-        onPress={() => setModalVisible(true)}
+        onPress={() => {
+            setEditingId(null); // --- NEW: Ensure we are in "Create Mode"
+            setName('');
+            setIncrement('2.5');
+            setModalVisible(true);
+        }}
       >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
@@ -86,15 +194,18 @@ export default function ExerciseListScreen() {
         visible={isModalVisible}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={closeModal} // --- NEW: Use helper
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-            <Text style={[styles.modalHeader, { color: theme.colors.text }]}>New Exercise</Text>
+            {/* --- NEW: Dynamic Header Title --- */}
+            <Text style={[styles.modalHeader, { color: theme.colors.text }]}>
+                {editingId ? "Edit Exercise" : "New Exercise"}
+            </Text>
             
             <TextInput 
               style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
-              placeholder="Name"
+              placeholder="Name (e.g. Squat)"
               placeholderTextColor={theme.colors.textSecondary}
               value={name}
               onChangeText={setName}
@@ -102,7 +213,7 @@ export default function ExerciseListScreen() {
             
             <TextInput 
               style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
-              placeholder="Increment"
+              placeholder="Increment (e.g. 2.5)"
               placeholderTextColor={theme.colors.textSecondary}
               value={increment}
               onChangeText={setIncrement}
@@ -110,11 +221,14 @@ export default function ExerciseListScreen() {
             />
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text style={{ color: theme.colors.textSecondary }}>Cancel</Text>
+              <TouchableOpacity onPress={closeModal}>
+                <Text style={{ color: theme.colors.textSecondary, fontSize: 16 }}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleSave}>
-                <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>Save</Text>
+                <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 }}>
+                    {/* --- NEW: Dynamic Button Label --- */}
+                    {editingId ? "Update" : "Save"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -124,50 +238,26 @@ export default function ExerciseListScreen() {
   );
 }
 
-// Static Styles (We inject colors via inline styles above where needed)
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
+  safeArea: { flex: 1, paddingHorizontal: 16 },
+  header: { fontSize: 28, fontWeight: 'bold', marginVertical: 16 },
+  searchContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginVertical: 16,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 16,
   },
   card: {
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-  },
-  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  cardSubtitle: {
-    fontSize: 14,
-  },
-  badge: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
+  cardTitle: { fontSize: 16, fontWeight: '600' },
+  cardSubtitle: { fontSize: 13, marginTop: 4 },
   fab: {
     position: 'absolute',
     bottom: 24,
@@ -179,26 +269,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 5,
   },
-  fabText: {
-    color: 'white',
-    fontSize: 32,
-    marginTop: -4,
-  },
+  fabText: { color: 'white', fontSize: 32, marginTop: -4 },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     padding: 20,
   },
-  modalContent: {
-    borderRadius: 12,
-    padding: 20,
-  },
-  modalHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
+  modalContent: { borderRadius: 12, padding: 24 },
+  modalHeader: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
   input: {
     borderWidth: 1,
     borderRadius: 8,
@@ -209,6 +288,7 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 16,
+    gap: 24,
+    marginTop: 8
   },
 });

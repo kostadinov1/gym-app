@@ -8,16 +8,29 @@ import { getRoutines } from '../api/workouts';
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const navigation = useNavigation<any>(); // We'll fix types later
+  const navigation = useNavigation<any>();
 
-  const { data, isLoading } = useQuery({
+  // Use useFocusEffect or refetchOnMount to ensure data refreshes when we come back from "Finish"
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['routines'],
     queryFn: getRoutines,
   });
 
-  if (isLoading) {
-    return <ActivityIndicator style={{ flex: 1 }} size="large" color={theme.colors.primary} />;
-  }
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      refetch();
+    });
+    return unsubscribe;
+  }, [navigation, refetch]);
+
+  const isDoneToday = (dateString?: string | null) => {
+    if (!dateString) return false;
+    const today = new Date().toISOString().split('T')[0];
+    const completed = new Date(dateString).toISOString().split('T')[0];
+    return today === completed;
+  };
+
+  if (isLoading) return <ActivityIndicator style={{ flex: 1 }} size="large" color={theme.colors.primary} />;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -26,23 +39,54 @@ export default function HomeScreen() {
       <FlatList
         data={data}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={[styles.card, { backgroundColor: theme.colors.card }]}
-            onPress={() => navigation.navigate('ActiveWorkout', { routineId: item.id })}
-          >
-            <View>
-              <Text style={[styles.title, { color: theme.colors.text }]}>{item.name}</Text>
-              <Text style={{ color: theme.colors.textSecondary }}>
-                {/* Simple logic to show day name or 'Flexible' */}
-                {item.day_of_week !== null 
-                  ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][item.day_of_week!] 
-                  : 'Flexible Schedule'}
+        renderItem={({ item }) => {
+          const completed = isDoneToday(item.last_completed_at);
+          
+          return (
+            <TouchableOpacity 
+              // 1. HARD DISABLE: Cannot be clicked if completed
+              disabled={completed} 
+              
+              style={[
+                styles.card, 
+                { backgroundColor: theme.colors.card },
+                // 2. VISUAL DISABLE: Dim opacity and change background slightly
+                completed && { opacity: 0.6, backgroundColor: theme.colors.background } 
+              ]}
+              onPress={() => navigation.navigate('ActiveWorkout', { routineId: item.id })}
+            >
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={[
+                        styles.title, 
+                        // Grey out text if completed
+                        { color: completed ? theme.colors.textSecondary : theme.colors.text }
+                    ]}>
+                        {item.name}
+                    </Text>
+                    
+                    {/* The Badge */}
+                    {completed && (
+                        <View style={{ backgroundColor: theme.colors.success, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2 }}>
+                            <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>DONE</Text>
+                        </View>
+                    )}
+                </View>
+                
+                <Text style={{ color: theme.colors.textSecondary }}>
+                  {item.day_of_week !== null 
+                    ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][item.day_of_week!] 
+                    : 'Flexible Schedule'}
+                </Text>
+              </View>
+              
+              {/* Icon Logic */}
+              <Text style={{ fontSize: 24, color: completed ? theme.colors.success : theme.colors.textSecondary }}>
+                {completed ? '✓' : '›'}
               </Text>
-            </View>
-            <Text style={{ fontSize: 24, color: theme.colors.textSecondary }}>›</Text>
-          </TouchableOpacity>
-        )}
+            </TouchableOpacity>
+          );
+        }}
       />
     </SafeAreaView>
   );
