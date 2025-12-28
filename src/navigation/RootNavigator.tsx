@@ -1,4 +1,5 @@
 import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme';
@@ -8,6 +9,20 @@ import { useTheme } from '../theme';
 import { View, Text } from 'react-native';
 import ActiveWorkoutScreen from '../screens/ActiveWorkoutScreen';
 import ExerciseListScreen from '../screens/ExerciseListScreen';
+import HomeScreen from '../screens/HomeScreen';
+
+
+const WorkoutStack = createNativeStackNavigator();
+
+// 1. Create a Stack for the Workout Tab
+function WorkoutStackNavigator() {
+  return (
+    <WorkoutStack.Navigator screenOptions={{ headerShown: false }}>
+      <WorkoutStack.Screen name="Home" component={HomeScreen} />
+      <WorkoutStack.Screen name="ActiveWorkout" component={ActiveWorkoutScreen} />
+    </WorkoutStack.Navigator>
+  );
+}
 
 const Tab = createBottomTabNavigator();
 
@@ -36,7 +51,7 @@ export default function RootNavigator() {
             >
                 <Tab.Screen
                     name="Workout"
-                    component={ActiveWorkoutScreen}
+                    component={WorkoutStackNavigator}
                 />
                 <Tab.Screen
                     name="History"
