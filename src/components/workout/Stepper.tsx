@@ -16,24 +16,26 @@ export const Stepper = ({ value, onChange, step, unit }: StepperProps) => {
   const handleDecrement = () => onChange(Number((value - step).toFixed(2)));
 
   return (
-    <View style={[styles.container, { borderColor: theme.colors.border }]}>
+    <View style={[styles.container, { borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}>
       {/* Minus Button */}
       <TouchableOpacity onPress={handleDecrement} style={styles.button}>
         <Text style={[styles.buttonText, { color: theme.colors.primary }]}>-</Text>
       </TouchableOpacity>
 
-      {/* Center Value (Editable) */}
-      <View style={[styles.valueContainer, { borderLeftColor: theme.colors.border, borderRightColor: theme.colors.border }]}>
+      {/* Center Value */}
+      <View style={styles.valueContainer}>
         <TextInput
           style={[styles.input, { color: theme.colors.text }]}
           keyboardType="numeric"
           value={String(value)}
           onChangeText={(text) => {
-            const num = parseFloat(text);
-            if (!isNaN(num)) onChange(num);
+             // Allow empty string for typing, otherwise parse
+             if (text === '') return;
+             const num = parseFloat(text);
+             if (!isNaN(num)) onChange(num);
           }}
-          selectTextOnFocus
         />
+        {/* We make the unit smaller and absolute or just next to it */}
         {unit && <Text style={[styles.unit, { color: theme.colors.textSecondary }]}>{unit}</Text>}
       </View>
 
@@ -48,43 +50,40 @@ export const Stepper = ({ value, onChange, step, unit }: StepperProps) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    borderWidth: 1,
     borderRadius: 8,
-    height: 40,
+    height: 36, // Reduced height
     alignItems: 'center',
-    overflow: 'hidden',
+    flex: 1, // Allow it to shrink/grow
+    marginHorizontal: 2, // Tiny gap
   },
   button: {
-    width: 40,
+    width: 32, // Reduced width
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'transparent',
   },
   buttonText: {
-    fontSize: 24,
-    fontWeight: '500',
+    fontSize: 20,
+    fontWeight: '600',
     marginTop: -2,
   },
   valueContainer: {
-    paddingHorizontal: 12,
+    flex: 1, // Takes remaining space
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    minWidth: 80,
   },
   input: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     textAlign: 'center',
     padding: 0,
+    minWidth: 20,
   },
   unit: {
-    fontSize: 12,
+    fontSize: 10,
     marginLeft: 2,
-    marginTop: 2,
+    marginTop: 3,
   },
 });

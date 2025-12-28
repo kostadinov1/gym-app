@@ -22,7 +22,7 @@ export const SetRow = ({
       styles.container, 
       isCompleted && { backgroundColor: theme.colors.successBackground }
     ]}>
-      {/* Set Label (Clickable) */}
+      {/* Set Label */}
       <TouchableOpacity onPress={onToggleComplete} style={styles.labelContainer}>
         <View style={[
           styles.badge, 
@@ -37,21 +37,30 @@ export const SetRow = ({
         </View>
       </TouchableOpacity>
 
-      {/* Controls */}
+      {/* Controls Container */}
       <View style={styles.controls}>
-        <Stepper 
-          value={weight} 
-          step={2.5} 
-          unit="kg"
-          onChange={(val) => onUpdate('weight', val)} 
-        />
-        <View style={{ width: 12 }} /> 
-        <Stepper 
-          value={reps} 
-          step={1} 
-          unit="reps"
-          onChange={(val) => onUpdate('reps', val)} 
-        />
+        {/* Weight Stepper */}
+        <View style={{ flex: 1.2 }}> 
+            <Stepper 
+              value={weight} 
+              step={2.5} 
+              unit="kg"
+              onChange={(val) => onUpdate('weight', val)} 
+            />
+        </View>
+
+        {/* Spacer */}
+        <View style={{ width: 8 }} />
+
+        {/* Reps Stepper */}
+        <View style={{ flex: 1 }}>
+            <Stepper 
+              value={reps} 
+              step={1} 
+              unit="reps"
+              onChange={(val) => onUpdate('reps', val)} 
+            />
+        </View>
       </View>
     </View>
   );
@@ -61,32 +70,31 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 8, // Reduced padding
     borderRadius: 8,
     marginBottom: 4,
   },
   labelContainer: {
-    width: 40,
+    width: 32, // Reduced
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 8,
   },
   badge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24, // Smaller Badge
+    height: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   labelText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   controls: {
-    flex: 1,
+    flex: 1, // This forces the steppers to stay within screen width
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
 });
