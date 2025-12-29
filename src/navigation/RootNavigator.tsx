@@ -13,7 +13,8 @@ import HomeScreen from '../screens/HomeScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import PlansScreen from '../screens/PlansScreen';
-
+import CreatePlanScreen from '../screens/plans/CreatePlanScreen';
+import PlanDetailsScreen from '../screens/plans/PlanDetailsScreen';
 
 const WorkoutStack = createNativeStackNavigator();
 
@@ -30,11 +31,17 @@ function WorkoutStackNavigator() {
 const Tab = createBottomTabNavigator();
 
 // Temporary placeholders
-const PlaceholderScreen = ({ name }: { name: string }) => (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>{name}</Text>
-    </View>
-);
+const PlansStack = createNativeStackNavigator();
+
+function PlansStackNavigator() {
+  return (
+    <PlansStack.Navigator screenOptions={{ headerShown: false }}>
+      <PlansStack.Screen name="PlansList" component={PlansScreen} />
+      <PlansStack.Screen name="CreatePlan" component={CreatePlanScreen} />
+      <PlansStack.Screen name="PlanDetails" component={PlanDetailsScreen} />
+    </PlansStack.Navigator>
+  );
+}
 
 export default function RootNavigator() {
     const theme = useTheme();
@@ -62,8 +69,8 @@ export default function RootNavigator() {
                     />
                 <Tab.Screen 
                     name="Plans" 
-                    component={PlansScreen} 
-                    />
+                    component={PlansStackNavigator} // Point to the new Stack
+                />
                 <Tab.Screen
                     name="Exercises"
                     component={ExerciseListScreen}

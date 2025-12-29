@@ -17,6 +17,26 @@ export interface CreatePlanDto {
   duration_weeks: number;
 }
 
+
+export interface RoutineExercise {
+    exercise_id: string;
+    target_sets: number;
+    target_reps: number;
+    target_weight: number;
+    increment_value: number;
+}
+
+export interface RoutineDetail {
+    id: string;
+    name: string;
+    day_of_week: number;
+    exercises: RoutineExercise[];
+}
+
+export interface PlanDetail extends Plan {
+    routines: RoutineDetail[];
+}
+
 // Fetch all active plans
 export const getPlans = () => {
   return client<Plan[]>('/plans/');
@@ -35,4 +55,19 @@ export const deletePlan = (id: string) => {
   return client(`/plans/${id}`, {
     method: 'DELETE',
   });
+};
+
+
+
+
+export const getPlanDetails = (id: string) => {
+    return client<PlanDetail>(`/plans/${id}`);
+};
+
+// We also need a way to create a routine (assign a day)
+export const createRoutine = (planId: string, name: string, dayOfWeek: number) => {
+    return client(`/plans/${planId}/routines`, {
+        method: 'POST',
+        body: JSON.stringify({ name, day_of_week: dayOfWeek })
+    });
 };
