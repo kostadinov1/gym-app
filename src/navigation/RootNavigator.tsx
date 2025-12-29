@@ -12,6 +12,7 @@ import ExerciseListScreen from '../screens/ExerciseListScreen';
 import HomeScreen from '../screens/HomeScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import PlansScreen from '../screens/PlansScreen';
 
 
 const WorkoutStack = createNativeStackNavigator();
@@ -58,6 +59,10 @@ export default function RootNavigator() {
                     <Tab.Screen 
                     name="History" 
                     component={HistoryScreen} 
+                    />
+                <Tab.Screen 
+                    name="Plans" 
+                    component={PlansScreen} 
                     />
                 <Tab.Screen
                     name="Exercises"
