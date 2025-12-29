@@ -11,6 +11,7 @@ import ActiveWorkoutScreen from '../screens/ActiveWorkoutScreen';
 import ExerciseListScreen from '../screens/ExerciseListScreen';
 import HomeScreen from '../screens/HomeScreen';
 import HistoryScreen from '../screens/HistoryScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 
 const WorkoutStack = createNativeStackNavigator();
@@ -62,9 +63,9 @@ export default function RootNavigator() {
                     name="Exercises"
                     component={ExerciseListScreen}
                 />
-                <Tab.Screen
-                    name="Profile"
-                    children={() => <PlaceholderScreen name="Profile / Settings" />}
+                <Tab.Screen 
+                name="Profile" 
+                component={ProfileScreen} 
                 />
             </Tab.Navigator>
         </NavigationContainer>
