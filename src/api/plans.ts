@@ -37,6 +37,18 @@ export interface PlanDetail extends Plan {
     routines: RoutineDetail[];
 }
 
+
+export interface AddExerciseDto {
+    exercise_id: string;
+    order_index: number;
+    target_sets: number;
+    target_reps: number;
+    target_weight: number;
+    rest_seconds: number;
+    increment_value: number;
+}
+
+
 // Fetch all active plans
 export const getPlans = () => {
   return client<Plan[]>('/plans/');
@@ -69,5 +81,12 @@ export const createRoutine = (planId: string, name: string, dayOfWeek: number) =
     return client(`/plans/${planId}/routines`, {
         method: 'POST',
         body: JSON.stringify({ name, day_of_week: dayOfWeek })
+    });
+};
+
+export const addExerciseTarget = (routineId: string, data: AddExerciseDto) => {
+    return client(`/plans/routines/${routineId}/exercises`, {
+        method: 'POST',
+        body: JSON.stringify(data)
     });
 };

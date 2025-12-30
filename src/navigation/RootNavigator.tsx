@@ -15,6 +15,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import PlansScreen from '../screens/PlansScreen';
 import CreatePlanScreen from '../screens/plans/CreatePlanScreen';
 import PlanDetailsScreen from '../screens/plans/PlanDetailsScreen';
+import RoutineEditorScreen from '../screens/plans/RoutineEditorScreen';
 
 const WorkoutStack = createNativeStackNavigator();
 
@@ -39,6 +40,7 @@ function PlansStackNavigator() {
       <PlansStack.Screen name="PlansList" component={PlansScreen} />
       <PlansStack.Screen name="CreatePlan" component={CreatePlanScreen} />
       <PlansStack.Screen name="PlanDetails" component={PlanDetailsScreen} />
+      <PlansStack.Screen name="RoutineEditor" component={RoutineEditorScreen} />
     </PlansStack.Navigator>
   );
 }

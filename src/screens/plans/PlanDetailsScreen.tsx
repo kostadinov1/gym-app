@@ -85,7 +85,10 @@ export default function PlanDetailsScreen() {
                             <TouchableOpacity 
                                 style={[styles.routineCard, { backgroundColor: theme.colors.inputBackground }]}
                                 // TODO: Navigate to Exercise Editor for this routine
-                                onPress={() => Alert.alert("Coming Soon", "We will add exercises here next step!")}
+                                   onPress={() => navigation.navigate('RoutineEditor', { 
+        routineId: routine.id, 
+        routineName: routine.name 
+    })}
                             >
                                 <Text style={{ fontSize: 16, fontWeight: '600', color: theme.colors.text }}>{routine.name}</Text>
                                 <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>
