@@ -5,36 +5,46 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { getExercises } from '../../api/exercises';
-import { addExerciseTarget } from '../../api/plans'; // We need to add this export to api/plans.ts
+import { addExerciseTarget, getPlanDetails } from '../../api/plans'; // Add getPlanDetails
 
 export default function RoutineEditorScreen() {
   const theme = useTheme();
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const { routineId, routineName } = route.params; // Passed from PlanDetails
+  const { routineId, routineName, planId } = route.params; // Get planId
   const queryClient = useQueryClient();
 
-  // State for Modal
+  // ... (State for Modal remains the same) ...
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
-  
-  // Target Inputs
   const [sets, setSets] = useState('3');
   const [reps, setReps] = useState('10');
   const [weight, setWeight] = useState('20');
   const [increment, setIncrement] = useState('2.5');
 
-  // 1. Fetch Available Exercises (for the picker)
-  const { data: exercises, isLoading: loadingEx } = useQuery({
+  // 1. Fetch Plan Details (It's cached, so it's fast)
+  // We use this to get the *Current* list of exercises
+  const { data: planData } = useQuery({
+    queryKey: ['planDetails', planId],
+    queryFn: () => getPlanDetails(planId),
+    enabled: !!planId
+  });
+
+  // Filter to find THIS routine
+  const currentRoutine = planData?.routines.find(r => r.id === routineId);
+  const existingExercises = currentRoutine?.exercises || [];
+
+  // ... (Fetch Exercises for Picker logic remains the same) ...
+  const { data: allExercises, isLoading: loadingEx } = useQuery({
     queryKey: ['exercises'],
     queryFn: getExercises,
   });
 
-  // 2. Mutation to Save
+  // ... (Mutation logic remains the same) ...
   const addMutation = useMutation({
     mutationFn: () => addExerciseTarget(routineId, {
         exercise_id: selectedExerciseId!,
-        order_index: 1, // Logic for order needed later, default 1 for now
+        order_index: existingExercises.length + 1, // Auto-increment order
         target_sets: parseInt(sets),
         target_reps: parseInt(reps),
         target_weight: parseFloat(weight),
@@ -42,11 +52,9 @@ export default function RoutineEditorScreen() {
         rest_seconds: 90
     }),
     onSuccess: () => {
-        Alert.alert("Success", "Exercise Added!");
         setModalVisible(false);
-        // Invalidate Plan Details so the previous screen updates
         queryClient.invalidateQueries({ queryKey: ['planDetails'] });
-        navigation.goBack(); 
+        // Don't navigate back! Stay here so we can see the new item.
     },
     onError: (err) => Alert.alert("Error", (err as Error).message)
   });
@@ -68,22 +76,40 @@ export default function RoutineEditorScreen() {
         </View>
       </View>
 
-      {/* Main Content: Just a big add button for now (since we don't fetch current exercises here yet) */}
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ color: theme.colors.textSecondary, marginBottom: 20 }}>
-              (List of current exercises would go here)
-          </Text>
-          
-          <TouchableOpacity 
+      {/* THE LIST OF ADDED EXERCISES */}
+      <FlatList 
+        data={existingExercises}
+        keyExtractor={(item) => item.id || item.exercise_id}
+        contentContainerStyle={{ padding: 16 }}
+        ListEmptyComponent={
+            <Text style={{ textAlign: 'center', marginTop: 20, color: theme.colors.textSecondary }}>
+                No exercises yet. Tap + to add one.
+            </Text>
+        }
+        renderItem={({ item }) => (
+            <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+                <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
+                <Text style={{ color: theme.colors.textSecondary }}>
+                    {item.target_sets} x {item.target_reps} @ {item.target_weight}kg (+{item.increment_value})
+                </Text>
+            </View>
+        )}
+      />
+
+      {/* FOOTER BUTTON */}
+      <View style={{ padding: 16 }}>
+        <TouchableOpacity 
             style={[styles.bigButton, { backgroundColor: theme.colors.primary }]}
             onPress={() => setModalVisible(true)}
-          >
-              <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Add Exercise</Text>
-          </TouchableOpacity>
+        >
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Add Exercise</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* MODAL: Pick Exercise & Set Targets */}
+      {/* MODAL (Keep exactly as it was) */}
       <Modal visible={isModalVisible} animationType="slide">
+          {/* ... Copy the Modal content from previous message ... */}
+          {/* Ensure you use 'allExercises' in the FlatList inside the modal */}
           <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
               <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: '#eee' }}>
                   <Text style={{ fontSize: 18, fontWeight: 'bold', flex: 1, color: theme.colors.text }}>Configure Exercise</Text>
@@ -93,12 +119,11 @@ export default function RoutineEditorScreen() {
               </View>
 
               <View style={{ padding: 16 }}>
-                  {/* Step 1: Pick Exercise */}
                   <Text style={[styles.label, { color: theme.colors.text }]}>1. Select Exercise</Text>
                   <View style={{ height: 150, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, marginBottom: 16 }}>
                       {loadingEx ? <ActivityIndicator /> : (
                           <FlatList 
-                            data={exercises}
+                            data={allExercises} // Use allExercises here
                             keyExtractor={item => item.id}
                             renderItem={({ item }) => (
                                 <TouchableOpacity 
@@ -112,7 +137,6 @@ export default function RoutineEditorScreen() {
                       )}
                   </View>
 
-                  {/* Step 2: Inputs */}
                   <Text style={[styles.label, { color: theme.colors.text }]}>2. Set Targets</Text>
                   <View style={{ flexDirection: 'row', gap: 10 }}>
                       <View style={{ flex: 1 }}>
@@ -154,5 +178,7 @@ const styles = StyleSheet.create({
   header: { fontSize: 20, fontWeight: 'bold' },
   bigButton: { padding: 16, borderRadius: 12, alignItems: 'center' },
   label: { fontWeight: 'bold', marginBottom: 8, fontSize: 16 },
-  input: { borderWidth: 1, borderRadius: 8, padding: 12, marginBottom: 12, fontSize: 16 }
+  input: { borderWidth: 1, borderRadius: 8, padding: 12, marginBottom: 12, fontSize: 16 },
+  card: { padding: 16, borderRadius: 12, marginBottom: 8 },
+  cardTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 }
 });

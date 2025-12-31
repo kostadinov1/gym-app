@@ -19,7 +19,9 @@ export interface CreatePlanDto {
 
 
 export interface RoutineExercise {
+    id: string; // The ID of the RoutineExercise link
     exercise_id: string;
+    name: string; // <--- Added
     target_sets: number;
     target_reps: number;
     target_weight: number;
