@@ -1,5 +1,6 @@
 // REPLACE THIS IP with your specific LAN IP
 const BASE_URL = 'http://192.168.10.121:8000';
+import * as SecureStore from 'expo-secure-store';
 
 class ApiError extends Error {
   status: number;
@@ -9,31 +10,39 @@ class ApiError extends Error {
   }
 }
 
-// A generic wrapper to handle JSON and Errors automatically
-export async function client<T>(endpoint: string, options?: RequestInit): Promise<T> {
+async function client<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  // 1. Get Token
+  const token = await SecureStore.getItemAsync('userToken');
+
+  // 2. Attach Header
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...options?.headers,
+  };
+
   const config = {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     ...options,
+    headers,
   };
 
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, config);
-
+    // ... (Rest of logic remains the same: error handling, json parsing)
     if (!response.ok) {
-      // Security: Handle 400/500 errors explicitly
-      const errorBody = await response.text();
-      throw new ApiError(errorBody || 'Network response was not ok', response.status);
+        if (response.status === 401) {
+            // Optional: Broadcast a logout event here if token expired
+        }
+        const errorBody = await response.text();
+        throw new ApiError(errorBody || 'Network response was not ok', response.status);
     }
-
-    // Security: Validate that the response is actually JSON
     const data = await response.json();
     return data as T;
   } catch (error) {
-    // Log error securely (don't alert sensitive info in production)
     console.error('API Call Failed:', error);
     throw error;
   }
 }
+
+export { client };
+
