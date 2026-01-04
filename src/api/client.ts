@@ -1,6 +1,13 @@
 // REPLACE THIS IP with your specific LAN IP
-const BASE_URL = 'http://192.168.10.121:8000';
+
 import * as SecureStore from 'expo-secure-store';
+
+// CHANGE THIS LINE:
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+
+if (!BASE_URL) {
+  console.error("🚨 Missing API URL! Check your .env file.");
+}
 
 class ApiError extends Error {
   status: number;
