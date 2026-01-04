@@ -1,7 +1,9 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# Dependencies
 node_modules/
+package-lock.json
+
 
 # Expo
 .expo/
@@ -31,7 +33,6 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
 
 # typescript
 *.tsbuildinfo
@@ -40,7 +41,24 @@ yarn-error.*
 /ios
 /android
 
-.env
-.env.development
-.env.production
 
+
+
+# Native Builds (We are using Prebuild, so we ignore these)
+android/
+ios/
+
+
+# Environment Variables (CRITICAL)
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env*.local
+
+# IDEs
+.vscode
+.idea
+*.jks
+*.keystore

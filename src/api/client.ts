@@ -1,13 +1,6 @@
-// REPLACE THIS IP with your specific LAN IP
-
 import * as SecureStore from 'expo-secure-store';
 
-// CHANGE THIS LINE:
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
-
-if (!BASE_URL) {
-  console.error("🚨 Missing API URL! Check your .env file.");
-}
 
 class ApiError extends Error {
   status: number;
@@ -18,10 +11,8 @@ class ApiError extends Error {
 }
 
 async function client<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  // 1. Get Token
   const token = await SecureStore.getItemAsync('userToken');
-
-  // 2. Attach Header
+  
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -35,14 +26,22 @@ async function client<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, config);
-    // ... (Rest of logic remains the same: error handling, json parsing)
+
     if (!response.ok) {
-        if (response.status === 401) {
-            // Optional: Broadcast a logout event here if token expired
-        }
-        const errorBody = await response.text();
-        throw new ApiError(errorBody || 'Network response was not ok', response.status);
+      // 1. Try to parse JSON error (e.g. {"detail": "Email already registered"})
+      let errorMessage = 'Something went wrong';
+      try {
+        const errorData = await response.json();
+        // Backend usually sends "detail"
+        errorMessage = errorData.detail || JSON.stringify(errorData);
+      } catch (e) {
+        // Fallback if not JSON
+        errorMessage = await response.text();
+      }
+
+      throw new ApiError(errorMessage, response.status);
     }
+
     const data = await response.json();
     return data as T;
   } catch (error) {
@@ -52,4 +51,3 @@ async function client<T>(endpoint: string, options?: RequestInit): Promise<T> {
 }
 
 export { client };
-
