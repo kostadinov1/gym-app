@@ -1,6 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+// const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+
+const BASE_URL = 'https://gym-api-m6vx.onrender.com'; 
 
 class ApiError extends Error {
   status: number;
