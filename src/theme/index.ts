@@ -4,8 +4,8 @@ const palette = {
   blue: '#007AFF',
   lightBlue: '#0A84FF',
   green: '#34C759',
-  lightGreen: '#E0F8E3', // Light background for completed sets
-  darkGreen: '#1C3A22', // Dark background for completed sets
+  lightGreen: '#E0F8E3', 
+  darkGreen: '#1C3A22',
   red: '#FF3B30',
   white: '#FFFFFF',
   black: '#000000',
@@ -27,6 +27,7 @@ export const lightTheme = {
     success: palette.green,
     successBackground: palette.lightGreen,
     inputBackground: '#F9F9F9',
+    error: '#FF3B30',
   },
   spacing: { s: 8, m: 16, l: 24 },
   borderRadius: { m: 8, l: 12 },
@@ -44,6 +45,7 @@ export const darkTheme = {
     success: palette.green,
     successBackground: palette.darkGreen,
     inputBackground: '#2C2C2E',
+    error: '#FF3B30',
   },
   spacing: { s: 8, m: 16, l: 24 },
   borderRadius: { m: 8, l: 12 },

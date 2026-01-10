@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { authEvents } from '../utils/authEvents';
 
 interface AuthContextType {
   userToken: string | null;
@@ -19,7 +20,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const token = await SecureStore.getItemAsync('userToken');
         if (token) {
-            setUserToken(token);
+          setUserToken(token);
         }
       } catch (e) {
         console.log('Restoring token failed');
@@ -30,10 +31,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     bootstrapAsync();
   }, []);
 
+
+
   const signIn = async (token: string) => {
     await SecureStore.setItemAsync('userToken', token);
     setUserToken(token);
   };
+
+  useEffect(() => {
+    const unsubscribe = authEvents.subscribe(() => {
+      signOut(); // This clears the token and state, forcing App.tsx to show LoginScreen
+    });
+    return unsubscribe;
+  }, []);
 
   const signOut = async () => {
     await SecureStore.deleteItemAsync('userToken');

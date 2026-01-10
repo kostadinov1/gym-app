@@ -14,26 +14,27 @@ export default function ActiveWorkoutScreen() {
   const { routineId } = route.params;
   const queryClient = useQueryClient();
 
+  // 1. Capture Start Time
   const startTime = useRef(new Date());
 
+  // 2. FETCH THE ROUTINE DATA (This was missing!)
   const { data, isLoading } = useQuery({
     queryKey: ['activeSession', routineId],
     queryFn: () => startRoutine(routineId),
   });
 
+  // 3. Local State
   const [exercises, setExercises] = useState<any[]>([]);
 
-  // 1. Transform Data (FIXED: Generate Unique IDs)
+  // 4. Transform Data when Loaded (This was also missing!)
   useEffect(() => {
     if (data) {
-      const transformed = data.exercises.map((ex: any, index: number) => ({
-        // We create a unique local ID using index to prevent duplicates crashing the list
-        uniqueId: `${ex.exercise_id}_${index}`, 
-        exercise_id: ex.exercise_id, // Keep real ID for saving
+      const transformed = data.exercises.map((ex: any) => ({
+        id: ex.exercise_id,
         name: ex.name,
         history: 'No history yet', 
         sets: ex.sets.map((s: any) => ({
-          id: `${ex.exercise_id}-${s.set_number}-${index}`, // Unique Set ID
+          id: `${ex.exercise_id}-${s.set_number}`,
           setNumber: s.set_number,
           weight: s.target_weight,
           reps: s.target_reps,
@@ -44,13 +45,11 @@ export default function ActiveWorkoutScreen() {
     }
   }, [data]);
 
+  // 5. Define Mutation
   const finishMutation = useMutation({
     mutationFn: finishWorkout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['history'] });
-      // Update routines list to show "Done" badge immediately
-      queryClient.invalidateQueries({ queryKey: ['routines'] }); 
-      
       Alert.alert("Great Job!", "Workout saved successfully.", [
         { text: "OK", onPress: () => navigation.goBack() }
       ]);
@@ -60,11 +59,12 @@ export default function ActiveWorkoutScreen() {
     }
   });
 
-  // 2. Handle Finish (Use real exercise_id)
+  // 6. Finish Logic
   const handleFinish = () => {
+    // Fix for "s implicitly has any type" -> added (s: any)
     const flatSets = exercises.flatMap(ex => 
       ex.sets.map((s: any) => ({
-        exercise_id: ex.exercise_id, // Send the REAL database ID
+        exercise_id: ex.id,
         set_number: s.setNumber,
         reps: s.reps,
         weight: s.weight,
@@ -82,10 +82,9 @@ export default function ActiveWorkoutScreen() {
     finishMutation.mutate(payload);
   };
 
-  // 3. Update Functions (Use uniqueId)
-  const updateSet = (uniqueId: string, setId: string, field: 'weight'|'reps', value: number) => {
+  const updateSet = (exerciseId: string, setId: string, field: 'weight'|'reps', value: number) => {
     setExercises(prev => prev.map(ex => {
-      if (ex.uniqueId !== uniqueId) return ex; // Compare unique ID
+      if (ex.id !== exerciseId) return ex;
       return {
         ...ex,
         sets: ex.sets.map((s: any) => s.id === setId ? { ...s, [field]: value } : s)
@@ -93,9 +92,9 @@ export default function ActiveWorkoutScreen() {
     }));
   };
 
-  const toggleComplete = (uniqueId: string, setId: string) => {
+  const toggleComplete = (exerciseId: string, setId: string) => {
     setExercises(prev => prev.map(ex => {
-      if (ex.uniqueId !== uniqueId) return ex; // Compare unique ID
+      if (ex.id !== exerciseId) return ex;
       return {
         ...ex,
         sets: ex.sets.map((s: any) => s.id === setId ? { ...s, isCompleted: !s.isCompleted } : s)
@@ -103,6 +102,7 @@ export default function ActiveWorkoutScreen() {
     }));
   };
 
+  // 7. Loading State
   if (isLoading || exercises.length === 0) {
     return (
       <View style={[styles.safeArea, styles.center, { backgroundColor: theme.colors.background }]}>
@@ -117,13 +117,13 @@ export default function ActiveWorkoutScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 16 }}>
            <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
         </TouchableOpacity>
+        {/* Now 'data' exists, so this won't crash */}
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{data?.name}</Text>
       </View>
 
       <FlatList 
         data={exercises}
-        // FIX: Use the uniqueId we generated
-        keyExtractor={item => item.uniqueId} 
+        keyExtractor={item => item.id}
         contentContainerStyle={{ padding: 16 }}
         renderItem={({ item: exercise }) => (
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
@@ -136,9 +136,8 @@ export default function ActiveWorkoutScreen() {
               <SetRow 
                 key={set.id}
                 {...set}
-                // Pass uniqueId to update functions
-                onUpdate={(field, val) => updateSet(exercise.uniqueId, set.id, field, val)}
-                onToggleComplete={() => toggleComplete(exercise.uniqueId, set.id)}
+                onUpdate={(field, val) => updateSet(exercise.id, set.id, field, val)}
+                onToggleComplete={() => toggleComplete(exercise.id, set.id)}
               />
             ))}
           </View>

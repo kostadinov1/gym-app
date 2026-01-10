@@ -3,7 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme';
-
+import { Ionicons } from '@expo/vector-icons';
 // Placeholder screens (We will replace these later)
 
 import { View, Text } from 'react-native';
@@ -51,36 +51,41 @@ export default function RootNavigator() {
     return (
         <NavigationContainer>
             <Tab.Navigator
-                screenOptions={{
-                    headerShown: false, // We will build custom headers
+                screenOptions={({ route }) => ({
+                    headerShown: false,
                     tabBarStyle: {
                         backgroundColor: theme.colors.card,
                         borderTopColor: theme.colors.border,
+                        paddingBottom: 5, // Little padding for modern look
+                        height: 60,
                     },
                     tabBarActiveTintColor: theme.colors.primary,
                     tabBarInactiveTintColor: theme.colors.textSecondary,
-                }}
+                    // Dynamic Icon Logic
+                    tabBarIcon: ({ focused, color, size }) => {
+                        let iconName: keyof typeof Ionicons.glyphMap = 'home'; // Default
+
+                        if (route.name === 'Workout') {
+                            iconName = focused ? 'barbell' : 'barbell-outline';
+                        } else if (route.name === 'History') {
+                            iconName = focused ? 'calendar' : 'calendar-outline';
+                        } else if (route.name === 'Plans') {
+                            iconName = focused ? 'list' : 'list-outline';
+                        } else if (route.name === 'Exercises') {
+                            iconName = focused ? 'library' : 'library-outline';
+                        } else if (route.name === 'Profile') {
+                            iconName = focused ? 'person' : 'person-outline';
+                        }
+
+                        return <Ionicons name={iconName} size={size} color={color} />;
+                    },
+                })}
             >
-                <Tab.Screen
-                    name="Workout"
-                    component={WorkoutStackNavigator}
-                />
-                    <Tab.Screen 
-                    name="History" 
-                    component={HistoryScreen} 
-                    />
-                <Tab.Screen 
-                    name="Plans" 
-                    component={PlansStackNavigator} // Point to the new Stack
-                />
-                <Tab.Screen
-                    name="Exercises"
-                    component={ExerciseListScreen}
-                />
-                <Tab.Screen 
-                name="Profile" 
-                component={ProfileScreen} 
-                />
+                <Tab.Screen name="Workout" component={WorkoutStackNavigator} />
+                <Tab.Screen name="History" component={HistoryScreen} />
+                <Tab.Screen name="Plans" component={PlansStackNavigator} />
+                <Tab.Screen name="Exercises" component={ExerciseListScreen} />
+                <Tab.Screen name="Profile" component={ProfileScreen} />
             </Tab.Navigator>
         </NavigationContainer>
     );
