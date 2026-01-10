@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { 
+  View, Text, TextInput, TouchableOpacity, StyleSheet, 
+  Alert, ActivityIndicator 
+} from 'react-native';
+// Removed: SafeAreaView, KeyboardAvoidingView, ScrollView imports
 import { useMutation } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { login, register } from '../../api/auth';
 import { useAuth } from '../../context/AuthContext';
+import { Container } from '../../components/common/Container'; // <--- Import Wrapper
 
 export default function LoginScreen() {
   const theme = useTheme();
@@ -14,21 +18,18 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Login Mutation
+  // ... (Mutations and handleSubmit logic remain EXACTLY the same) ...
   const loginMutation = useMutation({
     mutationFn: () => login(email, password),
-    onSuccess: (data) => {
-        signIn(data.access_token); // Save token -> App switches to Main Navigator
-    },
+    onSuccess: (data) => signIn(data.access_token),
     onError: (err) => Alert.alert("Login Failed", (err as Error).message)
   });
 
-  // Register Mutation
   const registerMutation = useMutation({
     mutationFn: () => register(email, password),
     onSuccess: () => {
         Alert.alert("Success", "Account created! Please log in.");
-        setIsRegistering(false); // Switch back to login view
+        setIsRegistering(false);
     },
     onError: (err) => Alert.alert("Registration Failed", (err as Error).message)
   });
@@ -38,17 +39,17 @@ export default function LoginScreen() {
           Alert.alert("Error", "Please enter email and password");
           return;
       }
-      if (isRegistering) {
-          registerMutation.mutate();
-      } else {
-          loginMutation.mutate();
-      }
+      if (isRegistering) registerMutation.mutate();
+      else loginMutation.mutate();
   };
 
   const isLoading = loginMutation.isPending || registerMutation.isPending;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <Container 
+      isScrollable={true} 
+      style={styles.containerStyle} // <--- Pass alignment styles here
+    >
       <View style={styles.content}>
         <Text style={[styles.title, { color: theme.colors.text }]}>
             {isRegistering ? "Create Account" : "Welcome Back"}
@@ -97,13 +98,19 @@ export default function LoginScreen() {
             </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { flex: 1, justifyContent: 'center', padding: 24 },
+  // Renamed from scrollContent to be clearer
+  containerStyle: {
+    flexGrow: 1,
+    justifyContent: 'center', // This centers the form vertically
+  },
+  content: {
+    padding: 24,
+  },
   title: { fontSize: 32, fontWeight: 'bold', marginBottom: 8 },
   input: {
     height: 50,
