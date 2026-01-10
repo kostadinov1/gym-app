@@ -4,40 +4,59 @@ import {
   Platform, 
   StyleSheet, 
   ScrollView, 
-  ViewStyle 
+  ViewStyle,
+  View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, SafeAreaViewProps } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 
 interface ContainerProps {
   children: React.ReactNode;
-  /** Set to true if the screen is a Form (needs scrolling). 
-   * Set to false if the screen contains a FlatList (handles its own scrolling). */
+  /** True = Form (Scrolls). False = List (Fixed). */
   isScrollable?: boolean; 
+  /** Style for the inner content wrapper (e.g. padding, centering) */
   style?: ViewStyle;
+  /** Override default background color */
+  backgroundColor?: string;
+  /** Pass specific edges to SafeAreaView (optional) */
+  edges?: SafeAreaViewProps['edges'];
 }
 
-export const Container = ({ children, isScrollable = false, style }: ContainerProps) => {
+export const Container = ({ 
+  children, 
+  isScrollable = false, 
+  style, 
+  backgroundColor,
+  edges 
+}: ContainerProps) => {
   const theme = useTheme();
+  
+  // Default to theme background if not provided
+  const bgColor = backgroundColor || theme.colors.background;
 
   const content = isScrollable ? (
     <ScrollView 
-      contentContainerStyle={styles.scrollContent} 
+      contentContainerStyle={[styles.scrollContent, style]} 
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
       {children}
     </ScrollView>
   ) : (
-    // If it's a list, just render children directly (FlatList handles itself)
-    children 
+    // For non-scrollable, we still apply the style to a View wrapper
+    <View style={[styles.fixedContent, style]}>
+      {children}
+    </View>
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView 
+      style={[styles.safeArea, { backgroundColor: bgColor }]} 
+      edges={edges}
+    >
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={[styles.keyboardView, style]}
+        style={styles.keyboardView}
       >
         {content}
       </KeyboardAvoidingView>
@@ -54,6 +73,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    // Add padding if needed globally
+  },
+  fixedContent: {
+    flex: 1,
   }
 });
