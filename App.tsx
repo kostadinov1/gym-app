@@ -7,6 +7,7 @@ import { useTheme } from './src/theme';
 
 import RootNavigator from './src/navigation/RootNavigator';
 import LoginScreen from './src/screens/auth/LoginScreen';
+import { ThemeProvider } from './src/context/ThemeContext';
 
 const queryClient = new QueryClient();
 
@@ -30,10 +31,13 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
+        <ThemeProvider>
+
         <QueryClientProvider client={queryClient}>
             <StatusBar barStyle="dark-content" />
             <NavigationWrapper />
         </QueryClientProvider>
+        </ThemeProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

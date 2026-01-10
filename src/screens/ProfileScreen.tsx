@@ -2,13 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native'; // Add TouchableOpacity, Alert
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
-import { useTheme } from '../theme';
 import { getStats } from '../api/history';
-import { useAuth } from '../context/AuthContext'; // <--- IMPORT THIS
+import { useAuth } from '../context/AuthContext'; 
+import { useTheme, useThemeToggle } from '../context/ThemeContext';
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const { signOut } = useAuth(); // <--- GET SIGNOUT FUNCTION
+  const { isDark, toggleTheme } = useThemeToggle(); 
+  const { signOut } = useAuth(); 
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['stats'],
@@ -22,12 +23,11 @@ export default function ProfileScreen() {
       "Are you sure you want to log out?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Log Out", style: "destructive", onPress: signOut } // Call context function
+        { text: "Log Out", style: "destructive", onPress: signOut } 
       ]
     );
   };
 
-  // ... (StatCard and SettingRow components remain the same) ...
   const StatCard = ({ label, value }: { label: string, value: string | number }) => (
     <View style={[styles.statCard, { backgroundColor: theme.colors.card }]}>
       <Text style={[styles.statValue, { color: theme.colors.primary }]}>{value}</Text>
@@ -35,11 +35,17 @@ export default function ProfileScreen() {
     </View>
   );
 
-  const SettingRow = ({ label, value }: { label: string, value: string }) => (
-    <View style={[styles.settingRow, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
+  const SettingRow = ({ label, value, onPress }: { label: string, value: string, onPress?: () => void }) => (
+    <TouchableOpacity 
+        onPress={onPress} 
+        disabled={!onPress}
+        style={[styles.settingRow, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}
+    >
       <Text style={[styles.settingLabel, { color: theme.colors.text }]}>{label}</Text>
-      <Text style={[styles.settingValue, { color: theme.colors.textSecondary }]}>{value}</Text>
-    </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={[styles.settingValue, { color: theme.colors.textSecondary }]}>{value}</Text>
+      </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -69,9 +75,16 @@ export default function ProfileScreen() {
         </View>
 
         {/* SETTINGS SECTION */}
-        <Text style={[styles.sectionTitle, { color: theme.colors.text, marginTop: 24 }]}>Settings</Text>
+ <Text style={[styles.sectionTitle, { color: theme.colors.text, marginTop: 24 }]}>Settings</Text>
         <View style={styles.settingsGroup}>
-            <SettingRow label="Theme" value={theme.mode === 'dark' ? 'Dark Mode' : 'Light Mode'} />
+            
+            {/* THEME TOGGLE ROW */}
+            <SettingRow 
+                label="Theme" 
+                value={isDark ? 'Dark Mode 🌙' : 'Light Mode ☀️'} 
+                onPress={toggleTheme} // <--- Wire it up!
+            />
+            
             <SettingRow label="Units" value="Metric (kg)" />
             <SettingRow label="Version" value="1.0.0 (Alpha)" />
         </View>

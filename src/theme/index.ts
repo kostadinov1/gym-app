@@ -1,20 +1,23 @@
-import { useColorScheme } from 'react-native';
-
+// 1. Define the Palette (Colors)
 const palette = {
   blue: '#007AFF',
   lightBlue: '#0A84FF',
   green: '#34C759',
   lightGreen: '#E0F8E3', 
-  darkGreen: '#1C3A22',
+  darkGreen: '#1C3A22', 
   red: '#FF3B30',
+  redDark: '#FF453A',
   white: '#FFFFFF',
   black: '#000000',
   gray100: '#F2F2F7',
   gray200: '#E5E5EA',
   gray800: '#1C1C1E',
   gray900: '#000000',
+  grayInputLight: '#F9F9F9',
+  grayInputDark: '#2C2C2E',
 };
 
+// 2. Define the Themes Objects
 export const lightTheme = {
   mode: 'light',
   colors: {
@@ -26,8 +29,8 @@ export const lightTheme = {
     border: palette.gray200,
     success: palette.green,
     successBackground: palette.lightGreen,
-    inputBackground: '#F9F9F9',
-    error: '#FF3B30',
+    inputBackground: palette.grayInputLight,
+    error: palette.red,
   },
   spacing: { s: 8, m: 16, l: 24 },
   borderRadius: { m: 8, l: 12 },
@@ -44,15 +47,11 @@ export const darkTheme = {
     border: '#38383A',
     success: palette.green,
     successBackground: palette.darkGreen,
-    inputBackground: '#2C2C2E',
-    error: '#FF3B30',
+    inputBackground: palette.grayInputDark,
+    error: palette.redDark,
   },
   spacing: { s: 8, m: 16, l: 24 },
   borderRadius: { m: 8, l: 12 },
 };
 
-// A helper hook to get the current theme automatically
-export const useTheme = () => {
-  const scheme = useColorScheme();
-  return scheme === 'dark' ? darkTheme : lightTheme;
-};
+export { useTheme } from '../context/ThemeContext';
