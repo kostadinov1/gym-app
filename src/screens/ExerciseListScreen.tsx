@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme'; 
 // --- NEW: Added updateExercise to imports ---
 import { getExercises, createExercise, deleteExercise, updateExercise } from '../api/exercises';
+import { FAB } from '../components/common/FAB';
 
 export default function ExerciseListScreen() {
   const theme = useTheme(); 
@@ -177,17 +178,12 @@ export default function ExerciseListScreen() {
       />
 
       {/* FAB - Opens Create Mode */}
-      <TouchableOpacity 
-        style={[styles.fab, { backgroundColor: theme.colors.primary }]} 
-        onPress={() => {
-            setEditingId(null); // --- NEW: Ensure we are in "Create Mode"
-            setName('');
-            setIncrement('2.5');
-            setModalVisible(true);
-        }}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      <FAB onPress={() => {
+          setEditingId(null);
+          setName('');
+          setIncrement('2.5');
+          setModalVisible(true);
+      }} />
 
       {/* Modal */}
       <Modal

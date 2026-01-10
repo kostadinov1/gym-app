@@ -6,6 +6,7 @@ import { useTheme } from '../theme';
 import { getPlans, deletePlan } from '../api/plans';
 
 import { useNavigation } from '@react-navigation/native'; // Add this
+import { FAB } from '../components/common/FAB';
 
 export default function PlansScreen() {
     const navigation = useNavigation<any>()
@@ -86,13 +87,7 @@ if (isError) {
             />
 
             {/* FAB to Create New Plan */}
-            <TouchableOpacity
-                style={styles.fab}
-                // LINK TO CREATE SCREEN
-                onPress={() => navigation.navigate('CreatePlan')}
-            >
-                <Text style={styles.fabText}>+</Text>
-            </TouchableOpacity>
+<FAB onPress={() => navigation.navigate('CreatePlan')} />
 
         </SafeAreaView>
     );
