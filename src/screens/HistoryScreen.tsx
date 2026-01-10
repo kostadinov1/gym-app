@@ -4,24 +4,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../theme';
-import { getHistory, HistorySession } from '../api/history';
+import { getHistory } from '../api/history';
 
 export default function HistoryScreen() {
   const theme = useTheme();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // 1. Calculate Date Range for current month (Simplification for V1)
-  // Ideally, we listen to the calendar's "onMonthChange" to fetch new data
+  // 1. Calculate Date Range (Simplification for V1)
   const startDate = '2025-01-01T00:00:00Z'; 
   const endDate = '2025-12-31T23:59:59Z';
 
   // 2. Fetch Data
   const { data, isLoading } = useQuery({
-    queryKey: ['history', '2025'], // In V2, add month to key
+    queryKey: ['history'], 
     queryFn: () => getHistory(startDate, endDate),
   });
 
-  // 3. Transform Data for Calendar (Marked Dates)
+  // 3. Transform Data for Calendar
   const markedDates = useMemo(() => {
     if (!data) return {};
     const marks: any = {};
@@ -30,7 +29,7 @@ export default function HistoryScreen() {
       const dateKey = session.date.split('T')[0];
       marks[dateKey] = {
         marked: true,
-        dotColor: theme.colors.primary
+        dotColor: theme.colors.primary // Use theme color for dots
       };
     });
 
@@ -43,7 +42,7 @@ export default function HistoryScreen() {
     };
     
     return marks;
-  }, [data, selectedDate, theme]);
+  }, [data, selectedDate, theme]); // Re-calculate when theme changes
 
   // 4. Filter list for selected day
   const dailySessions = useMemo(() => {
@@ -56,18 +55,42 @@ export default function HistoryScreen() {
       <Text style={[styles.header, { color: theme.colors.text }]}>History</Text>
 
       <Calendar
+        // FIX 1: Force re-render when theme changes
+        key={theme.mode} 
+        
         current={selectedDate}
         onDayPress={(day: any) => setSelectedDate(day.dateString)}
         markedDates={markedDates}
+        
+        // FIX 2: Stop the size jumping (Always show 6 rows)
+        hideExtraDays={false} 
+        
+        // Theme Configuration
         theme={{
           calendarBackground: theme.colors.card,
           textSectionTitleColor: theme.colors.textSecondary,
-          dayTextColor: theme.colors.text,
-          todayTextColor: theme.colors.primary,
           selectedDayBackgroundColor: theme.colors.primary,
           selectedDayTextColor: '#ffffff',
-          monthTextColor: theme.colors.text,
+          todayTextColor: theme.colors.primary,
+          dayTextColor: theme.colors.text,
+          textDisabledColor: theme.colors.border, // For the "extra days"
+          dotColor: theme.colors.primary,
+          selectedDotColor: '#ffffff',
           arrowColor: theme.colors.primary,
+          monthTextColor: theme.colors.text,
+          indicatorColor: theme.colors.primary,
+        }}
+        
+        // Optional: Style the container for shadows/borders
+        style={{
+            borderRadius: 12,
+            marginHorizontal: 16,
+            elevation: 2,
+            shadowColor: '#000',
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            shadowOffset: { width: 0, height: 2 },
+            overflow: 'hidden' // Ensures background color clips corners
         }}
       />
 
@@ -77,7 +100,7 @@ export default function HistoryScreen() {
         </Text>
         
         {isLoading ? (
-          <ActivityIndicator />
+          <ActivityIndicator color={theme.colors.primary} />
         ) : (
           <FlatList
             data={dailySessions}
