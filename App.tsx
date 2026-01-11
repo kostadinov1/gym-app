@@ -10,6 +10,7 @@ import LoginScreen from './src/screens/auth/LoginScreen';
 import { ThemeProvider } from './src/context/ThemeContext';
 
 const queryClient = new QueryClient();
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // We separate this component to access useAuth context
 const NavigationWrapper = () => {
@@ -29,16 +30,18 @@ const NavigationWrapper = () => {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <ThemeProvider>
-
-        <QueryClientProvider client={queryClient}>
-            <StatusBar barStyle="dark-content" />
-            <NavigationWrapper />
-        </QueryClientProvider>
-        </ThemeProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    // 2. WRAP EVERYTHING (Outside SafeAreaProvider)
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <ThemeProvider>
+              <QueryClientProvider client={queryClient}>
+                  <StatusBar barStyle="default" />
+                  <NavigationWrapper />
+              </QueryClientProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
