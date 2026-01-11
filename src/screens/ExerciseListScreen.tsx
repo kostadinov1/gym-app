@@ -1,20 +1,20 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  StyleSheet, View, Text, FlatList, ActivityIndicator, 
-  TouchableOpacity, Modal, TextInput, Alert 
+import {
+  StyleSheet, View, Text, FlatList, ActivityIndicator,
+  TouchableOpacity, Modal, TextInput, Alert
 } from 'react-native';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../theme'; 
+import { useTheme } from '../theme';
 // --- NEW: Added updateExercise to imports ---
 import { getExercises, createExercise, deleteExercise, updateExercise } from '../api/exercises';
 import { FAB } from '../components/common/FAB';
 
 export default function ExerciseListScreen() {
-  const theme = useTheme(); 
+  const theme = useTheme();
   const [isModalVisible, setModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
-  
+
   // --- NEW: State to track which ID we are editing (null = Create Mode) ---
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -32,7 +32,7 @@ export default function ExerciseListScreen() {
   const filteredData = useMemo(() => {
     if (!data) return [];
     if (!searchText) return data;
-    return data.filter(ex => 
+    return data.filter(ex =>
       ex.name.toLowerCase().includes(searchText.toLowerCase())
     );
   }, [data, searchText]);
@@ -94,22 +94,22 @@ export default function ExerciseListScreen() {
   // --- NEW: Handle Save (Decides between Create or Update) ---
   const handleSave = () => {
     if (!name) return;
-    
+
     if (editingId) {
       // UPDATE MODE
+      createMutation.mutate({
+        name,
+        default_increment: 0, // Just send 0 for now to satisfy the API
+        unit: 'kg'
+      });
+
+      // In handleSave (Update mode):
       updateMutation.mutate({
         id: editingId,
         payload: {
           name,
-          default_increment: parseFloat(increment) || 2.5
+          default_increment: 0
         }
-      });
-    } else {
-      // CREATE MODE
-      createMutation.mutate({
-        name,
-        default_increment: parseFloat(increment) || 2.5,
-        unit: 'kg'
       });
     }
   };
@@ -121,21 +121,21 @@ export default function ExerciseListScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
       <Text style={[styles.header, { color: theme.colors.text }]}>Exercise Library</Text>
-      
+
       {/* SEARCH BAR */}
       <View style={[styles.searchContainer, { backgroundColor: theme.colors.inputBackground }]}>
         <Text style={{ fontSize: 18, marginRight: 8 }}>🔍</Text>
-        <TextInput 
-            style={{ flex: 1, color: theme.colors.text, fontSize: 16 }}
-            placeholder="Search exercises..."
-            placeholderTextColor={theme.colors.textSecondary}
-            value={searchText}
-            onChangeText={setSearchText}
+        <TextInput
+          style={{ flex: 1, color: theme.colors.text, fontSize: 16 }}
+          placeholder="Search exercises..."
+          placeholderTextColor={theme.colors.textSecondary}
+          value={searchText}
+          onChangeText={setSearchText}
         />
         {searchText.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchText('')}>
-                <Text style={{ color: theme.colors.textSecondary }}>✕</Text>
-            </TouchableOpacity>
+          <TouchableOpacity onPress={() => setSearchText('')}>
+            <Text style={{ color: theme.colors.textSecondary }}>✕</Text>
+          </TouchableOpacity>
         )}
       </View>
 
@@ -146,17 +146,17 @@ export default function ExerciseListScreen() {
         renderItem={({ item }) => (
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
             <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
-                    {item.is_custom && (
-                        <View style={{ backgroundColor: theme.colors.primary, borderRadius: 4, paddingHorizontal: 4 }}>
-                            <Text style={{ fontSize: 10, color: 'white', fontWeight: 'bold' }}>CUSTOM</Text>
-                        </View>
-                    )}
-                </View>
-                <Text style={[styles.cardSubtitle, { color: theme.colors.textSecondary }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
+                {item.is_custom && (
+                  <View style={{ backgroundColor: theme.colors.primary, borderRadius: 4, paddingHorizontal: 4 }}>
+                    <Text style={{ fontSize: 10, color: 'white', fontWeight: 'bold' }}>CUSTOM</Text>
+                  </View>
+                )}
+              </View>
+              {/* <Text style={[styles.cardSubtitle, { color: theme.colors.textSecondary }]}>
                 Increment: {item.default_increment} {item.unit}
-                </Text>
+              </Text> */}
             </View>
 
             {/* ACTION BUTTONS (Only for Custom) */}
@@ -164,12 +164,12 @@ export default function ExerciseListScreen() {
               <View style={{ flexDirection: 'row', gap: 16 }}>
                 {/* --- NEW: Edit Button --- */}
                 <TouchableOpacity onPress={() => handleEditPress(item)}>
-                   <Text style={{ fontSize: 18 }}>✏️</Text>
+                  <Text style={{ fontSize: 18 }}>✏️</Text>
                 </TouchableOpacity>
 
                 {/* Delete Button */}
                 <TouchableOpacity onPress={() => handleDelete(item.id, item.name)}>
-                    <Text style={{ fontSize: 18 }}>🗑️</Text>
+                  <Text style={{ fontSize: 18 }}>🗑️</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -179,10 +179,10 @@ export default function ExerciseListScreen() {
 
       {/* FAB - Opens Create Mode */}
       <FAB onPress={() => {
-          setEditingId(null);
-          setName('');
-          setIncrement('2.5');
-          setModalVisible(true);
+        setEditingId(null);
+        setName('');
+        setIncrement('2.5');
+        setModalVisible(true);
       }} />
 
       {/* Modal */}
@@ -196,18 +196,18 @@ export default function ExerciseListScreen() {
           <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
             {/* --- NEW: Dynamic Header Title --- */}
             <Text style={[styles.modalHeader, { color: theme.colors.text }]}>
-                {editingId ? "Edit Exercise" : "New Exercise"}
+              {editingId ? "Edit Exercise" : "New Exercise"}
             </Text>
-            
-            <TextInput 
+
+            <TextInput
               style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
               placeholder="Name (e.g. Squat)"
               placeholderTextColor={theme.colors.textSecondary}
               value={name}
               onChangeText={setName}
             />
-            
-            <TextInput 
+
+            <TextInput
               style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
               placeholder="Increment (e.g. 2.5)"
               placeholderTextColor={theme.colors.textSecondary}
@@ -222,8 +222,8 @@ export default function ExerciseListScreen() {
               </TouchableOpacity>
               <TouchableOpacity onPress={handleSave}>
                 <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 }}>
-                    {/* --- NEW: Dynamic Button Label --- */}
-                    {editingId ? "Update" : "Save"}
+                  {/* --- NEW: Dynamic Button Label --- */}
+                  {editingId ? "Update" : "Save"}
                 </Text>
               </TouchableOpacity>
             </View>

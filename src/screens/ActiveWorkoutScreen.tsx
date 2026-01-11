@@ -1,13 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../theme';
 import { SetRow } from '../components/workout/SetRow';
 import { startRoutine, finishWorkout } from '../api/workouts';
+import { getExercises } from '../api/exercises';
+import { FAB } from '../components/common/FAB';
 
 export default function ActiveWorkoutScreen() {
+  const [isAddModalVisible, setAddModalVisible] = useState(false);
   const theme = useTheme();
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
@@ -15,7 +18,6 @@ export default function ActiveWorkoutScreen() {
   const queryClient = useQueryClient();
 
   const startTime = useRef(new Date());
-
   const { data, isLoading } = useQuery({
     queryKey: ['activeSession', routineId],
     queryFn: () => startRoutine(routineId),
@@ -23,6 +25,10 @@ export default function ActiveWorkoutScreen() {
 
   const [exercises, setExercises] = useState<any[]>([]);
 
+    const { data: allExercises } = useQuery({
+    queryKey: ['exercises'],
+    queryFn: getExercises,
+  });
   // 1. Transform Data (FIXED: Generate Unique IDs)
   useEffect(() => {
     if (data) {
@@ -151,13 +157,29 @@ export default function ActiveWorkoutScreen() {
   };
 
 
-  // if (isLoading || exercises.length === 0) {
-  //   return (
-  //     <View style={[styles.safeArea, styles.center, { backgroundColor: theme.colors.background }]}>
-  //       <ActivityIndicator size="large" color={theme.colors.primary} />
-  //     </View>
-  //   );
-  // }
+  // 3. NEW: Logic to add Ad-Hoc Exercise
+  const handleAddAdHoc = (exercise: any) => {
+    const newExerciseIndex = exercises.length;
+    const newExercise = {
+        uniqueId: `adhoc-${exercise.id}-${Date.now()}`, // Unique UI Key
+        exercise_id: exercise.id,
+        name: exercise.name,
+        history: 'Ad-Hoc', // Visual indicator
+        sets: [
+            {
+                id: `adhoc-set-${Date.now()}`,
+                setNumber: 1,
+                weight: 0,
+                reps: 0,
+                isCompleted: false
+            }
+        ]
+    };
+
+    setExercises(prev => [...prev, newExercise]);
+    setAddModalVisible(false);
+  };
+  
 
   // 1. Only show spinner if React Query is actually loading
   if (isLoading) {
@@ -232,8 +254,9 @@ export default function ActiveWorkoutScreen() {
         data={exercises}
         // FIX: Use the uniqueId we generated
         keyExtractor={item => item.uniqueId}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         renderItem={({ item: exercise }) => (
+          
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
             <View style={styles.cardHeader}>
               <Text style={[styles.exerciseName, { color: theme.colors.text }]}>{exercise.name}</Text>
@@ -260,7 +283,14 @@ export default function ActiveWorkoutScreen() {
             </TouchableOpacity>
           </View>
         )}
+        
       />
+   {/* FAB - Add exercise Button */}
+      <FAB
+        onPress={() => setAddModalVisible(true)} 
+        style={{ bottom: 100 }} 
+      />
+
 
       <View style={[styles.footer, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
@@ -276,7 +306,30 @@ export default function ActiveWorkoutScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+         {/* 6. NEW: Simple Modal Picker */}
+      <Modal visible={isAddModalVisible} animationType="slide">
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Add Exercise</Text>
+                <TouchableOpacity onPress={() => setAddModalVisible(false)}>
+                    <Text style={{ color: theme.colors.primary, fontSize: 16 }}>Close</Text>
+                </TouchableOpacity>
+            </View>
+            <FlatList 
+                data={allExercises}
+                keyExtractor={item => item.id}
+                renderItem={({ item }) => (
+                    <TouchableOpacity 
+                        style={[styles.pickerItem, { borderBottomColor: theme.colors.border }]}
+                        onPress={() => handleAddAdHoc(item)}
+                    >
+                        <Text style={{ fontSize: 16, color: theme.colors.text }}>{item.name}</Text>
+                    </TouchableOpacity>
+                )}
+            />
+        </SafeAreaView>
+      </Modal>
+      </SafeAreaView>
   );
 }
 
@@ -296,5 +349,31 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0', // You might want to use theme.colors.border here
     marginTop: 4
+  },
+    // New Styles
+  adHocFab: {
+      position: 'absolute',
+      bottom: 90, // Sit ABOVE the Finish Button (which is usually ~20-30px from bottom + height)
+      right: 20,
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      justifyContent: 'center',
+      alignItems: 'center',
+      elevation: 5,
+      zIndex: 100,
+  },
+  modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderColor: '#eee'
+  },
+  modalTitle: { fontSize: 20, fontWeight: 'bold' },
+  pickerItem: {
+      padding: 16,
+      borderBottomWidth: 1,
   }
 });
