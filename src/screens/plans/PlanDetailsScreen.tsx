@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { getPlanDetails, createRoutine } from '../../api/plans';
 import { Container } from '../../components/common/Container';
+import { SwipeWrapper } from '../../components/common/SwipeWrapper'; // <--- Import
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -71,6 +72,10 @@ export default function PlanDetailsScreen() {
   };
 
   return (
+        <SwipeWrapper 
+      onSwipeLeft={() => changeWeek('next')} 
+      onSwipeRight={() => changeWeek('prev')}
+    >
     <Container isScrollable={true}>
       {/* Header */}
       <View style={styles.headerRow}>
@@ -187,6 +192,7 @@ export default function PlanDetailsScreen() {
         </View>
       </Modal>
     </Container>
+    </SwipeWrapper>
   );
 }
 
