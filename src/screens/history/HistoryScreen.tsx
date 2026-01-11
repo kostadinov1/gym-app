@@ -1,22 +1,30 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import { useQuery } from '@tanstack/react-query';
-import { useTheme } from '../theme';
-import { getHistory } from '../api/history';
+import { useTheme } from '../../theme';
+import { getHistory } from '../../api/history';
+import { useNavigation } from '@react-navigation/native'; // Add import
+
 
 export default function HistoryScreen() {
   const theme = useTheme();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-
+  const navigation = useNavigation<any>();
   // 1. Calculate Date Range (Simplification for V1)
-  const startDate = '2025-01-01T00:00:00Z'; 
-  const endDate = '2025-12-31T23:59:59Z';
+  // --- FIX START ---
+  // Get the current year dynamically (e.g., 2026)
+  const currentYear = new Date().getFullYear();
+
+  // Fetch a wider range (Previous Year -> Next Year) to handle edge cases
+  const startDate = `${currentYear - 1}-01-01T00:00:00Z`;
+  const endDate = `${currentYear + 1}-12-31T23:59:59Z`;
+  // --- FIX END ---
 
   // 2. Fetch Data
   const { data, isLoading } = useQuery({
-    queryKey: ['history'], 
+    queryKey: ['history'],
     queryFn: () => getHistory(startDate, endDate),
   });
 
@@ -24,7 +32,7 @@ export default function HistoryScreen() {
   const markedDates = useMemo(() => {
     if (!data) return {};
     const marks: any = {};
-    
+
     data.forEach(session => {
       const dateKey = session.date.split('T')[0];
       marks[dateKey] = {
@@ -40,7 +48,7 @@ export default function HistoryScreen() {
       selectedColor: theme.colors.primary,
       disableTouchEvent: true
     };
-    
+
     return marks;
   }, [data, selectedDate, theme]); // Re-calculate when theme changes
 
@@ -56,15 +64,15 @@ export default function HistoryScreen() {
 
       <Calendar
         // FIX 1: Force re-render when theme changes
-        key={theme.mode} 
-        
+        key={theme.mode}
+
         current={selectedDate}
         onDayPress={(day: any) => setSelectedDate(day.dateString)}
         markedDates={markedDates}
-        
+
         // FIX 2: Stop the size jumping (Always show 6 rows)
-        hideExtraDays={false} 
-        
+        hideExtraDays={false}
+
         // Theme Configuration
         theme={{
           calendarBackground: theme.colors.card,
@@ -80,17 +88,17 @@ export default function HistoryScreen() {
           monthTextColor: theme.colors.text,
           indicatorColor: theme.colors.primary,
         }}
-        
+
         // Optional: Style the container for shadows/borders
         style={{
-            borderRadius: 12,
-            marginHorizontal: 16,
-            elevation: 2,
-            shadowColor: '#000',
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            shadowOffset: { width: 0, height: 2 },
-            overflow: 'hidden' // Ensures background color clips corners
+          borderRadius: 12,
+          marginHorizontal: 16,
+          elevation: 2,
+          shadowColor: '#000',
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          shadowOffset: { width: 0, height: 2 },
+          overflow: 'hidden' // Ensures background color clips corners
         }}
       />
 
@@ -98,7 +106,7 @@ export default function HistoryScreen() {
         <Text style={[styles.subHeader, { color: theme.colors.textSecondary }]}>
           Workouts on {selectedDate}
         </Text>
-        
+
         {isLoading ? (
           <ActivityIndicator color={theme.colors.primary} />
         ) : (
@@ -109,16 +117,22 @@ export default function HistoryScreen() {
               <Text style={{ color: theme.colors.textSecondary, marginTop: 20 }}>No workouts logged.</Text>
             }
             renderItem={({ item }) => (
-              <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
-                <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
-                  {item.routine_name}
-                </Text>
-                <Text style={{ color: theme.colors.textSecondary }}>
-                   {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                   {' • '}
-                   {item.status}
-                </Text>
-              </View>
+              <TouchableOpacity
+                // Add Navigation
+                onPress={() => navigation.navigate('HistoryDetails', { sessionId: item.id })}
+                style={[styles.card, { backgroundColor: theme.colors.card }]}
+              >
+                <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+                  <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+                    {item.routine_name}
+                  </Text>
+                  <Text style={{ color: theme.colors.textSecondary }}>
+                    {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {' • '}
+                    {item.status}
+                  </Text>
+                </View>
+              </TouchableOpacity>
             )}
           />
         )}

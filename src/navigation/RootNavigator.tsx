@@ -10,23 +10,25 @@ import { View, Text } from 'react-native';
 import ActiveWorkoutScreen from '../screens/ActiveWorkoutScreen';
 import ExerciseListScreen from '../screens/ExerciseListScreen';
 import HomeScreen from '../screens/HomeScreen';
-import HistoryScreen from '../screens/HistoryScreen';
+import HistoryScreen from '../screens/history/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import PlansScreen from '../screens/PlansScreen';
 import CreatePlanScreen from '../screens/plans/CreatePlanScreen';
 import PlanDetailsScreen from '../screens/plans/PlanDetailsScreen';
 import RoutineEditorScreen from '../screens/plans/RoutineEditorScreen';
+import HistoryDetailsScreen from '../screens/history/HistoryDetailsScreen';
+
 
 const WorkoutStack = createNativeStackNavigator();
 
 // 1. Create a Stack for the Workout Tab
 function WorkoutStackNavigator() {
-  return (
-    <WorkoutStack.Navigator screenOptions={{ headerShown: false }}>
-      <WorkoutStack.Screen name="Home" component={HomeScreen} />
-      <WorkoutStack.Screen name="ActiveWorkout" component={ActiveWorkoutScreen} />
-    </WorkoutStack.Navigator>
-  );
+    return (
+        <WorkoutStack.Navigator screenOptions={{ headerShown: false }}>
+            <WorkoutStack.Screen name="Home" component={HomeScreen} />
+            <WorkoutStack.Screen name="ActiveWorkout" component={ActiveWorkoutScreen} />
+        </WorkoutStack.Navigator>
+    );
 }
 
 const Tab = createBottomTabNavigator();
@@ -35,14 +37,26 @@ const Tab = createBottomTabNavigator();
 const PlansStack = createNativeStackNavigator();
 
 function PlansStackNavigator() {
-  return (
-    <PlansStack.Navigator screenOptions={{ headerShown: false }}>
-      <PlansStack.Screen name="PlansList" component={PlansScreen} />
-      <PlansStack.Screen name="CreatePlan" component={CreatePlanScreen} />
-      <PlansStack.Screen name="PlanDetails" component={PlanDetailsScreen} />
-      <PlansStack.Screen name="RoutineEditor" component={RoutineEditorScreen} />
-    </PlansStack.Navigator>
-  );
+    return (
+        <PlansStack.Navigator screenOptions={{ headerShown: false }}>
+            <PlansStack.Screen name="PlansList" component={PlansScreen} />
+            <PlansStack.Screen name="CreatePlan" component={CreatePlanScreen} />
+            <PlansStack.Screen name="PlanDetails" component={PlanDetailsScreen} />
+            <PlansStack.Screen name="RoutineEditor" component={RoutineEditorScreen} />
+        </PlansStack.Navigator>
+    );
+}
+
+
+const HistoryStack = createNativeStackNavigator();
+
+function HistoryStackNavigator() {
+    return (
+        <HistoryStack.Navigator screenOptions={{ headerShown: false }}>
+            <HistoryStack.Screen name="HistoryList" component={HistoryScreen} />
+            <HistoryStack.Screen name="HistoryDetails" component={HistoryDetailsScreen} />
+        </HistoryStack.Navigator>
+    );
 }
 
 export default function RootNavigator() {
@@ -81,11 +95,15 @@ export default function RootNavigator() {
                     },
                 })}
             >
+
+
                 <Tab.Screen name="Workout" component={WorkoutStackNavigator} />
-                <Tab.Screen name="History" component={HistoryScreen} />
+                <Tab.Screen name="History" component={HistoryStackNavigator}/>
+                {/* <Tab.Screen name="History" component={HistoryScreen} /> */}
                 <Tab.Screen name="Plans" component={PlansStackNavigator} />
                 <Tab.Screen name="Exercises" component={ExerciseListScreen} />
                 <Tab.Screen name="Profile" component={ProfileScreen} />
+
             </Tab.Navigator>
         </NavigationContainer>
     );
