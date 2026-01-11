@@ -50,6 +50,15 @@ export interface AddExerciseDto {
     increment_value: number;
 }
 
+export interface RoutineDetail {
+    id: string;
+    name: string;
+    day_of_week: number;
+    routine_type: 'workout' | 'rest'; // <--- ADD THIS
+    exercises: RoutineExercise[];
+}
+
+
 
 // Fetch all active plans
 export const getPlans = () => {
@@ -79,10 +88,15 @@ export const getPlanDetails = (id: string) => {
 };
 
 // We also need a way to create a routine (assign a day)
-export const createRoutine = (planId: string, name: string, dayOfWeek: number) => {
+// Update create function to accept type
+export const createRoutine = (planId: string, name: string, dayOfWeek: number, type: 'workout' | 'rest' = 'workout') => {
     return client(`/plans/${planId}/routines`, {
         method: 'POST',
-        body: JSON.stringify({ name, day_of_week: dayOfWeek })
+        body: JSON.stringify({ 
+            name, 
+            day_of_week: dayOfWeek,
+            routine_type: type // <--- SEND IT
+        })
     });
 };
 
@@ -92,3 +106,5 @@ export const addExerciseTarget = (routineId: string, data: AddExerciseDto) => {
         body: JSON.stringify(data)
     });
 };
+
+
