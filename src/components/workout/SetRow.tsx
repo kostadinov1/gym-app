@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Import Icons
 import { useTheme } from '../../theme';
 import { Stepper } from './Stepper';
 
@@ -10,10 +11,11 @@ interface SetRowProps {
   isCompleted: boolean;
   onUpdate: (field: 'weight' | 'reps', value: number) => void;
   onToggleComplete: () => void;
+  onDelete?: () => void; // <--- New Optional Prop
 }
 
 export const SetRow = ({ 
-  setNumber, weight, reps, isCompleted, onUpdate, onToggleComplete 
+  setNumber, weight, reps, isCompleted, onUpdate, onToggleComplete, onDelete 
 }: SetRowProps) => {
   const theme = useTheme();
 
@@ -37,9 +39,8 @@ export const SetRow = ({
         </View>
       </TouchableOpacity>
 
-      {/* Controls Container */}
+      {/* Controls */}
       <View style={styles.controls}>
-        {/* Weight Stepper */}
         <View style={{ flex: 1.2 }}> 
             <Stepper 
               value={weight} 
@@ -48,11 +49,7 @@ export const SetRow = ({
               onChange={(val) => onUpdate('weight', val)} 
             />
         </View>
-
-        {/* Spacer */}
         <View style={{ width: 8 }} />
-
-        {/* Reps Stepper */}
         <View style={{ flex: 1 }}>
             <Stepper 
               value={reps} 
@@ -61,6 +58,13 @@ export const SetRow = ({
               onChange={(val) => onUpdate('reps', val)} 
             />
         </View>
+        
+        {/* NEW: Delete Button */}
+        {onDelete && (
+            <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
+                <Ionicons name="trash-outline" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -70,18 +74,18 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8, // Reduced padding
+    paddingVertical: 8,
     borderRadius: 8,
     marginBottom: 4,
   },
   labelContainer: {
-    width: 32, // Reduced
+    width: 32,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
   },
   badge: {
-    width: 24, // Smaller Badge
+    width: 24,
     height: 24,
     borderRadius: 12,
     justifyContent: 'center',
@@ -92,9 +96,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   controls: {
-    flex: 1, // This forces the steppers to stay within screen width
+    flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
+  // New style
+  deleteBtn: {
+      marginLeft: 8,
+      padding: 4
+  }
 });

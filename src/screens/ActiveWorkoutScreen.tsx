@@ -28,10 +28,10 @@ export default function ActiveWorkoutScreen() {
     if (data) {
       const transformed = data.exercises.map((ex: any, index: number) => ({
         // We create a unique local ID using index to prevent duplicates crashing the list
-        uniqueId: `${ex.exercise_id}_${index}`, 
+        uniqueId: `${ex.exercise_id}_${index}`,
         exercise_id: ex.exercise_id, // Keep real ID for saving
         name: ex.name,
-        history: 'No history yet', 
+        history: 'No history yet',
         sets: ex.sets.map((s: any) => ({
           id: `${ex.exercise_id}-${s.set_number}-${index}`, // Unique Set ID
           setNumber: s.set_number,
@@ -49,8 +49,8 @@ export default function ActiveWorkoutScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['history'] });
       // Update routines list to show "Done" badge immediately
-      queryClient.invalidateQueries({ queryKey: ['routines'] }); 
-      
+      queryClient.invalidateQueries({ queryKey: ['routines'] });
+
       Alert.alert("Great Job!", "Workout saved successfully.", [
         { text: "OK", onPress: () => navigation.goBack() }
       ]);
@@ -62,7 +62,7 @@ export default function ActiveWorkoutScreen() {
 
   // 2. Handle Finish (Use real exercise_id)
   const handleFinish = () => {
-    const flatSets = exercises.flatMap(ex => 
+    const flatSets = exercises.flatMap(ex =>
       ex.sets.map((s: any) => ({
         exercise_id: ex.exercise_id, // Send the REAL database ID
         set_number: s.setNumber,
@@ -83,7 +83,7 @@ export default function ActiveWorkoutScreen() {
   };
 
   // 3. Update Functions (Use uniqueId)
-  const updateSet = (uniqueId: string, setId: string, field: 'weight'|'reps', value: number) => {
+  const updateSet = (uniqueId: string, setId: string, field: 'weight' | 'reps', value: number) => {
     setExercises(prev => prev.map(ex => {
       if (ex.uniqueId !== uniqueId) return ex; // Compare unique ID
       return {
@@ -103,7 +103,64 @@ export default function ActiveWorkoutScreen() {
     }));
   };
 
-  if (isLoading || exercises.length === 0) {
+
+  // 1. NEW: Add Set Logic
+  const handleAddSet = (exerciseUniqueId: string) => {
+    setExercises(prev => prev.map(ex => {
+      if (ex.uniqueId !== exerciseUniqueId) return ex;
+
+      const previousSet = ex.sets[ex.sets.length - 1];
+      const newSetNumber = ex.sets.length + 1;
+
+      const newSet = {
+        // Create a temp unique ID
+        id: `temp-${Date.now()}-${Math.random()}`,
+        setNumber: newSetNumber,
+        // Copy previous values or default to 0
+        weight: previousSet ? previousSet.weight : 0,
+        reps: previousSet ? previousSet.reps : 0,
+        isCompleted: false
+      };
+
+      return {
+        ...ex,
+        sets: [...ex.sets, newSet]
+      };
+    }));
+  };
+
+  // 2. NEW: Remove Set Logic (With renumbering)
+  const handleRemoveSet = (exerciseUniqueId: string, setIdToRemove: string) => {
+    setExercises(prev => prev.map(ex => {
+      if (ex.uniqueId !== exerciseUniqueId) return ex;
+
+      // Filter out the deleted set
+      const filteredSets = ex.sets.filter((s: any) => s.id !== setIdToRemove);
+
+      // Re-number remaining sets (1, 2, 3...)
+      const renumberedSets = filteredSets.map((s: any, index: number) => ({
+        ...s,
+        setNumber: index + 1
+      }));
+
+      return {
+        ...ex,
+        sets: renumberedSets
+      };
+    }));
+  };
+
+
+  // if (isLoading || exercises.length === 0) {
+  //   return (
+  //     <View style={[styles.safeArea, styles.center, { backgroundColor: theme.colors.background }]}>
+  //       <ActivityIndicator size="large" color={theme.colors.primary} />
+  //     </View>
+  //   );
+  // }
+
+  // 1. Only show spinner if React Query is actually loading
+  if (isLoading) {
     return (
       <View style={[styles.safeArea, styles.center, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -111,53 +168,113 @@ export default function ActiveWorkoutScreen() {
     );
   }
 
+// 2. If data loaded but we have no exercises
+  if (data && exercises.length === 0) {
+     return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 16 }}>
+                <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{data?.name}</Text>
+        </View>
+        
+        <View style={[styles.center, { padding: 32 }]}>
+            <Text style={{ fontSize: 40, marginBottom: 16 }}>📝</Text>
+            <Text style={{ 
+                color: theme.colors.text, 
+                fontSize: 18, 
+                fontWeight: 'bold', 
+                textAlign: 'center',
+                marginBottom: 8 
+            }}>
+                This routine is empty
+            </Text>
+            <Text style={{ 
+                color: theme.colors.textSecondary, 
+                fontSize: 16, 
+                textAlign: 'center',
+                marginBottom: 32
+            }}>
+                You need to add exercises to this routine before you can start working out.
+            </Text>
+            
+            {/* The Redirect Button */}
+            <TouchableOpacity 
+                style={{ 
+                    backgroundColor: theme.colors.primary, 
+                    paddingHorizontal: 24, 
+                    paddingVertical: 14, 
+                    borderRadius: 12 
+                }}
+                // Navigate to the 'Plans' Tab
+                onPress={() => navigation.navigate('Plans')} 
+            >
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+                    Go to Plans Manager
+                </Text>
+            </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+     );
+  }
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 16 }}>
-           <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
+          <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{data?.name}</Text>
       </View>
 
-      <FlatList 
+      <FlatList
         data={exercises}
         // FIX: Use the uniqueId we generated
-        keyExtractor={item => item.uniqueId} 
+        keyExtractor={item => item.uniqueId}
         contentContainerStyle={{ padding: 16 }}
         renderItem={({ item: exercise }) => (
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
-             <View style={styles.cardHeader}>
+            <View style={styles.cardHeader}>
               <Text style={[styles.exerciseName, { color: theme.colors.text }]}>{exercise.name}</Text>
               <Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>{exercise.history}</Text>
             </View>
-            
+
             {exercise.sets.map((set: any) => (
-              <SetRow 
+              <SetRow
                 key={set.id}
                 {...set}
-                // Pass uniqueId to update functions
                 onUpdate={(field, val) => updateSet(exercise.uniqueId, set.id, field, val)}
                 onToggleComplete={() => toggleComplete(exercise.uniqueId, set.id)}
+                // Pass the delete handler
+                onDelete={() => handleRemoveSet(exercise.uniqueId, set.id)}
               />
             ))}
+
+            {/* NEW: Add Set Button */}
+            <TouchableOpacity
+              style={styles.addSetButton}
+              onPress={() => handleAddSet(exercise.uniqueId)}
+            >
+              <Text style={{ color: theme.colors.primary, fontWeight: '600' }}>+ Add Set</Text>
+            </TouchableOpacity>
           </View>
         )}
       />
-      
-       <View style={[styles.footer, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border }]}>
-           <TouchableOpacity 
-            style={[
-              styles.finishButton, 
-              { backgroundColor: theme.colors.success, opacity: finishMutation.isPending ? 0.7 : 1 }
-            ]}
-            onPress={handleFinish}
-            disabled={finishMutation.isPending}
-         >
-            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>
-              {finishMutation.isPending ? "Saving..." : "Finish Workout"}
-            </Text>
-         </TouchableOpacity>
+
+      <View style={[styles.footer, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border }]}>
+        <TouchableOpacity
+          style={[
+            styles.finishButton,
+            { backgroundColor: theme.colors.success, opacity: finishMutation.isPending ? 0.7 : 1 }
+          ]}
+          onPress={handleFinish}
+          disabled={finishMutation.isPending}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>
+            {finishMutation.isPending ? "Saving..." : "Finish Workout"}
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -172,5 +289,12 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   exerciseName: { fontSize: 18, fontWeight: '700' },
   footer: { padding: 16, borderTopWidth: 1 },
-  finishButton: { padding: 16, borderRadius: 12, alignItems: 'center' }
+  finishButton: { padding: 16, borderRadius: 12, alignItems: 'center' },
+  addSetButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0', // You might want to use theme.colors.border here
+    marginTop: 4
+  }
 });
