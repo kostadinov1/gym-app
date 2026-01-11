@@ -17,6 +17,7 @@ import CreatePlanScreen from '../screens/plans/CreatePlanScreen';
 import PlanDetailsScreen from '../screens/plans/PlanDetailsScreen';
 import RoutineEditorScreen from '../screens/plans/RoutineEditorScreen';
 import HistoryDetailsScreen from '../screens/history/HistoryDetailsScreen';
+import SessionEditorScreen from '../screens/history/SessionEditorScreen';
 
 
 const WorkoutStack = createNativeStackNavigator();
@@ -55,6 +56,7 @@ function HistoryStackNavigator() {
         <HistoryStack.Navigator screenOptions={{ headerShown: false }}>
             <HistoryStack.Screen name="HistoryList" component={HistoryScreen} />
             <HistoryStack.Screen name="HistoryDetails" component={HistoryDetailsScreen} />
+            <HistoryStack.Screen name="SessionEditor" component={SessionEditorScreen} />
         </HistoryStack.Navigator>
     );
 }

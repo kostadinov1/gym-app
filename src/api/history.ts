@@ -1,4 +1,5 @@
 import { client } from './client';
+import { FinishWorkoutDto } from './workouts'; // Reuse the DTO structure
 
 export interface HistorySession {
   id: string;
@@ -14,6 +15,7 @@ export interface UserStats {
 }
 
 export interface SessionSetDetail {
+    exercise_id: string; // <--- ADD THIS
     exercise_name: string;
     set_number: number;
     reps: number;
@@ -31,6 +33,16 @@ export interface SessionDetail {
 }
 
 
+export interface UpdateSessionDto {
+    sets: {
+        exercise_id: string;
+        set_number: number;
+        reps: number;
+        weight: number;
+        is_completed: boolean;
+    }[];
+}
+
 export const getHistory = (startDate: string, endDate: string) => {
   // Query Params: ?start_date=...&end_date=...
   return client<HistorySession[]>(`/history/?start_date=${startDate}&end_date=${endDate}`);
@@ -42,4 +54,11 @@ export const getStats = () => {
 
 export const getSessionDetails = (sessionId: string) => {
     return client<SessionDetail>(`/history/${sessionId}`);
+};
+
+export const updateSession = (sessionId: string, data: UpdateSessionDto) => {
+    return client(`/history/${sessionId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    });
 };

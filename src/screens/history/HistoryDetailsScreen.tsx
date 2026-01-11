@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
@@ -8,7 +8,8 @@ import { Container } from '../../components/common/Container';
 
 export default function HistoryDetailsScreen() {
   const theme = useTheme();
-  const navigation = useNavigation();
+  // FIX 1: Add <any> to suppress the TypeScript error
+  const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { sessionId } = route.params;
 
@@ -25,7 +26,6 @@ export default function HistoryDetailsScreen() {
     );
   }
 
-  // Group sets by Exercise Name for cleaner UI
   const groupedSets = data.sets.reduce((acc: any, set) => {
     if (!acc[set.exercise_name]) {
         acc[set.exercise_name] = [];
@@ -39,13 +39,25 @@ export default function HistoryDetailsScreen() {
   return (
     <Container isScrollable={true}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginBottom: 8 }}>
+        {/* Back Button */}
+        <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.colors.text }]}>{data.routine_name}</Text>
-        <Text style={{ color: theme.colors.textSecondary }}>
-            {new Date(data.start_time).toLocaleDateString()} • {data.duration_minutes} min
-        </Text>
+        
+        {/* FIX 2: Wrapped text in a View so it stacks vertically in the center */}
+        <View style={{ flex: 1, paddingHorizontal: 16 }}>
+            <Text style={[styles.title, { color: theme.colors.text }]}>{data.routine_name}</Text>
+            <Text style={{ color: theme.colors.textSecondary }}>
+                {new Date(data.start_time).toLocaleDateString()} • {data.duration_minutes} min
+            </Text>
+        </View>
+
+        {/* Edit Button */}
+        <TouchableOpacity 
+            onPress={() => navigation.navigate('SessionEditor', { sessionId })}
+        >
+            <Text style={{ fontSize: 16, color: theme.colors.primary, fontWeight: 'bold' }}>Edit</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={{ padding: 16 }}>
@@ -71,8 +83,15 @@ export default function HistoryDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { padding: 16, borderBottomWidth: 1, borderColor: '#eee' },
-  title: { fontSize: 24, fontWeight: 'bold' },
+  header: { 
+      padding: 16, 
+      borderBottomWidth: 1, 
+      borderColor: '#eee',
+      flexDirection: 'row', 
+      alignItems: 'center',
+      justifyContent: 'space-between'
+  },
+  title: { fontSize: 20, fontWeight: 'bold' }, // Slightly smaller to fit better
   card: { padding: 16, borderRadius: 12, marginBottom: 12 },
   exerciseTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
   setRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1 },
