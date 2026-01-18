@@ -4,9 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
-import { getPlanDetails, createRoutine } from '../../api/plans';
+import { getPlanDetails, createRoutine, updatePlan } from '../../api/plans';
 import { Container } from '../../components/common/Container';
 import { SwipeWrapper } from '../../components/common/SwipeWrapper'; // <--- Import
+import { Calendar } from 'react-native-calendars';
+import Toast from 'react-native-toast-message';
+import { Ionicons } from '@expo/vector-icons';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -16,6 +19,10 @@ export default function PlanDetailsScreen() {
     const navigation = useNavigation<any>();
     const { planId } = route.params;
     const queryClient = useQueryClient();
+
+    const [isEditModalVisible, setEditModalVisible] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [editDate, setEditDate] = useState('');
 
     const [isModalVisible, setModalVisible] = useState(false);
     const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
@@ -30,15 +37,51 @@ export default function PlanDetailsScreen() {
     });
 
     const createMutation = useMutation({
-        // Pass the type
         mutationFn: () => createRoutine(planId, routineName, selectedDayIndex!, routineType),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['planDetails', planId] });
             setModalVisible(false);
             setRoutineName('');
-            setRoutineType('workout'); // Reset
+            setRoutineType('workout');
+
+            // --- NEW: Success Message ---
+            Toast.show({
+                type: 'success',
+                text1: 'Routine Added',
+                text2: `${routineName} added to the plan.`
+            });
         },
-        onError: (err) => Alert.alert("Error", (err as Error).message)
+        onError: (err) => {
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: (err as Error).message
+            });
+        }
+    });
+
+    const updatePlanMutation = useMutation({
+        mutationFn: () => updatePlan(planId, { name: editName, start_date: editDate }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['planDetails', planId] });
+            queryClient.invalidateQueries({ queryKey: ['routines'] });
+            setEditModalVisible(false);
+
+            // --- NEW: Success Message ---
+            Toast.show({
+                type: 'success',
+                text1: 'Plan Updated',
+                text2: 'Start date and details saved.'
+            });
+        },
+        onError: (err) => {
+            // Use Toast instead of Alert
+            Toast.show({
+                type: 'error',
+                text1: 'Update Failed',
+                text2: (err as Error).message
+            });
+        }
     });
 
     const handleAddPress = (dayIndex: number) => {
@@ -73,6 +116,16 @@ export default function PlanDetailsScreen() {
         return data.routines.find(r => r.day_of_week === dayIndex);
     };
 
+
+
+    const openEditModal = () => {
+        if (data) {
+            setEditName(data.name);
+            setEditDate(data.start_date.split('T')[0]);
+            setEditModalVisible(true);
+        }
+    };
+
     return (
         <SwipeWrapper
             onSwipeLeft={() => changeWeek('next')}
@@ -88,7 +141,11 @@ export default function PlanDetailsScreen() {
                         <Text style={[styles.header, { color: theme.colors.text }]}>{data.name}</Text>
                         <Text style={{ color: theme.colors.textSecondary }}>{data.duration_weeks} Weeks Plan</Text>
                     </View>
-                    <View style={{ width: 24 }} />
+
+                    {/* --- NEW: Settings Button --- */}
+                    <TouchableOpacity onPress={openEditModal}>
+                        <Text style={{ fontSize: 24 }}>⚙️</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* NEW: Week Selector */}
@@ -119,45 +176,51 @@ export default function PlanDetailsScreen() {
                                 </View>
 
                                 <View style={{ flex: 1 }}>
-
                                     {routine ? (
                                         <TouchableOpacity
                                             style={[
                                                 styles.routineCard,
-                                                { backgroundColor: isRest ? theme.colors.card : theme.colors.inputBackground },
-                                                isRest && { borderLeftWidth: 4, borderLeftColor: theme.colors.success }
+                                                // If Rest: Use successBackground (Light Green), else InputBackground (Light Gray)
+                                                { backgroundColor: isRest ? theme.colors.successBackground : theme.colors.inputBackground },
+                                                // Remove the heavy border, make it subtle
+                                                isRest && { borderColor: theme.colors.success, borderWidth: 1 }
                                             ]}
                                             disabled={isRest}
-                                            // CORRECT WAY: Pass specific variables, not 'e'
                                             onPress={() => navigation.navigate('RoutineEditor', {
                                                 routineId: routine.id,
                                                 routineName: routine.name,
                                                 planId: planId
                                             })}
                                         >
-                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                                                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.colors.text }}>{routine.name}</Text>
-                                                {/* Hide Edit button for Rest */}
+                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: isRest ? 0 : 8 }}>
+
+                                                {/* TITLE SECTION */}
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                                    {isRest && <Ionicons name="battery-charging" size={18} color={theme.colors.success} />}
+                                                    <Text style={{ fontSize: 16, fontWeight: '600', color: theme.colors.text }}>
+                                                        {routine.name}
+                                                    </Text>
+                                                </View>
+
+                                                {/* EDIT LABEL (Hide on Rest) */}
                                                 {!isRest && <Text style={{ fontSize: 12, color: theme.colors.primary }}>Edit</Text>}
                                             </View>
 
-                                            {/* Custom Text for Rest */}
+                                            {/* BODY SECTION */}
                                             {isRest ? (
-                                                <Text style={{ color: theme.colors.textSecondary, fontStyle: 'italic' }}>
-                                                    Recovery & Growth 🌱
-                                                </Text>
+                                                <View style={{ marginTop: 4 }}>
+                                                    <Text style={{ color: theme.colors.success, fontSize: 13, fontStyle: 'italic' }}>
+                                                        Active Recovery • Mobility • Sleep
+                                                    </Text>
+                                                </View>
                                             ) : (
-                                                // ... existing exercise loop ...
                                                 <>
                                                     {routine.exercises.length === 0 && (
                                                         <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>No exercises yet.</Text>
                                                     )}
                                                     {routine.exercises.map(ex => {
-                                                        // --- THE PROGRESSION ENGINE ---
+                                                        // ... (Keep your existing progression math here) ...
                                                         const weeksPassed = currentWeek - 1;
-
-                                                        // Calculate dynamic values
-                                                        // Note: We use || 0 just in case data is missing
                                                         const currentWeight = ex.target_weight + ((ex.increment_weight || 0) * weeksPassed);
                                                         const currentReps = ex.target_reps + ((ex.increment_reps || 0) * weeksPassed);
 
@@ -166,11 +229,6 @@ export default function PlanDetailsScreen() {
                                                                 <Text style={{ color: theme.colors.text }}>
                                                                     {ex.target_sets} x {currentReps} @ {currentWeight}kg
                                                                 </Text>
-                                                                {weeksPassed > 0 && (
-                                                                    <Text style={{ fontSize: 10, color: theme.colors.success }}>
-                                                                        (Base: {ex.target_weight}kg, {ex.target_reps} reps)
-                                                                    </Text>
-                                                                )}
                                                             </View>
                                                         );
                                                     })}
@@ -244,6 +302,48 @@ export default function PlanDetailsScreen() {
                         </View>
                     </View>
                 </Modal>
+
+                {/* --- NEW: Edit Plan Modal --- */}
+                <Modal visible={isEditModalVisible} animationType="slide" transparent>
+                    <View style={styles.modalOverlay}>
+                        <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+                            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Edit Plan</Text>
+
+                            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Plan Name</Text>
+                            <TextInput
+                                style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+                                value={editName}
+                                onChangeText={setEditName}
+                            />
+
+                            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Start Date</Text>
+                            <Calendar
+                                current={editDate}
+                                onDayPress={(day: any) => setEditDate(day.dateString)}
+                                markedDates={{
+                                    [editDate]: { selected: true, selectedColor: theme.colors.primary }
+                                }}
+                                theme={{
+                                    calendarBackground: theme.colors.card,
+                                    dayTextColor: theme.colors.text,
+                                    monthTextColor: theme.colors.text,
+                                    arrowColor: theme.colors.primary,
+                                }}
+                                style={{ borderRadius: 8, marginBottom: 16, height: 320 }}
+                            />
+
+                            <View style={styles.modalButtons}>
+                                <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                                    <Text style={{ color: theme.colors.textSecondary, fontSize: 16 }}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => updatePlanMutation.mutate()}>
+                                    <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 }}>Save Changes</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
+
             </Container>
         </SwipeWrapper>
     );
@@ -268,6 +368,12 @@ const styles = StyleSheet.create({
     dayLabel: { width: 50, paddingTop: 12, alignItems: 'center', marginRight: 12 },
     addButton: { padding: 12, borderStyle: 'dashed', borderWidth: 1, borderColor: '#ccc', borderRadius: 8, alignItems: 'center' },
     routineCard: { padding: 12, borderRadius: 8 },
+    label: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 8,
+        marginTop: 8
+    },
     // Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 32 },
     modalContent: { padding: 24, borderRadius: 16 },

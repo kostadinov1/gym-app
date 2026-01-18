@@ -62,6 +62,13 @@ export interface RoutineDetail {
     exercises: RoutineExercise[];
 }
 
+export interface UpdatePlanDto {
+    name?: string;
+    description?: string;
+    start_date?: string;
+    is_active?: boolean;
+}
+
 
 
 // Fetch all active plans
@@ -111,4 +118,12 @@ export const addExerciseTarget = (routineId: string, data: AddExerciseDto) => {
     });
 };
 
+
+
+export const updatePlan = (id: string, data: UpdatePlanDto) => {
+    return client<Plan>(`/plans/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+    });
+};
 
