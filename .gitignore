@@ -39,9 +39,9 @@ yarn-error.*
 /ios
 /android
 
+
+# App Versions
 /versions
-
-
 
 
 # Native Builds (We are using Prebuild, so we ignore these)
@@ -62,3 +62,7 @@ ios/
 .idea
 *.jks
 *.keystore
+
+# Context bundler script
+context_bundler.py
+project_context.txt
