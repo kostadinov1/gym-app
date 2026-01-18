@@ -11,6 +11,7 @@ import { ThemeProvider } from './src/context/ThemeContext';
 
 const queryClient = new QueryClient();
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Toast from 'react-native-toast-message';
 
 // We separate this component to access useAuth context
 const NavigationWrapper = () => {
@@ -38,6 +39,7 @@ export default function App() {
               <QueryClientProvider client={queryClient}>
                   <StatusBar barStyle="default" />
                   <NavigationWrapper />
+                  <Toast />
               </QueryClientProvider>
           </ThemeProvider>
         </AuthProvider>

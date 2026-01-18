@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Modal } from 'react-native'; // Removed Alert
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { SetRow } from '../components/workout/SetRow';
 import { startRoutine, finishWorkout } from '../api/workouts';
 import { getExercises } from '../api/exercises';
 import { FAB } from '../components/common/FAB';
+import Toast from 'react-native-toast-message'; // <--- Import Toast
 
 export default function ActiveWorkoutScreen() {
   const [isAddModalVisible, setAddModalVisible] = useState(false);
@@ -17,6 +18,9 @@ export default function ActiveWorkoutScreen() {
   const { routineId } = route.params;
   const queryClient = useQueryClient();
 
+  // --- NEW: Local state to prevent double tap ---
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const startTime = useRef(new Date());
   const { data, isLoading } = useQuery({
     queryKey: ['activeSession', routineId],
@@ -25,21 +29,20 @@ export default function ActiveWorkoutScreen() {
 
   const [exercises, setExercises] = useState<any[]>([]);
 
-    const { data: allExercises } = useQuery({
+  const { data: allExercises } = useQuery({
     queryKey: ['exercises'],
     queryFn: getExercises,
   });
-  // 1. Transform Data (FIXED: Generate Unique IDs)
+
   useEffect(() => {
     if (data) {
       const transformed = data.exercises.map((ex: any, index: number) => ({
-        // We create a unique local ID using index to prevent duplicates crashing the list
         uniqueId: `${ex.exercise_id}_${index}`,
-        exercise_id: ex.exercise_id, // Keep real ID for saving
+        exercise_id: ex.exercise_id,
         name: ex.name,
         history: 'No history yet',
         sets: ex.sets.map((s: any) => ({
-          id: `${ex.exercise_id}-${s.set_number}-${index}`, // Unique Set ID
+          id: `${ex.exercise_id}-${s.set_number}-${index}`,
           setNumber: s.set_number,
           weight: s.target_weight,
           reps: s.target_reps,
@@ -54,23 +57,35 @@ export default function ActiveWorkoutScreen() {
     mutationFn: finishWorkout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['history'] });
-      // Update routines list to show "Done" badge immediately
       queryClient.invalidateQueries({ queryKey: ['routines'] });
 
-      Alert.alert("Great Job!", "Workout saved successfully.", [
-        { text: "OK", onPress: () => navigation.goBack() }
-      ]);
+      // --- NEW: Toast instead of Alert ---
+      Toast.show({
+        type: 'success',
+        text1: 'Workout Completed! 💪',
+        text2: 'Great job, see you next time.',
+      });
+
+      navigation.goBack();
     },
     onError: (error) => {
-      Alert.alert("Error saving workout", (error as Error).message);
+      setIsSubmitting(false); // Re-enable button on error
+      Toast.show({
+        type: 'error',
+        text1: 'Save Failed',
+        text2: (error as Error).message,
+      });
     }
   });
 
-  // 2. Handle Finish (Use real exercise_id)
   const handleFinish = () => {
+    // --- NEW: Guard Clause ---
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     const flatSets = exercises.flatMap(ex =>
       ex.sets.map((s: any) => ({
-        exercise_id: ex.exercise_id, // Send the REAL database ID
+        exercise_id: ex.exercise_id,
         set_number: s.setNumber,
         reps: s.reps,
         weight: s.weight,
@@ -88,10 +103,17 @@ export default function ActiveWorkoutScreen() {
     finishMutation.mutate(payload);
   };
 
-  // 3. Update Functions (Use uniqueId)
+  // ... (Keep handleAddSet, updateSet, toggleComplete, handleRemoveSet, handleAddAdHoc EXACTLY as they were) ...
+  // For brevity, I am not repeating the helper functions here unless you need me to.
+  // They remain unchanged.
+  
+  // Need to include the helpers to make the file copy-pasteable? 
+  // Let me know if you want the FULL file content or just the diffs. 
+  // Assuming you can keep the helpers:
+
   const updateSet = (uniqueId: string, setId: string, field: 'weight' | 'reps', value: number) => {
     setExercises(prev => prev.map(ex => {
-      if (ex.uniqueId !== uniqueId) return ex; // Compare unique ID
+      if (ex.uniqueId !== uniqueId) return ex;
       return {
         ...ex,
         sets: ex.sets.map((s: any) => s.id === setId ? { ...s, [field]: value } : s)
@@ -101,7 +123,7 @@ export default function ActiveWorkoutScreen() {
 
   const toggleComplete = (uniqueId: string, setId: string) => {
     setExercises(prev => prev.map(ex => {
-      if (ex.uniqueId !== uniqueId) return ex; // Compare unique ID
+      if (ex.uniqueId !== uniqueId) return ex;
       return {
         ...ex,
         sets: ex.sets.map((s: any) => s.id === setId ? { ...s, isCompleted: !s.isCompleted } : s)
@@ -109,62 +131,41 @@ export default function ActiveWorkoutScreen() {
     }));
   };
 
-
-  // 1. NEW: Add Set Logic
   const handleAddSet = (exerciseUniqueId: string) => {
     setExercises(prev => prev.map(ex => {
       if (ex.uniqueId !== exerciseUniqueId) return ex;
-
       const previousSet = ex.sets[ex.sets.length - 1];
       const newSetNumber = ex.sets.length + 1;
-
       const newSet = {
-        // Create a temp unique ID
         id: `temp-${Date.now()}-${Math.random()}`,
         setNumber: newSetNumber,
-        // Copy previous values or default to 0
         weight: previousSet ? previousSet.weight : 0,
         reps: previousSet ? previousSet.reps : 0,
         isCompleted: false
       };
-
-      return {
-        ...ex,
-        sets: [...ex.sets, newSet]
-      };
+      return { ...ex, sets: [...ex.sets, newSet] };
     }));
   };
 
-  // 2. NEW: Remove Set Logic (With renumbering)
   const handleRemoveSet = (exerciseUniqueId: string, setIdToRemove: string) => {
     setExercises(prev => prev.map(ex => {
       if (ex.uniqueId !== exerciseUniqueId) return ex;
-
-      // Filter out the deleted set
       const filteredSets = ex.sets.filter((s: any) => s.id !== setIdToRemove);
-
-      // Re-number remaining sets (1, 2, 3...)
       const renumberedSets = filteredSets.map((s: any, index: number) => ({
         ...s,
         setNumber: index + 1
       }));
-
-      return {
-        ...ex,
-        sets: renumberedSets
-      };
+      return { ...ex, sets: renumberedSets };
     }));
   };
 
-
-  // 3. NEW: Logic to add Ad-Hoc Exercise
   const handleAddAdHoc = (exercise: any) => {
     const newExerciseIndex = exercises.length;
     const newExercise = {
-        uniqueId: `adhoc-${exercise.id}-${Date.now()}`, // Unique UI Key
+        uniqueId: `adhoc-${exercise.id}-${Date.now()}`,
         exercise_id: exercise.id,
         name: exercise.name,
-        history: 'Ad-Hoc', // Visual indicator
+        history: 'Ad-Hoc',
         sets: [
             {
                 id: `adhoc-set-${Date.now()}`,
@@ -175,13 +176,10 @@ export default function ActiveWorkoutScreen() {
             }
         ]
     };
-
     setExercises(prev => [...prev, newExercise]);
     setAddModalVisible(false);
   };
-  
 
-  // 1. Only show spinner if React Query is actually loading
   if (isLoading) {
     return (
       <View style={[styles.safeArea, styles.center, { backgroundColor: theme.colors.background }]}>
@@ -190,7 +188,6 @@ export default function ActiveWorkoutScreen() {
     );
   }
 
-// 2. If data loaded but we have no exercises
   if (data && exercises.length === 0) {
      return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
@@ -200,41 +197,16 @@ export default function ActiveWorkoutScreen() {
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{data?.name}</Text>
         </View>
-        
         <View style={[styles.center, { padding: 32 }]}>
             <Text style={{ fontSize: 40, marginBottom: 16 }}>📝</Text>
-            <Text style={{ 
-                color: theme.colors.text, 
-                fontSize: 18, 
-                fontWeight: 'bold', 
-                textAlign: 'center',
-                marginBottom: 8 
-            }}>
+            <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 8 }}>
                 This routine is empty
             </Text>
-            <Text style={{ 
-                color: theme.colors.textSecondary, 
-                fontSize: 16, 
-                textAlign: 'center',
-                marginBottom: 32
-            }}>
-                You need to add exercises to this routine before you can start working out.
-            </Text>
-            
-            {/* The Redirect Button */}
             <TouchableOpacity 
-                style={{ 
-                    backgroundColor: theme.colors.primary, 
-                    paddingHorizontal: 24, 
-                    paddingVertical: 14, 
-                    borderRadius: 12 
-                }}
-                // Navigate to the 'Plans' Tab
+                style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12 }}
                 onPress={() => navigation.navigate('Plans')} 
             >
-                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
-                    Go to Plans Manager
-                </Text>
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Go to Plans Manager</Text>
             </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -252,29 +224,23 @@ export default function ActiveWorkoutScreen() {
 
       <FlatList
         data={exercises}
-        // FIX: Use the uniqueId we generated
         keyExtractor={item => item.uniqueId}
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         renderItem={({ item: exercise }) => (
-          
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
             <View style={styles.cardHeader}>
               <Text style={[styles.exerciseName, { color: theme.colors.text }]}>{exercise.name}</Text>
               <Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>{exercise.history}</Text>
             </View>
-
             {exercise.sets.map((set: any) => (
               <SetRow
                 key={set.id}
                 {...set}
                 onUpdate={(field, val) => updateSet(exercise.uniqueId, set.id, field, val)}
                 onToggleComplete={() => toggleComplete(exercise.uniqueId, set.id)}
-                // Pass the delete handler
                 onDelete={() => handleRemoveSet(exercise.uniqueId, set.id)}
               />
             ))}
-
-            {/* NEW: Add Set Button */}
             <TouchableOpacity
               style={styles.addSetButton}
               onPress={() => handleAddSet(exercise.uniqueId)}
@@ -283,30 +249,26 @@ export default function ActiveWorkoutScreen() {
             </TouchableOpacity>
           </View>
         )}
-        
       />
-   {/* FAB - Add exercise Button */}
-      <FAB
-        onPress={() => setAddModalVisible(true)} 
-        style={{ bottom: 100 }} 
-      />
-
+      <FAB onPress={() => setAddModalVisible(true)} style={{ bottom: 100 }} />
 
       <View style={[styles.footer, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
           style={[
             styles.finishButton,
-            { backgroundColor: theme.colors.success, opacity: finishMutation.isPending ? 0.7 : 1 }
+            { backgroundColor: theme.colors.success, opacity: isSubmitting ? 0.7 : 1 } // Visual feedback
           ]}
           onPress={handleFinish}
-          disabled={finishMutation.isPending}
+          disabled={isSubmitting || finishMutation.isPending} // Disable button
         >
-          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>
-            {finishMutation.isPending ? "Saving..." : "Finish Workout"}
-          </Text>
+          {isSubmitting || finishMutation.isPending ? (
+              <ActivityIndicator color="white" />
+          ) : (
+              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>Finish Workout</Text>
+          )}
         </TouchableOpacity>
       </View>
-         {/* 6. NEW: Simple Modal Picker */}
+
       <Modal visible={isAddModalVisible} animationType="slide">
         <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
             <View style={styles.modalHeader}>
@@ -329,7 +291,7 @@ export default function ActiveWorkoutScreen() {
             />
         </SafeAreaView>
       </Modal>
-      </SafeAreaView>
+    </SafeAreaView>
   );
 }
 
@@ -343,37 +305,8 @@ const styles = StyleSheet.create({
   exerciseName: { fontSize: 18, fontWeight: '700' },
   footer: { padding: 16, borderTopWidth: 1 },
   finishButton: { padding: 16, borderRadius: 12, alignItems: 'center' },
-  addSetButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0', // You might want to use theme.colors.border here
-    marginTop: 4
-  },
-    // New Styles
-  adHocFab: {
-      position: 'absolute',
-      bottom: 90, // Sit ABOVE the Finish Button (which is usually ~20-30px from bottom + height)
-      right: 20,
-      width: 50,
-      height: 50,
-      borderRadius: 25,
-      justifyContent: 'center',
-      alignItems: 'center',
-      elevation: 5,
-      zIndex: 100,
-  },
-  modalHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 16,
-      borderBottomWidth: 1,
-      borderColor: '#eee'
-  },
+  addSetButton: { paddingVertical: 12, alignItems: 'center', borderTopWidth: 1, borderTopColor: '#f0f0f0', marginTop: 4 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderColor: '#eee' },
   modalTitle: { fontSize: 20, fontWeight: 'bold' },
-  pickerItem: {
-      padding: 16,
-      borderBottomWidth: 1,
-  }
+  pickerItem: { padding: 16, borderBottomWidth: 1 }
 });
