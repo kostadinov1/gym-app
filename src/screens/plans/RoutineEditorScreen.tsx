@@ -31,6 +31,9 @@ export default function RoutineEditorScreen() {
   });
 
   const currentRoutine = planData?.routines.find(r => r.id === routineId);
+  // Check if it is rest
+  const isRest = currentRoutine?.routine_type === 'rest';
+
   const existingExercises = currentRoutine?.exercises || [];
 
   const { data: allExercises, isLoading: loadingEx } = useQuery({
@@ -147,26 +150,34 @@ export default function RoutineEditorScreen() {
                       </View>
                   </View>
 
-                   {/* Row 2: Weight & Weight Increment */}
+                                    {/* Row 2: Weight & Weight Increment */}
                    <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
                       <View style={{ flex: 1 }}>
                           <Text style={{ color: theme.colors.textSecondary }}>Base Weight (kg)</Text>
                           <TextInput style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]} value={weight} onChangeText={setWeight} keyboardType="numeric" />
                       </View>
+                      
+                      {/* --- CONDITIONAL RENDER --- */}
                       <View style={{ flex: 1 }}>
-                          <Text style={{ color: theme.colors.textSecondary }}>+Kg / Week</Text>
-                          <TextInput style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]} value={incWeight} onChangeText={setIncWeight} keyboardType="numeric" />
+                          {!isRest && (
+                              <>
+                                <Text style={{ color: theme.colors.textSecondary }}>+Kg / Week</Text>
+                                <TextInput style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]} value={incWeight} onChangeText={setIncWeight} keyboardType="numeric" />
+                              </>
+                          )}
                       </View>
                   </View>
 
                    {/* Row 3: Rep Increment */}
-                   <View style={{ flexDirection: 'row', gap: 10 }}>
-                      <View style={{ flex: 1 }}>
-                          <Text style={{ color: theme.colors.textSecondary }}>+Reps / Week</Text>
-                          <TextInput style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]} value={incReps} onChangeText={setIncReps} keyboardType="numeric" />
+                   {!isRest && (
+                       <View style={{ flexDirection: 'row', gap: 10 }}>
+                          <View style={{ flex: 1 }}>
+                              <Text style={{ color: theme.colors.textSecondary }}>+Reps / Week</Text>
+                              <TextInput style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]} value={incReps} onChangeText={setIncReps} keyboardType="numeric" />
+                          </View>
+                          <View style={{ flex: 1 }} /> 
                       </View>
-                      <View style={{ flex: 1 }} /> 
-                  </View>
+                   )}
 
                   <TouchableOpacity 
                     style={[styles.bigButton, { backgroundColor: theme.colors.primary, marginTop: 20 }]}

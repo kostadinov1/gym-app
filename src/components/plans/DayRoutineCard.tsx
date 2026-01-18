@@ -56,8 +56,10 @@ export const DayRoutineCard = ({ dayName, routine, currentWeek, onPress, onAddPr
                   <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>No exercises yet.</Text>
                 )}
                 {routine.exercises.map((ex: any) => {
-                  // --- PROGRESSION MATH MOVED HERE ---
-                  const weeksPassed = currentWeek - 1;
+                  // --- FIX: REST DAYS DO NOT PROGRESS ---
+                  // If it's a rest day, we ignore the week swipe (effectively sticking to Week 1 values)
+                  const weeksPassed = isRest ? 0 : (currentWeek - 1);
+                  
                   const currentWeight = ex.target_weight + ((ex.increment_weight || 0) * weeksPassed);
                   const currentReps = ex.target_reps + ((ex.increment_reps || 0) * weeksPassed);
 
