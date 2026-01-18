@@ -121,20 +121,20 @@ export default function PlanDetailsScreen() {
                                 <View style={{ flex: 1 }}>
 
                                     {routine ? (
-<TouchableOpacity 
-                                        style={[
-                                            styles.routineCard, 
-                                            { backgroundColor: isRest ? theme.colors.card : theme.colors.inputBackground },
-                                            isRest && { borderLeftWidth: 4, borderLeftColor: theme.colors.success }
-                                        ]}
-                                        disabled={isRest}
-                                        // CORRECT WAY: Pass specific variables, not 'e'
-                                        onPress={() => navigation.navigate('RoutineEditor', { 
-                                            routineId: routine.id, 
-                                            routineName: routine.name,
-                                            planId: planId 
-                                        })}
-                                    >
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.routineCard,
+                                                { backgroundColor: isRest ? theme.colors.card : theme.colors.inputBackground },
+                                                isRest && { borderLeftWidth: 4, borderLeftColor: theme.colors.success }
+                                            ]}
+                                            disabled={isRest}
+                                            // CORRECT WAY: Pass specific variables, not 'e'
+                                            onPress={() => navigation.navigate('RoutineEditor', {
+                                                routineId: routine.id,
+                                                routineName: routine.name,
+                                                planId: planId
+                                            })}
+                                        >
                                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                                                 <Text style={{ fontSize: 16, fontWeight: '600', color: theme.colors.text }}>{routine.name}</Text>
                                                 {/* Hide Edit button for Rest */}
@@ -152,7 +152,28 @@ export default function PlanDetailsScreen() {
                                                     {routine.exercises.length === 0 && (
                                                         <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>No exercises yet.</Text>
                                                     )}
-                                                    {routine.exercises.map(ex => { /* ... */ })}
+                                                    {routine.exercises.map(ex => {
+                                                        // --- THE PROGRESSION ENGINE ---
+                                                        const weeksPassed = currentWeek - 1;
+
+                                                        // Calculate dynamic values
+                                                        // Note: We use || 0 just in case data is missing
+                                                        const currentWeight = ex.target_weight + ((ex.increment_weight || 0) * weeksPassed);
+                                                        const currentReps = ex.target_reps + ((ex.increment_reps || 0) * weeksPassed);
+
+                                                        return (
+                                                            <View key={ex.id} style={{ marginTop: 4 }}>
+                                                                <Text style={{ color: theme.colors.text }}>
+                                                                    {ex.target_sets} x {currentReps} @ {currentWeight}kg
+                                                                </Text>
+                                                                {weeksPassed > 0 && (
+                                                                    <Text style={{ fontSize: 10, color: theme.colors.success }}>
+                                                                        (Base: {ex.target_weight}kg, {ex.target_reps} reps)
+                                                                    </Text>
+                                                                )}
+                                                            </View>
+                                                        );
+                                                    })}
                                                 </>
                                             )}
                                         </TouchableOpacity>
@@ -253,12 +274,12 @@ const styles = StyleSheet.create({
     modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
     input: { borderWidth: 1, borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16 },
     modalButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 24 },
-      typeButton: {
-      flex: 1,
-      padding: 12,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: '#ccc',
-      alignItems: 'center'
-  }
+    typeButton: {
+        flex: 1,
+        padding: 12,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        alignItems: 'center'
+    }
 });

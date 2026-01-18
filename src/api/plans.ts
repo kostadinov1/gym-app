@@ -19,13 +19,15 @@ export interface CreatePlanDto {
 
 
 export interface RoutineExercise {
-    id: string; // The ID of the RoutineExercise link
+    id: string; 
     exercise_id: string;
-    name: string; // <--- Added
+    name: string; 
     target_sets: number;
     target_reps: number;
     target_weight: number;
-    increment_value: number;
+    // --- UPDATED: Explicit Increments ---
+    increment_weight: number;
+    increment_reps: number;
 }
 
 export interface RoutineDetail {
@@ -47,7 +49,9 @@ export interface AddExerciseDto {
     target_reps: number;
     target_weight: number;
     rest_seconds: number;
-    increment_value: number;
+    // --- UPDATED: Explicit Increments ---
+    increment_weight: number;
+    increment_reps: number;
 }
 
 export interface RoutineDetail {

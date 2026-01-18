@@ -32,7 +32,7 @@ async function client<T>(endpoint: string, options?: RequestInit): Promise<T> {
     headers,
   };
 
-   try {
+  try {
     const response = await fetch(`${BASE_URL}${endpoint}`, config);
 
     if (!response.ok) {
@@ -46,13 +46,19 @@ async function client<T>(endpoint: string, options?: RequestInit): Promise<T> {
       // Handle other errors
       let errorMessage = 'Something went wrong';
       try {
+        // Only try to read JSON once
         const errorData = await response.json();
         errorMessage = errorData.detail || JSON.stringify(errorData);
       } catch (e) {
-        errorMessage = await response.text();
+        // If JSON fails, it means the body hasn't been fully read successfully as JSON
+        // BUT if response.json() partially read it, response.text() might fail.
+        // However, usually response.json() consumes it.
+        // Better fallback: just use status text if parsing fails to avoid "Already read"
+        errorMessage = `Server Error (${response.status})`;
       }
 
       throw new ApiError(errorMessage, response.status);
+
     }
 
     const data = await response.json();
@@ -60,9 +66,10 @@ async function client<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
   } catch (error) {
     // FIX: Change console.error to console.log so the Red Box doesn't pop up
-    console.log('API Call Failed:', error); 
+    console.log('API Call Failed:', error);
     throw error;
   }
+
 }
 
 export { client };

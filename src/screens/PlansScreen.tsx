@@ -13,10 +13,10 @@ export default function PlansScreen() {
 
     const theme = useTheme();
 
- const { data, isLoading, refetch, error, isError } = useQuery({
-    queryKey: ['plans'],
-    queryFn: getPlans,
-});
+    const { data, isLoading, refetch, error, isError } = useQuery({
+        queryKey: ['plans'],
+        queryFn: getPlans,
+    });
 
     const deleteMutation = useMutation({
         mutationFn: deletePlan,
@@ -34,21 +34,41 @@ export default function PlansScreen() {
     if (isLoading) return <ActivityIndicator style={{ flex: 1 }} color={theme.colors.primary} />;
 
 
-    // ADD THIS BLOCK
-if (isError) {
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
-            <Text style={{ color: theme.colors.error, fontSize: 16, marginBottom: 10 }}>Failed to load plans</Text>
-            <Text style={{ color: theme.colors.textSecondary, marginBottom: 20 }}>{(error as Error).message}</Text>
+
+        // --- NEW: Empty State Component ---
+    const EmptyPlansState = () => (
+        <View style={styles.emptyContainer}>
+            <Text style={{ fontSize: 40, marginBottom: 10 }}>📅</Text>
+            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Plans Yet</Text>
+            <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+                Create a macro-cycle to track your progressive overload.
+            </Text>
             <TouchableOpacity 
-                onPress={() => refetch()} 
-                style={{ padding: 10, backgroundColor: theme.colors.card, borderRadius: 8 }}
+                style={[styles.createButton, { backgroundColor: theme.colors.primary }]}
+                onPress={() => navigation.navigate('CreatePlan')} 
             >
-                <Text style={{ color: theme.colors.primary }}>Try Again</Text>
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Create First Plan</Text>
             </TouchableOpacity>
         </View>
     );
-}
+
+    // ADD THIS BLOCK
+    if (isError) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
+                <Text style={{ color: theme.colors.error, fontSize: 16, marginBottom: 10 }}>Failed to load plans</Text>
+                <Text style={{ color: theme.colors.textSecondary, marginBottom: 20 }}>{(error as Error).message}</Text>
+                <TouchableOpacity
+                    onPress={() => refetch()}
+                    style={{ padding: 10, backgroundColor: theme.colors.card, borderRadius: 8 }}
+                >
+                    <Text style={{ color: theme.colors.primary }}>Try Again</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
+
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -57,6 +77,7 @@ if (isError) {
             <FlatList
                 data={data}
                 keyExtractor={(item) => item.id}
+                ListEmptyComponent={EmptyPlansState}
                 contentContainerStyle={{ padding: 16 }}
                 renderItem={({ item }) => (
                     <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
@@ -87,8 +108,10 @@ if (isError) {
             />
 
             {/* FAB to Create New Plan */}
-<FAB onPress={() => navigation.navigate('CreatePlan')} />
-
+            {/* <FAB onPress={() => navigation.navigate('CreatePlan')} /> */}
+            {data && data.length > 0 && (
+                <FAB onPress={() => navigation.navigate('CreatePlan')} />
+            )}
         </SafeAreaView>
     );
 }
@@ -99,17 +122,33 @@ const styles = StyleSheet.create({
     card: { flexDirection: 'row', padding: 16, borderRadius: 12, marginBottom: 12 },
     title: { fontSize: 18, fontWeight: 'bold' },
     badge: { alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-    fab: { position: 'absolute', bottom: 24, right: 24, width: 56, height: 56, borderRadius: 28, justifyContent: 'center',
-    alignItems: 'center', elevation: 0.01
-  },
-  fabText: { 
-    color: 'white', 
-    fontSize: 32, 
-    textAlign: 'center',
-    textAlignVertical: 'center', 
-    includeFontPadding: false, 
-    // Small adjustment to visually center the "+" character
-    lineHeight: 32, 
-  },
-    
+    fab: {
+        position: 'absolute', bottom: 24, right: 24, width: 56, height: 56, borderRadius: 28, justifyContent: 'center',
+        alignItems: 'center', elevation: 0.01
+    },
+    fabText: {
+        color: 'white',
+        fontSize: 32,
+        textAlign: 'center',
+        textAlignVertical: 'center',
+        includeFontPadding: false,
+        // Small adjustment to visually center the "+" character
+        lineHeight: 32,
+    },
+      // --- NEW STYLES ---
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 32,
+        marginTop: 50,
+    },
+    emptyTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+    emptyText: { textAlign: 'center', marginBottom: 24, fontSize: 16 },
+    createButton: {
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 12,
+    }
+
 });

@@ -17,7 +17,8 @@ export interface ExercisePreview {
   exercise_id: string;
   name: string;
   sets: SetTarget[];
-  increment_value: number;
+  increment_weight: number;
+  increment_reps: number;
 }
 
 export interface RoutineStartResponse {
