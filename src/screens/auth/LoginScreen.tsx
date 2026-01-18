@@ -9,6 +9,7 @@ import { useTheme } from '../../theme';
 import { login, register } from '../../api/auth';
 import { useAuth } from '../../context/AuthContext';
 import { Container } from '../../components/common/Container'; // <--- Import Wrapper
+import Toast from 'react-native-toast-message';
 
 export default function LoginScreen() {
   const theme = useTheme();
@@ -19,30 +20,58 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
 
   // ... (Mutations and handleSubmit logic remain EXACTLY the same) ...
+
   const loginMutation = useMutation({
     mutationFn: () => login(email, password),
     onSuccess: (data) => signIn(data.access_token),
-    onError: (err) => Alert.alert("Login Failed", (err as Error).message)
+    onError: (err) => {
+        // --- REPLACED ALERT WITH TOAST ---
+        Toast.show({
+            type: 'error',
+            text1: 'Login Failed',
+            text2: (err as Error).message, // e.g. "Incorrect email or password"
+            position: 'bottom' // Optional: Toasts at bottom look nice on forms
+        });
+    }
   });
 
   const registerMutation = useMutation({
     mutationFn: () => register(email, password),
     onSuccess: () => {
-        Alert.alert("Success", "Account created! Please log in.");
+        // --- REPLACED ALERT WITH TOAST ---
+        Toast.show({
+            type: 'success',
+            text1: 'Welcome! 🎉',
+            text2: 'Account created. Please log in.',
+            position: 'bottom'
+        });
         setIsRegistering(false);
     },
-    onError: (err) => Alert.alert("Registration Failed", (err as Error).message)
+    onError: (err) => {
+        // --- REPLACED ALERT WITH TOAST ---
+        Toast.show({
+            type: 'error',
+            text1: 'Registration Failed',
+            text2: (err as Error).message,
+            position: 'bottom'
+        });
+    }
   });
-
+  
+  // Update handleSubmit to show Toast validation error
   const handleSubmit = () => {
       if (!email || !password) {
-          Alert.alert("Error", "Please enter email and password");
+          Toast.show({
+              type: 'error',
+              text1: 'Missing Fields',
+              text2: 'Please enter both email and password',
+              position: 'bottom'
+          });
           return;
       }
       if (isRegistering) registerMutation.mutate();
       else loginMutation.mutate();
   };
-
   const isLoading = loginMutation.isPending || registerMutation.isPending;
 
   return (
