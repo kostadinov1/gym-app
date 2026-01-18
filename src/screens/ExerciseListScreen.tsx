@@ -6,21 +6,21 @@ import {
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
-// --- NEW: Added updateExercise to imports ---
+// ---  Added updateExercise to imports ---
 import { getExercises, createExercise, deleteExercise, updateExercise } from '../api/exercises';
 import { FAB } from '../components/common/FAB';
+import Toast from 'react-native-toast-message'; 
 
 export default function ExerciseListScreen() {
   const theme = useTheme();
   const [isModalVisible, setModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
 
-  // --- NEW: State to track which ID we are editing (null = Create Mode) ---
+  // ---  State to track which ID we are editing (null = Create Mode) ---
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Form State
   const [name, setName] = useState('');
-  const [increment, setIncrement] = useState('2.5');
 
   // 1. Fetch Exercises
   const { data, isLoading, refetch } = useQuery({
@@ -37,22 +37,33 @@ export default function ExerciseListScreen() {
     );
   }, [data, searchText]);
 
-  // --- NEW: Helper to close modal and reset form ---
+  // ---  Helper to close modal and reset form ---
   const closeModal = () => {
     setModalVisible(false);
-    setEditingId(null); // Reset to "Create Mode"
+    setEditingId(null); 
     setName('');
-    setIncrement('2.5');
   };
 
-  // --- NEW: Update Mutation ---
+
+
+
+  // ---  Update Mutation ---
   const updateMutation = useMutation({
     mutationFn: (data: { id: string, payload: any }) => updateExercise(data.id, data.payload),
     onSuccess: () => {
       closeModal();
       refetch();
+      // --- ADD TOAST ---
+      Toast.show({
+        type: 'success',
+        text1: 'Updated',
+        text2: 'Exercise name updated successfully'
+      });
     },
-    onError: (err) => Alert.alert("Error", (err as Error).message)
+    onError: (err) => {
+        // --- ADD ERROR TOAST ---
+        Toast.show({ type: 'error', text1: 'Update Failed', text2: (err as Error).message });
+    }
   });
 
   // Create Mutation
@@ -61,23 +72,45 @@ export default function ExerciseListScreen() {
     onSuccess: () => {
       closeModal();
       refetch();
+      // --- ADD TOAST ---
+      Toast.show({
+        type: 'success',
+        text1: 'Created',
+        text2: 'New exercise added to library'
+      });
     },
-    onError: (err) => Alert.alert("Error", (err as Error).message)
+    onError: (err) => {
+        Toast.show({ type: 'error', text1: 'Creation Failed', text2: (err as Error).message });
+    }
   });
-
+  
   // Delete Mutation
   const deleteMutation = useMutation({
     mutationFn: deleteExercise,
-    onSuccess: () => refetch(),
-    onError: (err) => Alert.alert("Error", "Could not delete. It might be in use.")
+    onSuccess: () => {
+      refetch();
+      // --- ADD THIS SUCCESS TOAST ---
+      Toast.show({
+        type: 'success',
+        text1: 'Deleted',
+        text2: 'Exercise removed successfully'
+      });
+    },
+    onError: (err) => {
+        // --- REPLACE ALERT WITH TOAST ---
+        Toast.show({
+            type: 'error',
+            text1: 'Cannot Delete Exercise',
+            text2: 'It is currently used in a Plan or History.'
+        });
+    }
   });
 
-  // --- NEW: Handle "Edit" Press ---
+  // ---  Handle "Edit" Press ---
   const handleEditPress = (item: any) => {
-    setEditingId(item.id);               // Set ID so we know we are updating
-    setName(item.name);                  // Pre-fill name
-    setIncrement(String(item.default_increment)); // Pre-fill increment
-    setModalVisible(true);               // Open Modal
+    setEditingId(item.id);               
+    setName(item.name);                  
+    setModalVisible(true);               
   };
 
   const handleDelete = (id: string, exName: string) => {
@@ -91,25 +124,25 @@ export default function ExerciseListScreen() {
     );
   };
 
-  // --- NEW: Handle Save (Decides between Create or Update) ---
-  const handleSave = () => {
+  // ---  Handle Save (Decides between Create or Update) ---
+const handleSave = () => {
     if (!name) return;
 
     if (editingId) {
-      // UPDATE MODE
-      createMutation.mutate({
-        name,
-        default_increment: 0, // Just send 0 for now to satisfy the API
-        unit: 'kg'
-      });
-
-      // In handleSave (Update mode):
+      // 1. UPDATE MODE
       updateMutation.mutate({
         id: editingId,
         payload: {
           name,
           default_increment: 0
         }
+      });
+    } else {
+      // 2. CREATE MODE (This was missing!)
+      createMutation.mutate({
+        name,
+        default_increment: 0,
+        unit: 'kg'
       });
     }
   };
@@ -154,15 +187,13 @@ export default function ExerciseListScreen() {
                   </View>
                 )}
               </View>
-              {/* <Text style={[styles.cardSubtitle, { color: theme.colors.textSecondary }]}>
-                Increment: {item.default_increment} {item.unit}
-              </Text> */}
+
             </View>
 
             {/* ACTION BUTTONS (Only for Custom) */}
             {item.is_custom && (
               <View style={{ flexDirection: 'row', gap: 16 }}>
-                {/* --- NEW: Edit Button --- */}
+                {/* ---  Edit Button --- */}
                 <TouchableOpacity onPress={() => handleEditPress(item)}>
                   <Text style={{ fontSize: 18 }}>✏️</Text>
                 </TouchableOpacity>
@@ -181,7 +212,6 @@ export default function ExerciseListScreen() {
       <FAB onPress={() => {
         setEditingId(null);
         setName('');
-        setIncrement('2.5');
         setModalVisible(true);
       }} />
 
@@ -190,13 +220,13 @@ export default function ExerciseListScreen() {
         visible={isModalVisible}
         animationType="slide"
         transparent={true}
-        onRequestClose={closeModal} // --- NEW: Use helper
+        onRequestClose={closeModal} // ---  Use helper
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-            {/* --- NEW: Dynamic Header Title --- */}
+            {/* ---  Dynamic Header Title --- */}
             <Text style={[styles.modalHeader, { color: theme.colors.text }]}>
-              {editingId ? "Edit Exercise" : "New Exercise"}
+              {editingId ? "Edit Exercise" : "Exercise"}
             </Text>
 
             <TextInput
@@ -206,23 +236,14 @@ export default function ExerciseListScreen() {
               value={name}
               onChangeText={setName}
             />
-
-            <TextInput
-              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
-              placeholder="Increment (e.g. 2.5)"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={increment}
-              onChangeText={setIncrement}
-              keyboardType="numeric"
-            />
-
+       
             <View style={styles.modalButtons}>
               <TouchableOpacity onPress={closeModal}>
                 <Text style={{ color: theme.colors.textSecondary, fontSize: 16 }}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleSave}>
                 <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 }}>
-                  {/* --- NEW: Dynamic Button Label --- */}
+                  {/* ---  Dynamic Button Label --- */}
                   {editingId ? "Update" : "Save"}
                 </Text>
               </TouchableOpacity>
