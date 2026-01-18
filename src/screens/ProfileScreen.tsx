@@ -1,10 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native'; // Add TouchableOpacity, Alert
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { getStats } from '../api/history';
 import { useAuth } from '../context/AuthContext'; 
 import { useTheme, useThemeToggle } from '../context/ThemeContext';
+import Toast from 'react-native-toast-message'; // <--- Import Toast
+import { deleteAccount } from '../api/auth';
+
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -24,6 +27,43 @@ export default function ProfileScreen() {
       [
         { text: "Cancel", style: "cancel" },
         { text: "Log Out", style: "destructive", onPress: signOut } 
+      ]
+    );
+  };
+
+
+
+   // --- NEW: Delete Account Mutation ---
+  const deleteAccountMutation = useMutation({
+    mutationFn: deleteAccount,
+    onSuccess: () => {
+      signOut(); // Clear token (Redirects to Login)
+      Toast.show({
+        type: 'success',
+        text1: 'Account Deleted',
+        text2: 'Your data has been removed.'
+      });
+    },
+    onError: (err) => {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: (err as Error).message
+      });
+    }
+  });
+
+  const handleDeleteAccountPress = () => {
+    Alert.alert(
+      "Delete Account",
+      "⚠️ This action is permanent. All your workouts, plans, and history will be lost forever.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete Forever", 
+          style: "destructive", 
+          onPress: () => deleteAccountMutation.mutate() 
+        }
       ]
     );
   };
@@ -95,6 +135,18 @@ export default function ProfileScreen() {
             onPress={handleLogout}
         >
             <Text style={{ color: theme.colors.error, fontWeight: 'bold', fontSize: 16 }}>Log Out</Text>
+        </TouchableOpacity>
+
+
+                {/* --- NEW: Delete Account Link --- */}
+        <TouchableOpacity 
+            style={{ marginBottom: 40, padding: 10, alignItems: 'center' }}
+            onPress={handleDeleteAccountPress}
+            disabled={deleteAccountMutation.isPending}
+        >
+            <Text style={{ color: theme.colors.textSecondary, fontSize: 14, textDecorationLine: 'underline' }}>
+                {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account & Data"}
+            </Text>
         </TouchableOpacity>
 
       </ScrollView>

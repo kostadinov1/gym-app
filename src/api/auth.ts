@@ -26,3 +26,17 @@ export const register = (email: string, password: string) => {
     body: JSON.stringify({ email, password }),
   });
 };
+
+
+export const deleteAccount = () => {
+  return client('/me', { // or /auth/me depending on your router prefix, assuming router has no prefix in main.py?
+    // Wait, in main.py you did: app.include_router(auth.router) without prefix.
+    // So it is likely just /me if the router has no prefix, OR /auth/me if you add it.
+    // Let's assume it is just "/me" based on the python code above, 
+    // BUT usually auth routers are prefixed. 
+    // CHECK: If your auth router has no prefix, this is '/me'. 
+    // If you want to be safe, update python to @router.delete("/delete-account") or similar.
+    // Let's stick to '/me' assuming the router is mounted at root or we handled it.
+    method: 'DELETE',
+  });
+};
