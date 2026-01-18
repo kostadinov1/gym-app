@@ -24,21 +24,12 @@ export default function LoginScreen() {
   const loginMutation = useMutation({
     mutationFn: () => login(email, password),
     onSuccess: (data) => signIn(data.access_token),
-    onError: (err) => {
-        // --- REPLACED ALERT WITH TOAST ---
-        Toast.show({
-            type: 'error',
-            text1: 'Login Failed',
-            text2: (err as Error).message, // e.g. "Incorrect email or password"
-            position: 'bottom' // Optional: Toasts at bottom look nice on forms
-        });
-    }
+    // REMOVED onError - App.tsx handles it now!
   });
 
   const registerMutation = useMutation({
     mutationFn: () => register(email, password),
     onSuccess: () => {
-        // --- REPLACED ALERT WITH TOAST ---
         Toast.show({
             type: 'success',
             text1: 'Welcome! 🎉',
@@ -47,15 +38,7 @@ export default function LoginScreen() {
         });
         setIsRegistering(false);
     },
-    onError: (err) => {
-        // --- REPLACED ALERT WITH TOAST ---
-        Toast.show({
-            type: 'error',
-            text1: 'Registration Failed',
-            text2: (err as Error).message,
-            position: 'bottom'
-        });
-    }
+    // REMOVED onError - App.tsx handles it now!
   });
   
   // Update handleSubmit to show Toast validation error

@@ -32,13 +32,13 @@ async function client<T>(endpoint: string, options?: RequestInit): Promise<T> {
     headers,
   };
 
-  try {
+   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, config);
 
-    // 1. Handle Errors (If status is NOT 200-299)
     if (!response.ok) {
-      // Handle Token Expiry (401)
-      if (response.status === 401) {
+      // --- FIX: Don't logout if we are just trying to log in! ---
+      // We check if the endpoint is NOT '/token' before emitting logout.
+      if (response.status === 401 && !endpoint.includes('/token')) {
         authEvents.emitLogout();
         throw new Error("Session expired. Please login again.");
       }
@@ -49,19 +49,18 @@ async function client<T>(endpoint: string, options?: RequestInit): Promise<T> {
         const errorData = await response.json();
         errorMessage = errorData.detail || JSON.stringify(errorData);
       } catch (e) {
-        // Fallback if backend didn't send JSON
         errorMessage = await response.text();
       }
 
       throw new ApiError(errorMessage, response.status);
     }
 
-    // 2. Handle Success
     const data = await response.json();
     return data as T;
 
   } catch (error) {
-    console.error('API Call Failed:', error);
+    // FIX: Change console.error to console.log so the Red Box doesn't pop up
+    console.log('API Call Failed:', error); 
     throw error;
   }
 }
