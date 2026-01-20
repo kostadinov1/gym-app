@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, TextInput, Modal, Text } from 'react-native';
+import { View, StyleSheet, Modal, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
+import { Calendar } from 'react-native-calendars'; // <--- Restored Import
 
 import { useTheme } from '../../theme';
 import { getPlanDetails, createRoutine, updatePlan } from '../../api/plans';
 import { Container } from '../../components/common/Container';
 import { SwipeWrapper } from '../../components/common/SwipeWrapper';
 
-// --- IMPORT SUB-COMPONENTS ---
+// COMPONENTS
 import { PlanHeader } from '../../components/plans/PlanHeader';
 import { WeekSelector } from '../../components/plans/WeekSelector';
 import { DayRoutineCard } from '../../components/plans/DayRoutineCard';
@@ -26,7 +26,7 @@ export default function PlanDetailsScreen() {
 
     // UI State
     const [currentWeek, setCurrentWeek] = useState(1);
-    
+
     // Edit Plan Modal State
     const [isEditModalVisible, setEditModalVisible] = useState(false);
     const [editName, setEditName] = useState('');
@@ -44,26 +44,35 @@ export default function PlanDetailsScreen() {
         queryFn: () => getPlanDetails(planId),
     });
 
-    // 2. MUTATIONS (Defined Top-Level)
+    // 2. MUTATIONS
     const updatePlanMutation = useMutation({
         mutationFn: () => updatePlan(planId, { name: editName, start_date: editDate }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['planDetails', planId] });
-            queryClient.invalidateQueries({ queryKey: ['routines'] }); 
+            // Invalidate routines so Active Workout recalculates math immediately
+            queryClient.invalidateQueries({ queryKey: ['routines'] });
             setEditModalVisible(false);
             Toast.show({ type: 'success', text1: 'Plan Updated' });
         },
         onError: (err) => Toast.show({ type: 'error', text1: 'Update Failed', text2: (err as Error).message })
     });
 
+
     const createRoutineMutation = useMutation({
-        mutationFn: () => createRoutine(planId, routineName, selectedDayIndex!, routineType),
+        mutationFn: () => {
+            // DEBUG: This confirms what we send to the API function
+            console.log("Creating Routine:", { routineName, selectedDayIndex, routineType });
+            return createRoutine(planId, routineName, selectedDayIndex!, routineType);
+
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['planDetails', planId] });
             setRoutineModalVisible(false);
+
+            Toast.show({ type: 'success', text1: 'Routine Added' });
+            // Reset State
             setRoutineName('');
             setRoutineType('workout');
-            Toast.show({ type: 'success', text1: 'Routine Added' });
         },
         onError: (err) => Toast.show({ type: 'error', text1: 'Error', text2: (err as Error).message })
     });
@@ -78,6 +87,7 @@ export default function PlanDetailsScreen() {
     const handleAddRoutinePress = (dayIndex: number) => {
         setSelectedDayIndex(dayIndex);
         setRoutineName('');
+        setRoutineType('workout');
         setRoutineModalVisible(true);
     };
 
@@ -98,54 +108,54 @@ export default function PlanDetailsScreen() {
     return (
         <SwipeWrapper onSwipeLeft={() => changeWeek('next')} onSwipeRight={() => changeWeek('prev')}>
             <Container isScrollable={true}>
-                
-                <PlanHeader 
-                    title={data.name} 
+
+                <PlanHeader
+                    title={data.name}
                     subtitle={`${data.duration_weeks} Weeks Plan`}
                     onBack={() => navigation.goBack()}
-                    onSettings={handleEditPlanPress}
+                    onSettings={handleEditPlanPress} // <--- Restored Link
                 />
 
-                <WeekSelector 
-                    currentWeek={currentWeek} 
-                    totalWeeks={data.duration_weeks} 
-                    onPrev={() => changeWeek('prev')} 
-                    onNext={() => changeWeek('next')} 
+                <WeekSelector
+                    currentWeek={currentWeek}
+                    totalWeeks={data.duration_weeks}
+                    onPrev={() => changeWeek('prev')}
+                    onNext={() => changeWeek('next')}
                 />
 
                 <View style={{ padding: 16 }}>
                     {DAYS.map((dayName, index) => {
                         const routine = data.routines.find(r => r.day_of_week === index);
                         return (
-                            <DayRoutineCard 
+                            <DayRoutineCard
                                 key={index}
                                 dayName={dayName}
                                 routine={routine}
                                 currentWeek={currentWeek}
                                 onAddPress={() => handleAddRoutinePress(index)}
-                                onPress={() => navigation.navigate('RoutineEditor', { 
-                                    routineId: routine?.id, 
+                                onPress={() => navigation.navigate('RoutineEditor', {
+                                    routineId: routine?.id,
                                     routineName: routine?.name,
-                                    planId: planId 
+                                    planId: planId
                                 })}
                             />
                         );
                     })}
                 </View>
 
-                {/* --- MODALS (Ideally extract these too later) --- */}
-                
-                {/* 1. Edit Plan Modal */}
+                {/* --- 1. EDIT PLAN MODAL (Restored) --- */}
                 <Modal visible={isEditModalVisible} animationType="slide" transparent>
                     <View style={styles.modalOverlay}>
                         <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
                             <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Edit Plan</Text>
+
                             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Plan Name</Text>
-                            <TextInput 
+                            <TextInput
                                 style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
                                 value={editName}
                                 onChangeText={setEditName}
                             />
+
                             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Start Date</Text>
                             <Calendar
                                 current={editDate}
@@ -154,25 +164,24 @@ export default function PlanDetailsScreen() {
                                 theme={{ calendarBackground: theme.colors.card, dayTextColor: theme.colors.text, arrowColor: theme.colors.primary }}
                                 style={{ borderRadius: 8, marginBottom: 16, height: 320 }}
                             />
+
                             <View style={styles.modalButtons}>
                                 <TouchableOpacity onPress={() => setEditModalVisible(false)}>
                                     <Text style={{ color: theme.colors.textSecondary, fontSize: 16 }}>Cancel</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => updatePlanMutation.mutate()}>
-                                    <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 }}>Save Changes</Text>
+                                    <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 }}>Save</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
                     </View>
                 </Modal>
 
-                {/* 2. Create Routine Modal */}
+                {/* --- 2. CREATE ROUTINE MODAL --- */}
                 <Modal visible={isRoutineModalVisible} transparent animationType="fade">
                     <View style={styles.modalOverlay}>
                         <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-                            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
-                                {selectedDayIndex !== null ? DAYS[selectedDayIndex] : ''} Routine
-                            </Text>
+                            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Add Routine</Text>
                             <TextInput
                                 style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
                                 placeholder="e.g. Pull Day A"
@@ -181,20 +190,33 @@ export default function PlanDetailsScreen() {
                                 onChangeText={setRoutineName}
                                 autoFocus
                             />
+
+                            {/* Type Selector */}
                             <View style={{ flexDirection: 'row', marginBottom: 20, gap: 12 }}>
                                 <TouchableOpacity
-                                    style={[styles.typeButton, routineType === 'workout' && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }]}
+                                    style={[
+                                        styles.typeButton,
+                                        routineType === 'workout' && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
+                                    ]}
                                     onPress={() => setRoutineType('workout')}
                                 >
                                     <Text style={{ color: routineType === 'workout' ? 'white' : theme.colors.textSecondary }}>💪 Workout</Text>
                                 </TouchableOpacity>
+
                                 <TouchableOpacity
-                                    style={[styles.typeButton, routineType === 'rest' && { backgroundColor: theme.colors.success, borderColor: theme.colors.success }]}
-                                    onPress={() => { setRoutineType('rest'); setRoutineName('Rest Day'); }}
+                                    style={[
+                                        styles.typeButton,
+                                        routineType === 'rest' && { backgroundColor: theme.colors.success, borderColor: theme.colors.success }
+                                    ]}
+                                    onPress={() => {
+                                        setRoutineType('rest');
+                                        setRoutineName('Rest Day');
+                                    }}
                                 >
                                     <Text style={{ color: routineType === 'rest' ? 'white' : theme.colors.textSecondary }}>💤 Rest</Text>
                                 </TouchableOpacity>
                             </View>
+
                             <View style={styles.modalButtons}>
                                 <TouchableOpacity onPress={() => setRoutineModalVisible(false)}>
                                     <Text style={{ color: theme.colors.textSecondary }}>Cancel</Text>

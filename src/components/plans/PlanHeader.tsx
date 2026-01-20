@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useTheme } from '../../theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../theme';
 
 interface PlanHeaderProps {
   title: string;
@@ -17,12 +17,10 @@ export const PlanHeader = ({ title, subtitle, onBack, onSettings }: PlanHeaderPr
       <TouchableOpacity onPress={onBack} style={{ padding: 8 }}>
         <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
       </TouchableOpacity>
-      
       <View style={{ flex: 1, alignItems: 'center' }}>
         <Text style={[styles.header, { color: theme.colors.text }]}>{title}</Text>
         <Text style={{ color: theme.colors.textSecondary }}>{subtitle}</Text>
       </View>
-      
       <TouchableOpacity onPress={onSettings} style={{ padding: 8 }}>
         <Ionicons name="settings-outline" size={24} color={theme.colors.text} />
       </TouchableOpacity>
