@@ -138,7 +138,15 @@ export const deleteRoutine = (routineId: string) => {
 };
 
 
+
 //  ======================================================    ROUTINE EXERCISE  =====================================================================
+
+export const reorderExercises = (routineId: string, exerciseIds: string[]) => {
+    return client(`/plans/routines/${routineId}/reorder`, {
+        method: 'PATCH',
+        body: JSON.stringify({ exercise_ids: exerciseIds })
+    });
+};
 
 export const updateRoutineExercise = (targetId: string, data: Partial<AddExerciseDto>) => {
     return client(`/plans/routine-exercises/${targetId}`, {

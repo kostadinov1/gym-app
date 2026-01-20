@@ -5,9 +5,11 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { getExercises } from '../../api/exercises';
-import { addExerciseTarget, deleteRoutine, deleteRoutineExercise, getPlanDetails, updateRoutine, updateRoutineExercise } from '../../api/plans';
+import { addExerciseTarget, deleteRoutine, deleteRoutineExercise, getPlanDetails, reorderExercises, updateRoutine, updateRoutineExercise } from '../../api/plans';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
+
+
 
 export default function RoutineEditorScreen() {
     const theme = useTheme();
@@ -18,21 +20,22 @@ export default function RoutineEditorScreen() {
 
     const [isModalVisible, setModalVisible] = useState(false);
     const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
-
-    // State
     const [sets, setSets] = useState('3');
     const [reps, setReps] = useState('10');
     const [weight, setWeight] = useState('20');
     const [incWeight, setIncWeight] = useState('2.5');
     const [incReps, setIncReps] = useState('0');
-
-
-
     const [isRenameModalVisible, setRenameModalVisible] = useState(false);
     const [newName, setNewName] = useState(routineName);
-
-
     const [editingTargetId, setEditingTargetId] = useState<string | null>(null);
+
+
+    const reorderMutation = useMutation({
+    mutationFn: (newIds: string[]) => reorderExercises(routineId, newIds),
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['planDetails'] });
+    }
+});
 
     // Update Mutation
     const updateExParamsMutation = useMutation({
@@ -144,6 +147,73 @@ export default function RoutineEditorScreen() {
         setModalVisible(true);
     };
 
+    const handleMove = (index: number, direction: 'up' | 'down') => {
+    // 1. Create a copy of the current exercises
+    const newData = [...existingExercises];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+    // 2. Safety check (don't move first item up or last item down)
+    if (targetIndex < 0 || targetIndex >= newData.length) return;
+
+    // 3. Swap the items
+    [newData[index], newData[targetIndex]] = [newData[targetIndex], newData[index]];
+
+    // 4. Extract the IDs and send to the backend
+    const newIds = newData.map(ex => ex.id);
+    reorderMutation.mutate(newIds);
+};
+    
+
+const renderItem = ({ item, index }: { item: any; index: number }) => (
+    <View style={[styles.card, { backgroundColor: theme.colors.card, flexDirection: 'row', alignItems: 'center', padding: 0 }]}>
+        
+        {/* 1. REORDER CONTROLS (Left) */}
+        <View style={{ paddingLeft: 12, paddingVertical: 8, alignItems: 'center', gap: 4 }}>
+            <TouchableOpacity 
+                onPress={() => handleMove(index, 'up')} 
+                disabled={index === 0 || reorderMutation.isPending}
+                style={{ opacity: index === 0 ? 0.2 : 1 }}
+            >
+                <Ionicons name="chevron-up" size={24} color={theme.colors.primary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+                onPress={() => handleMove(index, 'down')} 
+                disabled={index === existingExercises.length - 1 || reorderMutation.isPending}
+                style={{ opacity: index === existingExercises.length - 1 ? 0.2 : 1 }}
+            >
+                <Ionicons name="chevron-down" size={24} color={theme.colors.primary} />
+            </TouchableOpacity>
+        </View>
+
+        {/* 2. MAIN INFO AREA (Click to Edit) */}
+        <TouchableOpacity
+            onPress={() => handleEditExercisePress(item)}
+            style={{ flex: 1, padding: 16, paddingLeft: 12 }}
+        >
+            <View>
+                <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
+                <Text style={{ color: theme.colors.textSecondary }}>
+                    {item.target_sets} x {item.target_reps} @ {item.target_weight}kg
+                </Text>
+                {!isRest && (
+                    <Text style={{ fontSize: 11, color: theme.colors.primary, marginTop: 4 }}>
+                        +{item.increment_weight}kg / week
+                    </Text>
+                )}
+            </View>
+        </TouchableOpacity>
+
+        {/* 3. DELETE BUTTON (Right) */}
+        <TouchableOpacity 
+            onPress={() => handleDeleteExercise(item.id, item.name)} 
+            style={{ padding: 16 }}
+        >
+            <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+        </TouchableOpacity>
+    </View>
+);
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <View style={styles.headerRow}>
@@ -173,45 +243,17 @@ export default function RoutineEditorScreen() {
                 </View>
             </View>
 
-            <FlatList
-                data={existingExercises}
-                keyExtractor={(item) => item.id || item.exercise_id}
-                contentContainerStyle={{ padding: 16 }}
-                ListEmptyComponent={
-                    <Text style={{ textAlign: 'center', marginTop: 20, color: theme.colors.textSecondary }}>
-                        No exercises yet. Tap + to add one.
-                    </Text>
-                }
-                renderItem={({ item }) => (
-                    <View style={[styles.card, { backgroundColor: theme.colors.card, flexDirection: 'row', alignItems: 'center', padding: 0 }]}>
-                        {/* Clickable Area for Editing */}
-                        <TouchableOpacity
-                            onPress={() => handleEditExercisePress(item)}
-                            style={{ flex: 1, padding: 16 }}
-                        >
-                            <View>
-                                <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
-                                <Text style={{ color: theme.colors.textSecondary }}>
-                                    {item.target_sets} x {item.target_reps} @ {item.target_weight}kg
-                                </Text>
-                                {!isRest && (
-                                    <Text style={{ fontSize: 12, color: theme.colors.primary, marginTop: 4 }}>
-                                        Progress: +{item.increment_weight}kg, +{item.increment_reps} reps /week
-                                    </Text>
-                                )}
-                            </View>
-                        </TouchableOpacity>
-
-                        {/* Delete Button (Separate from edit area) */}
-                        <TouchableOpacity
-                            onPress={() => handleDeleteExercise(item.id, item.name)}
-                            style={{ padding: 20 }}
-                        >
-                            <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
-                        </TouchableOpacity>
-                    </View>
-                )}
-            />
+<FlatList
+    data={existingExercises}
+    keyExtractor={(item) => item.id}
+    renderItem={renderItem} // Use the new renderItem
+    contentContainerStyle={{ padding: 16 }}
+    ListEmptyComponent={
+        <Text style={{ textAlign: 'center', marginTop: 20, color: theme.colors.textSecondary }}>
+            No exercises yet. Tap + to add one.
+        </Text>
+    }
+/>
 
             <View style={{ padding: 16 }}>
                 <TouchableOpacity
