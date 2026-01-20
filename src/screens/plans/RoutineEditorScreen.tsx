@@ -5,7 +5,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { getExercises } from '../../api/exercises';
-import { addExerciseTarget, deleteRoutineExercise, getPlanDetails } from '../../api/plans';
+import { addExerciseTarget, deleteRoutine, deleteRoutineExercise, getPlanDetails, updateRoutine } from '../../api/plans';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -25,6 +25,29 @@ export default function RoutineEditorScreen() {
     const [weight, setWeight] = useState('20');
     const [incWeight, setIncWeight] = useState('2.5');
     const [incReps, setIncReps] = useState('0');
+
+
+
+    const [isRenameModalVisible, setRenameModalVisible] = useState(false);
+    const [newName, setNewName] = useState(routineName);
+
+    const updateRoutineMutation = useMutation({
+        mutationFn: () => updateRoutine(routineId, newName),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['planDetails'] });
+            setRenameModalVisible(false);
+            Toast.show({ type: 'success', text1: 'Routine renamed' });
+        }
+    });
+
+    const deleteRoutineMutation = useMutation({
+        mutationFn: () => deleteRoutine(routineId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['planDetails'] });
+            navigation.goBack();
+            Toast.show({ type: 'success', text1: 'Routine deleted' });
+        }
+    });
 
     const { data: planData } = useQuery({
         queryKey: ['planDetails', planId],
@@ -88,11 +111,28 @@ export default function RoutineEditorScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <View style={styles.headerRow}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
+                    <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
                 </TouchableOpacity>
-                <View>
-                    <Text style={[styles.header, { color: theme.colors.text }]}>{routineName}</Text>
-                    <Text style={{ color: theme.colors.textSecondary }}>Add Exercises</Text>
+
+                <View style={{ flex: 1 }}>
+                    <Text style={[styles.header, { color: theme.colors.text }]} numberOfLines={1}>
+                        {currentRoutine?.name || routineName}
+                    </Text>
+                    <Text style={{ color: theme.colors.textSecondary }}>Manage Exercises</Text>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 15 }}>
+                    <TouchableOpacity onPress={() => setRenameModalVisible(true)}>
+                        <Ionicons name="create-outline" size={24} color={theme.colors.textSecondary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => {
+                        Alert.alert("Delete Routine", "Are you sure? This will remove all exercises in this day.", [
+                            { text: "Cancel" },
+                            { text: "Delete", style: "destructive", onPress: () => deleteRoutineMutation.mutate() }
+                        ]);
+                    }}>
+                        <Ionicons name="trash-outline" size={24} color={theme.colors.error} />
+                    </TouchableOpacity>
                 </View>
             </View>
 
@@ -231,6 +271,39 @@ export default function RoutineEditorScreen() {
                     </View>
                 </SafeAreaView>
             </Modal>
+            {/* --- RENAME ROUTINE MODAL --- */}
+            <Modal visible={isRenameModalVisible} transparent animationType="fade">
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+                        <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Rename Routine</Text>
+                        <TextInput
+                            style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+                            placeholder="e.g. Heavy Pull"
+                            placeholderTextColor={theme.colors.textSecondary}
+                            value={newName}
+                            onChangeText={setNewName}
+                            autoFocus
+                        />
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity onPress={() => setRenameModalVisible(false)}>
+                                <Text style={{ color: theme.colors.textSecondary }}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                onPress={() => updateRoutineMutation.mutate()}
+                                disabled={!newName.trim() || updateRoutineMutation.isPending}
+                            >
+                                <Text style={{ 
+                                    color: theme.colors.primary, 
+                                    fontWeight: 'bold',
+                                    opacity: !newName.trim() ? 0.5 : 1 
+                                }}>
+                                    {updateRoutineMutation.isPending ? "Saving..." : "Rename"}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -243,5 +316,26 @@ const styles = StyleSheet.create({
     label: { fontWeight: 'bold', marginBottom: 8, fontSize: 16 },
     input: { borderWidth: 1, borderRadius: 8, padding: 12, fontSize: 16 },
     card: { padding: 16, borderRadius: 12, marginBottom: 8 },
-    cardTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 }
+    cardTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
+    modalOverlay: { 
+        flex: 1, 
+        backgroundColor: 'rgba(0,0,0,0.5)', 
+        justifyContent: 'center', 
+        padding: 32 
+    },
+    modalContent: { 
+        padding: 24, 
+        borderRadius: 16 
+    },
+    modalTitle: { 
+        fontSize: 18, 
+        fontWeight: 'bold', 
+        marginBottom: 16 
+    },
+    modalButtons: { 
+        flexDirection: 'row', 
+        justifyContent: 'flex-end', 
+        gap: 24,
+        marginTop: 8
+    },
 });

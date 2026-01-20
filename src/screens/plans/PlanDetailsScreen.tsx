@@ -38,6 +38,8 @@ export default function PlanDetailsScreen() {
     const [routineName, setRoutineName] = useState('');
     const [routineType, setRoutineType] = useState<'workout' | 'rest'>('workout');
 
+
+    
     // 1. DATA FETCHING
     const { data, isLoading } = useQuery({
         queryKey: ['planDetails', planId],
@@ -221,7 +223,12 @@ export default function PlanDetailsScreen() {
                                 <TouchableOpacity onPress={() => setRoutineModalVisible(false)}>
                                     <Text style={{ color: theme.colors.textSecondary }}>Cancel</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => createRoutineMutation.mutate()}>
+                                <TouchableOpacity
+                                    onPress={() => createRoutineMutation.mutate()}
+                                    // --- ADD THIS LINE ---
+                                    disabled={!routineName.trim() || createRoutineMutation.isPending}
+                                    style={{ opacity: !routineName.trim() ? 0.5 : 1 }}
+                                >
                                     <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>Create</Text>
                                 </TouchableOpacity>
                             </View>

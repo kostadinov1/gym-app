@@ -10,6 +10,7 @@ import { useTheme } from '../theme';
 import { getExercises, createExercise, deleteExercise, updateExercise } from '../api/exercises';
 import { FAB } from '../components/common/FAB';
 import Toast from 'react-native-toast-message'; 
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ExerciseListScreen() {
   const theme = useTheme();
@@ -191,19 +192,17 @@ const handleSave = () => {
             </View>
 
             {/* ACTION BUTTONS (Only for Custom) */}
-            {item.is_custom && (
-              <View style={{ flexDirection: 'row', gap: 16 }}>
-                {/* ---  Edit Button --- */}
-                <TouchableOpacity onPress={() => handleEditPress(item)}>
-                  <Text style={{ fontSize: 18 }}>✏️</Text>
-                </TouchableOpacity>
+          {item.is_custom && (
+            <View style={{ flexDirection: 'row', gap: 20 }}>
+              <TouchableOpacity onPress={() => handleEditPress(item)}>
+                <Ionicons name="create-outline" size={22} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
 
-                {/* Delete Button */}
-                <TouchableOpacity onPress={() => handleDelete(item.id, item.name)}>
-                  <Text style={{ fontSize: 18 }}>🗑️</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+              <TouchableOpacity onPress={() => handleDelete(item.id, item.name)}>
+                <Ionicons name="trash-outline" size={22} color={theme.colors.error} />
+              </TouchableOpacity>
+            </View>
+          )}
           </View>
         )}
       />

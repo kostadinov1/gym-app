@@ -101,9 +101,9 @@ export default function PlansScreen() {
 
                         </TouchableOpacity>
                         {/* Delete Button */}
-                        <TouchableOpacity onPress={() => handleDelete(item.id, item.name)} style={{ padding: 8 }}>
-                            <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
-                        </TouchableOpacity>
+<TouchableOpacity onPress={() => handleDelete(item.id, item.name)} style={{ padding: 8 }}>
+    <Ionicons name="trash-outline" size={22} color={theme.colors.error} />
+</TouchableOpacity>
                     </View>
                 )}
             />
