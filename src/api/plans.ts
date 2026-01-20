@@ -70,6 +70,7 @@ export interface UpdatePlanDto {
 }
 
 
+//  ======================================================    PLANS   =====================================================================
 
 // Fetch all active plans
 export const getPlans = () => {
@@ -90,9 +91,6 @@ export const deletePlan = (id: string) => {
     method: 'DELETE',
   });
 };
-
-
-
 
 export const getPlanDetails = (id: string) => {
     return client<PlanDetail>(`/plans/${id}`);
@@ -118,8 +116,6 @@ export const addExerciseTarget = (routineId: string, data: AddExerciseDto) => {
     });
 };
 
-
-
 export const updatePlan = (id: string, data: UpdatePlanDto) => {
     return client<Plan>(`/plans/${id}`, {
         method: 'PATCH',
@@ -127,17 +123,27 @@ export const updatePlan = (id: string, data: UpdatePlanDto) => {
     });
 };
 
+//  ======================================================    ROUTINE   =====================================================================
+
 export const updateRoutine = (routineId: string, name: string) => {
     return client(`/plans/routines/${routineId}`, {
         method: 'PATCH',
         body: JSON.stringify({ name })
     });
 };
-
-
 export const deleteRoutine = (routineId: string) => {
     return client(`/plans/routines/${routineId}`, {
         method: 'DELETE'
+    });
+};
+
+
+//  ======================================================    ROUTINE EXERCISE  =====================================================================
+
+export const updateRoutineExercise = (targetId: string, data: Partial<AddExerciseDto>) => {
+    return client(`/plans/routine-exercises/${targetId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
     });
 };
 

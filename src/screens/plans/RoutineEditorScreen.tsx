@@ -5,7 +5,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { getExercises } from '../../api/exercises';
-import { addExerciseTarget, deleteRoutine, deleteRoutineExercise, getPlanDetails, updateRoutine } from '../../api/plans';
+import { addExerciseTarget, deleteRoutine, deleteRoutineExercise, getPlanDetails, updateRoutine, updateRoutineExercise } from '../../api/plans';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -30,6 +30,20 @@ export default function RoutineEditorScreen() {
 
     const [isRenameModalVisible, setRenameModalVisible] = useState(false);
     const [newName, setNewName] = useState(routineName);
+
+
+    const [editingTargetId, setEditingTargetId] = useState<string | null>(null);
+
+    // Update Mutation
+    const updateExParamsMutation = useMutation({
+        mutationFn: (payload: any) => updateRoutineExercise(editingTargetId!, payload),
+        onSuccess: () => {
+            setModalVisible(false);
+            setEditingTargetId(null);
+            queryClient.invalidateQueries({ queryKey: ['planDetails'] });
+            Toast.show({ type: 'success', text1: 'Exercise updated' });
+        }
+    });
 
     const updateRoutineMutation = useMutation({
         mutationFn: () => updateRoutine(routineId, newName),
@@ -88,9 +102,21 @@ export default function RoutineEditorScreen() {
 
     const handleSave = () => {
         if (!selectedExerciseId) return;
-        addMutation.mutate();
-    };
 
+        const payload = {
+            target_sets: parseInt(sets) || 0,
+            target_reps: parseInt(reps) || 0,
+            target_weight: parseFloat(weight) || 0,
+            increment_weight: isRest ? 0 : (parseFloat(incWeight) || 0),
+            increment_reps: isRest ? 0 : (parseInt(incReps) || 0),
+        };
+
+        if (editingTargetId) {
+            updateExParamsMutation.mutate(payload);
+        } else {
+            addMutation.mutate(); // This uses your existing addMutation
+        }
+    };
 
     const deleteExMutation = useMutation({
         mutationFn: (id: string) => deleteRoutineExercise(id),
@@ -105,6 +131,17 @@ export default function RoutineEditorScreen() {
             { text: "Cancel", style: "cancel" },
             { text: "Remove", style: "destructive", onPress: () => deleteExMutation.mutate(id) }
         ]);
+    };
+
+    const handleEditExercisePress = (item: any) => {
+        setEditingTargetId(item.id);
+        setSelectedExerciseId(item.exercise_id); // Lock the exercise
+        setSets(String(item.target_sets));
+        setReps(String(item.target_reps));
+        setWeight(String(item.target_weight));
+        setIncWeight(String(item.increment_weight));
+        setIncReps(String(item.increment_reps));
+        setModalVisible(true);
     };
 
     return (
@@ -146,19 +183,30 @@ export default function RoutineEditorScreen() {
                     </Text>
                 }
                 renderItem={({ item }) => (
-                    <View style={[styles.card, { backgroundColor: theme.colors.card, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
-                            <Text style={{ color: theme.colors.textSecondary }}>
-                                {item.target_sets} x {item.target_reps} @ {item.target_weight}kg
-                            </Text>
-                            {!isRest && (
-                                <Text style={{ fontSize: 12, color: theme.colors.primary, marginTop: 4 }}>
-                                    Progress: +{item.increment_weight}kg, +{item.increment_reps} reps /week
+                    <View style={[styles.card, { backgroundColor: theme.colors.card, flexDirection: 'row', alignItems: 'center', padding: 0 }]}>
+                        {/* Clickable Area for Editing */}
+                        <TouchableOpacity
+                            onPress={() => handleEditExercisePress(item)}
+                            style={{ flex: 1, padding: 16 }}
+                        >
+                            <View>
+                                <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
+                                <Text style={{ color: theme.colors.textSecondary }}>
+                                    {item.target_sets} x {item.target_reps} @ {item.target_weight}kg
                                 </Text>
-                            )}
-                        </View>
-                        <TouchableOpacity onPress={() => handleDeleteExercise(item.id, item.name)} style={{ padding: 8 }}>
+                                {!isRest && (
+                                    <Text style={{ fontSize: 12, color: theme.colors.primary, marginTop: 4 }}>
+                                        Progress: +{item.increment_weight}kg, +{item.increment_reps} reps /week
+                                    </Text>
+                                )}
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* Delete Button (Separate from edit area) */}
+                        <TouchableOpacity
+                            onPress={() => handleDeleteExercise(item.id, item.name)}
+                            style={{ padding: 20 }}
+                        >
                             <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
                         </TouchableOpacity>
                     </View>
@@ -168,7 +216,12 @@ export default function RoutineEditorScreen() {
             <View style={{ padding: 16 }}>
                 <TouchableOpacity
                     style={[styles.bigButton, { backgroundColor: theme.colors.primary }]}
-                    onPress={() => setModalVisible(true)}
+                    onPress={() => {
+                        setEditingTargetId(null);
+                        setSelectedExerciseId(null);
+                        setSets('3'); setReps('10'); setWeight('20'); setIncWeight('2.5'); setIncReps('0');
+                        setModalVisible(true);
+                    }}
                 >
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Add Exercise</Text>
                 </TouchableOpacity>
@@ -184,24 +237,32 @@ export default function RoutineEditorScreen() {
                     </View>
 
                     <View style={{ padding: 16 }}>
-                        <Text style={[styles.label, { color: theme.colors.text }]}>1. Select Exercise</Text>
-                        <View style={{ height: 150, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, marginBottom: 16 }}>
-                            {loadingEx ? <ActivityIndicator /> : (
-                                <FlatList
-                                    data={allExercises}
-                                    keyExtractor={item => item.id}
-                                    renderItem={({ item }) => (
-                                        <TouchableOpacity
-                                            style={{ padding: 12, backgroundColor: selectedExerciseId === item.id ? theme.colors.primary : 'transparent' }}
-                                            onPress={() => setSelectedExerciseId(item.id)}
-                                        >
-                                            <Text style={{ color: selectedExerciseId === item.id ? 'white' : theme.colors.text }}>{item.name}</Text>
-                                        </TouchableOpacity>
+                        {!editingTargetId && (
+                            <>
+                                <Text style={[styles.label, { color: theme.colors.text }]}>1. Select Exercise</Text>
+                                <View style={{ height: 150, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, marginBottom: 16 }}>
+                                    {loadingEx ? <ActivityIndicator /> : (
+                                        <FlatList
+                                            data={allExercises}
+                                            keyExtractor={item => item.id}
+                                            renderItem={({ item }) => (
+                                                <TouchableOpacity
+                                                    style={{ padding: 12, backgroundColor: selectedExerciseId === item.id ? theme.colors.primary : 'transparent' }}
+                                                    onPress={() => setSelectedExerciseId(item.id)}
+                                                >
+                                                    <Text style={{ color: selectedExerciseId === item.id ? 'white' : theme.colors.text }}>{item.name}</Text>
+                                                </TouchableOpacity>
+                                            )}
+                                        />
                                     )}
-                                />
-                            )}
-                        </View>
-
+                                </View>
+                            </>
+                        )}
+                        {editingTargetId && (
+                            <Text style={[styles.label, { color: theme.colors.primary, marginBottom: 16 }]}>
+                                Editing: {existingExercises.find(e => e.id === editingTargetId)?.name}
+                            </Text>
+                        )}
                         <Text style={[styles.label, { color: theme.colors.text }]}>2. Set Targets</Text>
 
                         {/* Row 1: Sets & Reps */}
@@ -288,14 +349,14 @@ export default function RoutineEditorScreen() {
                             <TouchableOpacity onPress={() => setRenameModalVisible(false)}>
                                 <Text style={{ color: theme.colors.textSecondary }}>Cancel</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 onPress={() => updateRoutineMutation.mutate()}
                                 disabled={!newName.trim() || updateRoutineMutation.isPending}
                             >
-                                <Text style={{ 
-                                    color: theme.colors.primary, 
+                                <Text style={{
+                                    color: theme.colors.primary,
                                     fontWeight: 'bold',
-                                    opacity: !newName.trim() ? 0.5 : 1 
+                                    opacity: !newName.trim() ? 0.5 : 1
                                 }}>
                                     {updateRoutineMutation.isPending ? "Saving..." : "Rename"}
                                 </Text>
@@ -317,24 +378,24 @@ const styles = StyleSheet.create({
     input: { borderWidth: 1, borderRadius: 8, padding: 12, fontSize: 16 },
     card: { padding: 16, borderRadius: 12, marginBottom: 8 },
     cardTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
-    modalOverlay: { 
-        flex: 1, 
-        backgroundColor: 'rgba(0,0,0,0.5)', 
-        justifyContent: 'center', 
-        padding: 32 
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        padding: 32
     },
-    modalContent: { 
-        padding: 24, 
-        borderRadius: 16 
+    modalContent: {
+        padding: 24,
+        borderRadius: 16
     },
-    modalTitle: { 
-        fontSize: 18, 
-        fontWeight: 'bold', 
-        marginBottom: 16 
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 16
     },
-    modalButtons: { 
-        flexDirection: 'row', 
-        justifyContent: 'flex-end', 
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
         gap: 24,
         marginTop: 8
     },
