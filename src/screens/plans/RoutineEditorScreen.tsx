@@ -5,7 +5,9 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { getExercises } from '../../api/exercises';
-import { addExerciseTarget, getPlanDetails } from '../../api/plans';
+import { addExerciseTarget, deleteRoutineExercise, getPlanDetails } from '../../api/plans';
+import Toast from 'react-native-toast-message';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function RoutineEditorScreen() {
     const theme = useTheme();
@@ -66,6 +68,22 @@ export default function RoutineEditorScreen() {
         addMutation.mutate();
     };
 
+
+    const deleteExMutation = useMutation({
+        mutationFn: (id: string) => deleteRoutineExercise(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['planDetails'] });
+            Toast.show({ type: 'success', text1: 'Exercise removed' });
+        }
+    });
+
+    const handleDeleteExercise = (id: string, name: string) => {
+        Alert.alert("Remove Exercise", `Remove ${name} from this routine?`, [
+            { text: "Cancel", style: "cancel" },
+            { text: "Remove", style: "destructive", onPress: () => deleteExMutation.mutate(id) }
+        ]);
+    };
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <View style={styles.headerRow}>
@@ -88,18 +106,21 @@ export default function RoutineEditorScreen() {
                     </Text>
                 }
                 renderItem={({ item }) => (
-                    <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
-                        <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
-                        <Text style={{ color: theme.colors.textSecondary }}>
-                            {item.target_sets} x {item.target_reps} @ {item.target_weight}kg
-                        </Text>
-
-                        {/* --- FIX: Only show progress text if NOT Rest Day --- */}
-                        {!isRest && (
-                            <Text style={{ fontSize: 12, color: theme.colors.primary, marginTop: 4 }}>
-                                Progress: +{item.increment_weight}kg, +{item.increment_reps} reps /week
+                    <View style={[styles.card, { backgroundColor: theme.colors.card, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
+                            <Text style={{ color: theme.colors.textSecondary }}>
+                                {item.target_sets} x {item.target_reps} @ {item.target_weight}kg
                             </Text>
-                        )}
+                            {!isRest && (
+                                <Text style={{ fontSize: 12, color: theme.colors.primary, marginTop: 4 }}>
+                                    Progress: +{item.increment_weight}kg, +{item.increment_reps} reps /week
+                                </Text>
+                            )}
+                        </View>
+                        <TouchableOpacity onPress={() => handleDeleteExercise(item.id, item.name)} style={{ padding: 8 }}>
+                            <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                        </TouchableOpacity>
                     </View>
                 )}
             />

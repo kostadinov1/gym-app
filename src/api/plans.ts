@@ -127,3 +127,16 @@ export const updatePlan = (id: string, data: UpdatePlanDto) => {
     });
 };
 
+
+
+export const deleteRoutine = (routineId: string) => {
+    return client(`/plans/routines/${routineId}`, {
+        method: 'DELETE'
+    });
+};
+
+export const deleteRoutineExercise = (targetId: string) => {
+    return client(`/plans/routine-exercises/${targetId}`, {
+        method: 'DELETE'
+    });
+};

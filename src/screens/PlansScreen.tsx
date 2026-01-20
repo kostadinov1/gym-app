@@ -7,6 +7,7 @@ import { getPlans, deletePlan } from '../api/plans';
 
 import { useNavigation } from '@react-navigation/native'; // Add this
 import { FAB } from '../components/common/FAB';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function PlansScreen() {
     const navigation = useNavigation<any>()
@@ -101,7 +102,7 @@ export default function PlansScreen() {
                         </TouchableOpacity>
                         {/* Delete Button */}
                         <TouchableOpacity onPress={() => handleDelete(item.id, item.name)} style={{ padding: 8 }}>
-                            <Text style={{ fontSize: 18 }}>🗑️</Text>
+                            <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
                         </TouchableOpacity>
                     </View>
                 )}
