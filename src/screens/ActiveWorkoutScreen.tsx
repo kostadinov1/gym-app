@@ -106,7 +106,7 @@ export default function ActiveWorkoutScreen() {
   // ... (Keep handleAddSet, updateSet, toggleComplete, handleRemoveSet, handleAddAdHoc EXACTLY as they were) ...
   // For brevity, I am not repeating the helper functions here unless you need me to.
   // They remain unchanged.
-  
+
   // Need to include the helpers to make the file copy-pasteable? 
   // Let me know if you want the FULL file content or just the diffs. 
   // Assuming you can keep the helpers:
@@ -162,19 +162,19 @@ export default function ActiveWorkoutScreen() {
   const handleAddAdHoc = (exercise: any) => {
     const newExerciseIndex = exercises.length;
     const newExercise = {
-        uniqueId: `adhoc-${exercise.id}-${Date.now()}`,
-        exercise_id: exercise.id,
-        name: exercise.name,
-        history: 'Ad-Hoc',
-        sets: [
-            {
-                id: `adhoc-set-${Date.now()}`,
-                setNumber: 1,
-                weight: 0,
-                reps: 0,
-                isCompleted: false
-            }
-        ]
+      uniqueId: `adhoc-${exercise.id}-${Date.now()}`,
+      exercise_id: exercise.id,
+      name: exercise.name,
+      history: 'Ad-Hoc',
+      sets: [
+        {
+          id: `adhoc-set-${Date.now()}`,
+          setNumber: 1,
+          weight: 0,
+          reps: 0,
+          isCompleted: false
+        }
+      ]
     };
     setExercises(prev => [...prev, newExercise]);
     setAddModalVisible(false);
@@ -189,28 +189,28 @@ export default function ActiveWorkoutScreen() {
   }
 
   if (data && exercises.length === 0) {
-     return (
+    return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
         <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 16 }}>
-                <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{data?.name}</Text>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 16 }}>
+            <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{data?.name}</Text>
         </View>
         <View style={[styles.center, { padding: 32 }]}>
-            <Text style={{ fontSize: 40, marginBottom: 16 }}>📝</Text>
-            <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 8 }}>
-                This routine is empty
-            </Text>
-            <TouchableOpacity 
-                style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12 }}
-                onPress={() => navigation.navigate('Plans')} 
-            >
-                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Go to Plans Manager</Text>
-            </TouchableOpacity>
+          <Text style={{ fontSize: 40, marginBottom: 16 }}>📝</Text>
+          <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 8 }}>
+            This routine is empty
+          </Text>
+          <TouchableOpacity
+            style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12 }}
+            onPress={() => navigation.navigate('Plans')}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Go to Plans Manager</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
-     );
+    );
   }
 
   return (
@@ -256,39 +256,44 @@ export default function ActiveWorkoutScreen() {
         <TouchableOpacity
           style={[
             styles.finishButton,
-            { backgroundColor: theme.colors.success, opacity: isSubmitting ? 0.7 : 1 } // Visual feedback
+            {
+              backgroundColor: theme.colors.success,
+              opacity: (isSubmitting || finishMutation.isPending || finishMutation.isSuccess) ? 0.5 : 1
+            }
           ]}
           onPress={handleFinish}
-          disabled={isSubmitting || finishMutation.isPending} // Disable button
+          // OLD: disabled={isSubmitting || finishMutation.isPending}
+          // NEW: Add isSuccess to prevent clicks during the "slide away" animation
+          disabled={isSubmitting || finishMutation.isPending || finishMutation.isSuccess}
         >
           {isSubmitting || finishMutation.isPending ? (
-              <ActivityIndicator color="white" />
+            <ActivityIndicator color="white" />
           ) : (
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>Finish Workout</Text>
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>Finish Workout</Text>
           )}
         </TouchableOpacity>
       </View>
 
       <Modal visible={isAddModalVisible} animationType="slide">
         <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-            <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Add Exercise</Text>
-                <TouchableOpacity onPress={() => setAddModalVisible(false)}>
-                    <Text style={{ color: theme.colors.primary, fontSize: 16 }}>Close</Text>
-                </TouchableOpacity>
-            </View>
-            <FlatList 
-                data={allExercises}
-                keyExtractor={item => item.id}
-                renderItem={({ item }) => (
-                    <TouchableOpacity 
-                        style={[styles.pickerItem, { borderBottomColor: theme.colors.border }]}
-                        onPress={() => handleAddAdHoc(item)}
-                    >
-                        <Text style={{ fontSize: 16, color: theme.colors.text }}>{item.name}</Text>
-                    </TouchableOpacity>
-                )}
-            />
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Add Exercise</Text>
+            <TouchableOpacity onPress={() => setAddModalVisible(false)}>
+              <Text style={{ color: theme.colors.primary, fontSize: 16 }}>Close</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={allExercises}
+            keyExtractor={item => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.pickerItem, { borderBottomColor: theme.colors.border }]}
+                onPress={() => handleAddAdHoc(item)}
+              >
+                <Text style={{ fontSize: 16, color: theme.colors.text }}>{item.name}</Text>
+              </TouchableOpacity>
+            )}
+          />
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -308,5 +313,6 @@ const styles = StyleSheet.create({
   addSetButton: { paddingVertical: 12, alignItems: 'center', borderTopWidth: 1, borderTopColor: '#f0f0f0', marginTop: 4 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderColor: '#eee' },
   modalTitle: { fontSize: 20, fontWeight: 'bold' },
-  pickerItem: { padding: 16, borderBottomWidth: 1 }
+  pickerItem: { padding: 16, borderBottomWidth: 1 },
+
 });

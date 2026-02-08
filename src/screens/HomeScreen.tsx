@@ -22,13 +22,16 @@ export default function HomeScreen() {
     return unsubscribe;
   }, [navigation, refetch]);
 
-  const isDoneToday = (dateString?: string | null) => {
+const isDoneToday = (dateString?: string | null) => {
     if (!dateString) return false;
-    const today = new Date().toISOString().split('T')[0];
-    const completed = new Date(dateString).toISOString().split('T')[0];
-    return today === completed;
-  };
+    
+    const now = new Date(); // Device time
+    const completedAt = new Date(dateString); // Server time (UTC) converted to Object
 
+    // .toDateString() returns "Tue Feb 08 2026" based on the DEVICE'S timezone/locale
+    return now.toDateString() === completedAt.toDateString();
+  };
+  
   if (isLoading) return <ActivityIndicator style={{ flex: 1 }} size="large" color={theme.colors.primary} />;
 
   // --- NEW: Empty State Component ---
