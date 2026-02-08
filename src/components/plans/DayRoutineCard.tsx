@@ -62,6 +62,7 @@ export const DayRoutineCard = ({ dayName, routine, currentWeek, onPress, onAddPr
                 </Text>
               </View>
               
+              
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 {!isRest && <Text style={{ fontSize: 12, color: theme.colors.primary, fontWeight: 'bold' }}>Edit</Text>}
               </View>

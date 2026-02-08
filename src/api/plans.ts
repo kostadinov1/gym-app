@@ -137,7 +137,12 @@ export const deleteRoutine = (routineId: string) => {
     });
 };
 
-
+export const moveRoutine = (routineId: string, newDay: number) => {
+    return client(`/plans/routines/${routineId}/move`, {
+        method: 'PATCH',
+        body: JSON.stringify({ new_day: newDay })
+    });
+};
 
 //  ======================================================    ROUTINE EXERCISE  =====================================================================
 

@@ -5,6 +5,7 @@ export interface Routine {
   name: string;
   day_of_week?: number;
   last_completed_at?: string | null; // <--- NEW FIELD
+  routine_type: 'workout' | 'rest';
 }
 
 export interface SetTarget {
