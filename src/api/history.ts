@@ -43,6 +43,19 @@ export interface UpdateSessionDto {
     }[];
 }
 
+export interface ChartPoint {
+    date: string;
+    value: number;
+    label: string;
+}
+
+export const getVolumeChart = (period: '1M' | '3M' | '6M' | '1Y' | 'ALL', planId?: string) => {
+    let url = `/history/charts/volume?period=${period}`;
+    if (planId) {
+        url += `&plan_id=${planId}`;
+    }
+    return client<ChartPoint[]>(url);
+};
 export const getHistory = (startDate: string, endDate: string) => {
   // Query Params: ?start_date=...&end_date=...
   return client<HistorySession[]>(`/history/?start_date=${startDate}&end_date=${endDate}`);

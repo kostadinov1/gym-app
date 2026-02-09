@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { getHistory } from '../../api/history';
 import { useNavigation } from '@react-navigation/native'; // Add import
+import { Ionicons } from '@expo/vector-icons';
 
 
 export default function HistoryScreen() {
@@ -60,7 +61,12 @@ export default function HistoryScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Text style={[styles.header, { color: theme.colors.text }]}>History</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', margin: 16 }}>
+          <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.colors.text }}>History</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Analytics')}>
+              <Ionicons name="stats-chart" size={24} color={theme.colors.primary} />
+          </TouchableOpacity>
+      </View>
 
       <Calendar
         // FIX 1: Force re-render when theme changes

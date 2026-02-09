@@ -18,7 +18,7 @@ import PlanDetailsScreen from '../screens/plans/PlanDetailsScreen';
 import RoutineEditorScreen from '../screens/plans/RoutineEditorScreen';
 import HistoryDetailsScreen from '../screens/history/HistoryDetailsScreen';
 import SessionEditorScreen from '../screens/history/SessionEditorScreen';
-
+import AnalyticsScreen from '../screens/analytics/AnalyticsScreen';
 
 const WorkoutStack = createNativeStackNavigator();
 
@@ -57,9 +57,25 @@ function HistoryStackNavigator() {
             <HistoryStack.Screen name="HistoryList" component={HistoryScreen} />
             <HistoryStack.Screen name="HistoryDetails" component={HistoryDetailsScreen} />
             <HistoryStack.Screen name="SessionEditor" component={SessionEditorScreen} />
+            {/* ADD THIS LINE */}
+            <HistoryStack.Screen name="Analytics" component={AnalyticsScreen} /> 
         </HistoryStack.Navigator>
     );
 }
+
+
+const ProfileStack = createNativeStackNavigator();
+
+// 2. Define the navigator function
+function ProfileStackNavigator() {
+    return (
+        <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
+            <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
+            <ProfileStack.Screen name="Analytics" component={AnalyticsScreen} />
+        </ProfileStack.Navigator>
+    );
+}
+
 
 export default function RootNavigator() {
     const theme = useTheme();
@@ -104,7 +120,7 @@ export default function RootNavigator() {
                 {/* <Tab.Screen name="History" component={HistoryScreen} /> */}
                 <Tab.Screen name="Plans" component={PlansStackNavigator} />
                 <Tab.Screen name="Exercises" component={ExerciseListScreen} />
-                <Tab.Screen name="Profile" component={ProfileScreen} />
+                <Tab.Screen name="Profile" component={ProfileStackNavigator} />
 
             </Tab.Navigator>
         </NavigationContainer>

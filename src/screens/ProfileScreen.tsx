@@ -3,17 +3,19 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, A
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getStats } from '../api/history';
-import { useAuth } from '../context/AuthContext'; 
+import { useAuth } from '../context/AuthContext';
 import { useTheme, useThemeToggle } from '../context/ThemeContext';
 import Toast from 'react-native-toast-message'; // <--- Import Toast
 import { deleteAccount } from '../api/auth';
-
+import { VolumeChart } from '../components/profile/VolumeChart';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 export default function ProfileScreen() {
+  const navigation = useNavigation<any>();
   const theme = useTheme();
-  const { isDark, toggleTheme } = useThemeToggle(); 
-  const { signOut } = useAuth(); 
-
+  const { isDark, toggleTheme } = useThemeToggle();
+  const { signOut } = useAuth();
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['stats'],
     queryFn: getStats,
@@ -26,14 +28,14 @@ export default function ProfileScreen() {
       "Are you sure you want to log out?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Log Out", style: "destructive", onPress: signOut } 
+        { text: "Log Out", style: "destructive", onPress: signOut }
       ]
     );
   };
 
 
 
-   // --- NEW: Delete Account Mutation ---
+  // --- NEW: Delete Account Mutation ---
   const deleteAccountMutation = useMutation({
     mutationFn: deleteAccount,
     onSuccess: () => {
@@ -59,10 +61,10 @@ export default function ProfileScreen() {
       "⚠️ This action is permanent. All your workouts, plans, and history will be lost forever.",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete Forever", 
-          style: "destructive", 
-          onPress: () => deleteAccountMutation.mutate() 
+        {
+          text: "Delete Forever",
+          style: "destructive",
+          onPress: () => deleteAccountMutation.mutate()
         }
       ]
     );
@@ -76,10 +78,10 @@ export default function ProfileScreen() {
   );
 
   const SettingRow = ({ label, value, onPress }: { label: string, value: string, onPress?: () => void }) => (
-    <TouchableOpacity 
-        onPress={onPress} 
-        disabled={!onPress}
-        style={[styles.settingRow, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={!onPress}
+      style={[styles.settingRow, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}
     >
       <Text style={[styles.settingLabel, { color: theme.colors.text }]}>{label}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -92,61 +94,88 @@ export default function ProfileScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Text style={[styles.header, { color: theme.colors.text }]}>Profile</Text>
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={{ padding: 16 }}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
       >
-        
+
         {/* STATS GRID */}
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>My Progress</Text>
         <View style={styles.grid}>
           <StatCard label="Total Workouts" value={data?.total_workouts || 0} />
           <StatCard label="This Month" value={data?.workouts_this_month || 0} />
         </View>
+        {/* ANALYTICS BUTTON */}
+        <TouchableOpacity 
+            style={{ 
+                flexDirection: 'row', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                backgroundColor: theme.colors.card, 
+                padding: 16, 
+                borderRadius: 12,
+                marginTop: 16,
+                marginBottom: 16
+            }}
+            onPress={() => navigation.navigate('Analytics')}
+        >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ backgroundColor: theme.colors.inputBackground, padding: 8, borderRadius: 8 }}>
+                     <Text>📈</Text>
+                </View>
+                <View>
+                    <Text style={{ color: theme.colors.text, fontWeight: 'bold', fontSize: 16 }}>Full Analytics</Text>
+                    <Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>Check your long term progress</Text>
+                </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+        </TouchableOpacity>
+        {/* --- NEW CHART --- */}
+        <VolumeChart />
 
         {/* LAST WORKOUT */}
         <View style={[styles.infoCard, { backgroundColor: theme.colors.card }]}>
-            <Text style={{ color: theme.colors.textSecondary, marginBottom: 4 }}>Last Workout</Text>
-            <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: '600' }}>
-                {data?.last_workout_date 
-                  ? new Date(data.last_workout_date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) 
-                  : "No workouts yet"}
-            </Text>
+          <Text style={{ color: theme.colors.textSecondary, marginBottom: 4 }}>Last Workout</Text>
+          <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: '600' }}>
+            {data?.last_workout_date
+              ? new Date(data.last_workout_date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
+              : "No workouts yet"}
+          </Text>
         </View>
 
         {/* SETTINGS SECTION */}
- <Text style={[styles.sectionTitle, { color: theme.colors.text, marginTop: 24 }]}>Settings</Text>
+        <Text style={[styles.sectionTitle, { color: theme.colors.text, marginTop: 24 }]}>Settings</Text>
         <View style={styles.settingsGroup}>
-            
-            {/* THEME TOGGLE ROW */}
-            <SettingRow 
-                label="Theme" 
-                value={isDark ? 'Dark Mode 🌙' : 'Light Mode ☀️'} 
-                onPress={toggleTheme} // <--- Wire it up!
-            />
-            
-            <SettingRow label="Units" value="Metric (kg)" />
-            <SettingRow label="Version" value="1.0.0 (Alpha)" />
+
+          {/* THEME TOGGLE ROW */}
+          <SettingRow
+            label="Theme"
+            value={isDark ? 'Dark Mode 🌙' : 'Light Mode ☀️'}
+            onPress={toggleTheme} // <--- Wire it up!
+          />
+
+          <SettingRow label="Units" value="Metric (kg)" />
+          <SettingRow label="Version" value="1.0.0 (Alpha)" />
         </View>
 
         {/* LOGOUT BUTTON */}
-        <TouchableOpacity 
-            style={[styles.logoutButton, { borderColor: theme.colors.error }]} 
-            onPress={handleLogout}
+        <TouchableOpacity
+          style={[styles.logoutButton, { borderColor: theme.colors.error }]}
+          onPress={handleLogout}
         >
-            <Text style={{ color: theme.colors.error, fontWeight: 'bold', fontSize: 16 }}>Log Out</Text>
+          <Text style={{ color: theme.colors.error, fontWeight: 'bold', fontSize: 16 }}>Log Out</Text>
         </TouchableOpacity>
 
 
-                {/* --- NEW: Delete Account Link --- */}
-        <TouchableOpacity 
-            style={{ marginBottom: 40, padding: 10, alignItems: 'center' }}
-            onPress={handleDeleteAccountPress}
-            disabled={deleteAccountMutation.isPending}
+        {/* --- NEW: Delete Account Link --- */}
+        <TouchableOpacity
+          style={{ marginBottom: 40, padding: 10, alignItems: 'center' }}
+          onPress={handleDeleteAccountPress}
+          disabled={deleteAccountMutation.isPending}
         >
-            <Text style={{ color: theme.colors.textSecondary, fontSize: 14, textDecorationLine: 'underline' }}>
-                {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account & Data"}
-            </Text>
+          <Text style={{ color: theme.colors.textSecondary, fontSize: 14, textDecorationLine: 'underline' }}>
+            {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account & Data"}
+          </Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -182,15 +211,15 @@ const styles = StyleSheet.create({
   },
   settingLabel: { fontSize: 16 },
   settingValue: { fontSize: 16 },
-  
+
   // NEW STYLE
   logoutButton: {
-      marginTop: 32,
-      marginBottom: 32,
-      padding: 16,
-      borderRadius: 12,
-      borderWidth: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
+    marginTop: 32,
+    marginBottom: 32,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   }
 });
