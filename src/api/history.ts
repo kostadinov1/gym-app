@@ -49,10 +49,17 @@ export interface ChartPoint {
     label: string;
 }
 
-export const getVolumeChart = (period: '1M' | '3M' | '6M' | '1Y' | 'ALL', planId?: string) => {
+export const getVolumeChart = (
+  period: '1M' | '3M' | '6M' | '1Y' | 'ALL',
+  planId?: string,
+  anchorDate?: string
+) => {
     let url = `/history/charts/volume?period=${period}`;
     if (planId) {
         url += `&plan_id=${planId}`;
+    }
+    if (anchorDate) {
+        url += `&anchor_date=${anchorDate}`;
     }
     return client<ChartPoint[]>(url);
 };

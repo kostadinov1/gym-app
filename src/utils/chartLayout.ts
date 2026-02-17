@@ -12,120 +12,131 @@ interface ChartLayoutOutput {
   barWidth: number;
   spacing: number;
   initialSpacing: number;
+  endSpacing: number;
   chartWidth: number | undefined; // undefined = scroll, number = fixed
   showLabels: boolean;
   isScrollable: boolean;
+  xAxisLabelWidth: number;
 }
+
+type PeriodConfig = {
+  visibleBarsBeforeScroll: number;
+  targetBarRatio: number;
+  maxBarWidth: number;
+  minSpacing: number;
+  showTopLabelsUpTo: number;
+};
+
+const PERIOD_CONFIG: Record<Period, PeriodConfig> = {
+  '1M': {
+    visibleBarsBeforeScroll: 24,
+    targetBarRatio: 0.62,
+    maxBarWidth: 18,
+    minSpacing: 2,
+    showTopLabelsUpTo: 10,
+  },
+  '3M': {
+    visibleBarsBeforeScroll: 16,
+    targetBarRatio: 0.6,
+    maxBarWidth: 24,
+    minSpacing: 5,
+    showTopLabelsUpTo: 12,
+  },
+  '6M': {
+    visibleBarsBeforeScroll: 20,
+    targetBarRatio: 0.6,
+    maxBarWidth: 20,
+    minSpacing: 3,
+    showTopLabelsUpTo: 10,
+  },
+  '1Y': {
+    visibleBarsBeforeScroll: 14,
+    targetBarRatio: 0.58,
+    maxBarWidth: 26,
+    minSpacing: 6,
+    showTopLabelsUpTo: 12,
+  },
+  ALL: {
+    visibleBarsBeforeScroll: 28,
+    targetBarRatio: 0.58,
+    maxBarWidth: 16,
+    minSpacing: 2,
+    showTopLabelsUpTo: 0,
+  },
+};
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 export const getSmartChartLayout = ({ 
   dataCount, 
   period,
   screenPadding = 48, // Standard padding (card padding + margins)
 }: ChartLayoutInput): ChartLayoutOutput => {
-  
   const screenWidth = Dimensions.get('window').width;
-  const availableWidth = screenWidth - screenPadding; // space for bars + gaps
+  const availableWidth = Math.max(screenWidth - screenPadding, 0); // space for bars + gaps
+  const config = PERIOD_CONFIG[period];
+  const minBarWidth = 5;
+  const maxSpacing = 18;
+  const initialSpacing = 12;
+  const endSpacing = 12;
+  const usableWidth = Math.max(availableWidth - initialSpacing - endSpacing, 0);
 
-  // Density controls
-  const minBarWidth = 6;
-  const maxBarWidth = 20;
-
-  const minSpacing = 4;
-  const maxSpacing = 14;
-
-  // Start from a reasonable default
-  let barWidth = 12;
-  let spacing = 8;
+  // Start from defaults
+  let barWidth = 10;
+  let spacing = 6;
   let chartWidth: number | undefined = undefined;
-  let showLabels = false;
+  let showLabels = dataCount <= config.showTopLabelsUpTo;
   let isScrollable = false;
-  let initialSpacing = 10;
+  let xAxisLabelWidth = 36;
 
   // Quick guard
   if (dataCount <= 0) {
-    return { barWidth, spacing, initialSpacing, chartWidth, showLabels, isScrollable };
+    return { barWidth, spacing, initialSpacing, endSpacing, chartWidth, showLabels, isScrollable, xAxisLabelWidth };
   }
 
-  // Helper: given total available width and count, compute fit values
-  const fitInAvailableWidth = (count: number) => {
-    // Reserve a bit of initial spacing at left
-    const usable = Math.max(availableWidth - initialSpacing, 0);
-    // Prefer a 65/35 split by default, then clamp
-    const rawBar = Math.floor((usable * 0.65) / count);
-    const rawGap = Math.floor((usable * 0.35) / count);
+  const visibleBars = Math.min(dataCount, config.visibleBarsBeforeScroll);
+  const slotWidth = usableWidth / Math.max(1, visibleBars);
+  const calculatedBarWidth = slotWidth * config.targetBarRatio;
+  barWidth = clamp(Math.round(calculatedBarWidth), minBarWidth, config.maxBarWidth);
+  spacing = clamp(Math.round(slotWidth - barWidth), config.minSpacing, maxSpacing);
 
-    // Clamp
-    barWidth = Math.max(minBarWidth, Math.min(maxBarWidth, rawBar));
-    spacing = Math.max(minSpacing, Math.min(maxSpacing, rawGap));
-
-    // If the density is too tight, allow a bit more gap to improve readability
-    if (barWidth + spacing > availableWidth / Math.max(1, count)) {
-      // Slightly reduce both if they overflow
-      const overflow = (barWidth + spacing) - (availableWidth / Math.max(1, count));
-      barWidth = Math.max(minBarWidth, barWidth - Math.ceil(overflow * 0.6));
-      spacing = Math.max(minSpacing, spacing - Math.ceil(overflow * 0.4));
-    }
-
-    // No chartWidth: we are fitting, not scrolling
-    chartWidth = availableWidth;
-    showLabels = period !== 'ALL' && count <= 26; // reasonable heuristic
+  // If this count does not comfortably fit at the computed density, use scroll mode.
+  const totalContentWidth = dataCount * (barWidth + spacing) + initialSpacing + endSpacing;
+  if (dataCount > config.visibleBarsBeforeScroll && totalContentWidth > availableWidth) {
+    isScrollable = true;
+    chartWidth = undefined;
+  } else {
     isScrollable = false;
-    initialSpacing = 10;
-  };
-
-  // Per-period policy: aim for a clean fit, but allow scroll if impossible
-  switch (period) {
-    case '1M':
-      // ~30 bars -> try to fit, but if density is too high, we allow limited scroll by still fitting
-      fitInAvailableWidth(dataCount);
-      // If after fit, bars look too crowded (barWidth at min), enable a tiny horizontal scroll hint
-      if (barWidth <= minBarWidth && dataCount > 26) {
-        // Enable scroll for readability
-        isScrollable = true;
-        chartWidth = undefined;
-      }
-      showLabels = true;
-      break;
-
-    case '3M':
-      // ~12 bars -> fit
-      fitInAvailableWidth(dataCount);
-      showLabels = true;
-      break;
-
-    case '6M':
-      // ~26 bars -> fit, but be stricter on density
-      fitInAvailableWidth(dataCount);
-      // If density is still tight, reduce label clutter
-      showLabels = barWidth > 12;
-      break;
-
-    case '1Y':
-      // ~12 bars -> fit
-      fitInAvailableWidth(dataCount);
-      showLabels = true;
-      break;
-
-    case 'ALL':
-      // Many bars; try to fit but allow some scrolling if necessary
-      fitInAvailableWidth(dataCount);
-      if (barWidth <= minBarWidth || dataCount > Math.floor(availableWidth / (minBarWidth + minSpacing))) {
-        isScrollable = true;
-        chartWidth = undefined;
-      }
-      showLabels = false;
-      break;
+    chartWidth = availableWidth;
   }
 
-  // Final sanity clamp (in case calculations push out of bounds)
-  barWidth = Math.max(minBarWidth, Math.min(maxBarWidth, barWidth));
-  spacing = Math.max(minSpacing, Math.min(maxSpacing, spacing));
+  // Adapt x-axis label width to density and period so labels avoid overlap.
+  if (isScrollable) {
+    xAxisLabelWidth = period === 'ALL' ? 28 : 32;
+  } else if (dataCount <= 12) {
+    xAxisLabelWidth = 44;
+  } else if (dataCount <= 20) {
+    xAxisLabelWidth = 38;
+  } else {
+    xAxisLabelWidth = 32;
+  }
+
+  // In dense layouts, suppress top labels.
+  if (period === 'ALL') {
+    showLabels = false;
+  } else if (isScrollable) {
+    showLabels = dataCount <= Math.min(10, config.showTopLabelsUpTo);
+  } else {
+    showLabels = dataCount <= config.showTopLabelsUpTo;
+  }
 
   return {
     barWidth,
     spacing,
     initialSpacing,
+    endSpacing,
     chartWidth,
+    xAxisLabelWidth,
     showLabels,
     isScrollable
   };
