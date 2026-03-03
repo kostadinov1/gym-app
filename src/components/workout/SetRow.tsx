@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Import Icons
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme';
 import { Stepper } from './Stepper';
 
@@ -8,62 +8,64 @@ interface SetRowProps {
   setNumber: number;
   weight: number;
   reps: number;
+  durationSeconds?: number;
+  hasDuration?: boolean;
   isCompleted: boolean;
-  onUpdate: (field: 'weight' | 'reps', value: number) => void;
+  onUpdate: (field: 'weight' | 'reps' | 'durationSeconds', value: number) => void;
   onToggleComplete: () => void;
-  onDelete?: () => void; // <--- New Optional Prop
+  onDelete?: () => void;
 }
 
-export const SetRow = ({ 
-  setNumber, weight, reps, isCompleted, onUpdate, onToggleComplete, onDelete 
+export const SetRow = ({
+  setNumber,
+  weight,
+  reps,
+  durationSeconds,
+  hasDuration = false,
+  isCompleted,
+  onUpdate,
+  onToggleComplete,
+  onDelete,
 }: SetRowProps) => {
   const theme = useTheme();
 
   return (
-    <View style={[
-      styles.container, 
-      isCompleted && { backgroundColor: theme.colors.successBackground }
-    ]}>
-      {/* Set Label */}
+    <View style={[styles.container, isCompleted && { backgroundColor: theme.colors.successBackground }]}> 
       <TouchableOpacity onPress={onToggleComplete} style={styles.labelContainer}>
-        <View style={[
-          styles.badge, 
-          { backgroundColor: isCompleted ? theme.colors.success : theme.colors.border }
-        ]}>
-          <Text style={[
-            styles.labelText, 
-            { color: isCompleted ? '#FFF' : theme.colors.text }
-          ]}>
-            {setNumber}
-          </Text>
+        <View style={[styles.badge, { backgroundColor: isCompleted ? theme.colors.success : theme.colors.border }]}> 
+          <Text style={[styles.labelText, { color: isCompleted ? '#FFF' : theme.colors.text }]}>{setNumber}</Text>
         </View>
       </TouchableOpacity>
 
-      {/* Controls */}
       <View style={styles.controls}>
-        <View style={{ flex: 1.2 }}> 
-            <Stepper 
-              value={weight} 
-              step={2.5} 
-              unit="kg"
-              onChange={(val) => onUpdate('weight', val)} 
-            />
+        <View style={{ flex: 1.1 }}>
+          <Stepper value={weight} step={2.5} unit="kg" onChange={(val) => onUpdate('weight', val)} />
         </View>
+
         <View style={{ width: 8 }} />
+
         <View style={{ flex: 1 }}>
-            <Stepper 
-              value={reps} 
-              step={1} 
-              unit="reps"
-              onChange={(val) => onUpdate('reps', val)} 
-            />
+          <Stepper value={reps} step={1} unit="reps" onChange={(val) => onUpdate('reps', val)} />
         </View>
-        
-        {/* NEW: Delete Button */}
+
+        {hasDuration && (
+          <>
+            <View style={{ width: 8 }} />
+            <View style={{ flex: 1 }}>
+              <Stepper
+                value={durationSeconds ?? 0}
+                step={5}
+                unit="sec"
+                onChange={(val) => onUpdate('durationSeconds', val)}
+              />
+            </View>
+          </>
+        )}
+
         {onDelete && (
-            <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
-                <Ionicons name="trash-outline" size={20} color={theme.colors.textSecondary} />
-            </TouchableOpacity>
+          <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
+            <Ionicons name="trash-outline" size={20} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
         )}
       </View>
     </View>
@@ -100,9 +102,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  // New style
   deleteBtn: {
-      marginLeft: 8,
-      padding: 4
-  }
+    marginLeft: 8,
+    padding: 4,
+  },
 });

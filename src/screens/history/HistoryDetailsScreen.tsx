@@ -8,7 +8,6 @@ import { Container } from '../../components/common/Container';
 
 export default function HistoryDetailsScreen() {
   const theme = useTheme();
-  // FIX 1: Add <any> to suppress the TypeScript error
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { sessionId } = route.params;
@@ -20,15 +19,15 @@ export default function HistoryDetailsScreen() {
 
   if (isLoading || !data) {
     return (
-        <Container style={{ justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator color={theme.colors.primary} />
-        </Container>
+      <Container style={{ justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator color={theme.colors.primary} />
+      </Container>
     );
   }
 
   const groupedSets = data.sets.reduce((acc: any, set) => {
     if (!acc[set.exercise_name]) {
-        acc[set.exercise_name] = [];
+      acc[set.exercise_name] = [];
     }
     acc[set.exercise_name].push(set);
     return acc;
@@ -39,43 +38,39 @@ export default function HistoryDetailsScreen() {
   return (
     <Container isScrollable={true}>
       <View style={styles.header}>
-        {/* Back Button */}
         <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
+          <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
         </TouchableOpacity>
-        
-        {/* FIX 2: Wrapped text in a View so it stacks vertically in the center */}
+
         <View style={{ flex: 1, paddingHorizontal: 16 }}>
-            <Text style={[styles.title, { color: theme.colors.text }]}>{data.routine_name}</Text>
-            <Text style={{ color: theme.colors.textSecondary }}>
-                {new Date(data.start_time).toLocaleDateString()} • {data.duration_minutes} min
-            </Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>{data.routine_name}</Text>
+          <Text style={{ color: theme.colors.textSecondary }}>
+            {new Date(data.start_time).toLocaleDateString()} • {data.duration_minutes} min
+          </Text>
         </View>
 
-        {/* Edit Button */}
-        <TouchableOpacity 
-            onPress={() => navigation.navigate('SessionEditor', { sessionId })}
-        >
-            <Text style={{ fontSize: 16, color: theme.colors.primary, fontWeight: 'bold' }}>Edit</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('SessionEditor', { sessionId })}>
+          <Text style={{ fontSize: 16, color: theme.colors.primary, fontWeight: 'bold' }}>Edit</Text>
         </TouchableOpacity>
       </View>
 
       <View style={{ padding: 16 }}>
         {exerciseNames.map((name) => (
-            <View key={name} style={[styles.card, { backgroundColor: theme.colors.card }]}>
-                <Text style={[styles.exerciseTitle, { color: theme.colors.text }]}>{name}</Text>
-                
-                {groupedSets[name].map((set: any, index: number) => (
-                    <View key={index} style={[styles.setRow, { borderBottomColor: theme.colors.border }]}>
-                        <View style={styles.setBadge}>
-                            <Text style={{ fontWeight: 'bold', color: theme.colors.textSecondary }}>{set.set_number}</Text>
-                        </View>
-                        <Text style={{ color: theme.colors.text, fontSize: 16 }}>
-                            {set.weight}kg x {set.reps}
-                        </Text>
-                    </View>
-                ))}
-            </View>
+          <View key={name} style={[styles.card, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.exerciseTitle, { color: theme.colors.text }]}>{name}</Text>
+
+            {groupedSets[name].map((set: any, index: number) => (
+              <View key={index} style={[styles.setRow, { borderBottomColor: theme.colors.border }]}>
+                <View style={styles.setBadge}>
+                  <Text style={{ fontWeight: 'bold', color: theme.colors.textSecondary }}>{set.set_number}</Text>
+                </View>
+                <Text style={{ color: theme.colors.text, fontSize: 16 }}>
+                  {set.weight}kg x {set.reps}
+                  {set.duration_seconds !== null && set.duration_seconds !== undefined ? ` • ${set.duration_seconds}s` : ''}
+                </Text>
+              </View>
+            ))}
+          </View>
         ))}
       </View>
     </Container>
@@ -83,20 +78,25 @@ export default function HistoryDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { 
-      padding: 16, 
-      borderBottomWidth: 1, 
-      borderColor: '#eee',
-      flexDirection: 'row', 
-      alignItems: 'center',
-      justifyContent: 'space-between'
+  header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  title: { fontSize: 20, fontWeight: 'bold' }, // Slightly smaller to fit better
+  title: { fontSize: 20, fontWeight: 'bold' },
   card: { padding: 16, borderRadius: 12, marginBottom: 12 },
   exerciseTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
   setRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1 },
-  setBadge: { 
-      width: 24, height: 24, borderRadius: 12, backgroundColor: '#eee', 
-      justifyContent: 'center', alignItems: 'center', marginRight: 12 
-  }
+  setBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#eee',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
 });

@@ -1,10 +1,10 @@
 import { client } from './client';
-import { FinishWorkoutDto } from './workouts'; // Reuse the DTO structure
+import { FinishWorkoutDto } from './workouts';
 
 export interface HistorySession {
   id: string;
   routine_name: string;
-  date: string; // ISO date
+  date: string;
   status: string;
 }
 
@@ -15,56 +15,57 @@ export interface UserStats {
 }
 
 export interface SessionSetDetail {
-    exercise_id: string; // <--- ADD THIS
-    exercise_name: string;
-    set_number: number;
-    reps: number;
-    weight: number;
-    is_completed: boolean;
+  exercise_id: string;
+  exercise_name: string;
+  set_number: number;
+  reps: number;
+  weight: number;
+  duration_seconds?: number | null;
+  is_completed: boolean;
 }
 
 export interface SessionDetail {
-    id: string;
-    routine_name: string;
-    start_time: string;
-    end_time: string;
-    duration_minutes: number;
-    sets: SessionSetDetail[];
+  id: string;
+  routine_name: string;
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+  sets: SessionSetDetail[];
 }
 
-
 export interface UpdateSessionDto {
-    sets: {
-        exercise_id: string;
-        set_number: number;
-        reps: number;
-        weight: number;
-        is_completed: boolean;
-    }[];
+  sets: {
+    exercise_id: string;
+    set_number: number;
+    reps: number;
+    weight: number;
+    duration_seconds?: number | null;
+    is_completed: boolean;
+  }[];
 }
 
 export interface ChartPoint {
-    date: string;
-    value: number;
-    label: string;
+  date: string;
+  value: number;
+  label: string;
 }
 
 export const getVolumeChart = (
   period: '1M' | '3M' | '6M' | '1Y' | 'ALL',
   planId?: string,
-  anchorDate?: string
+  anchorDate?: string,
 ) => {
-    let url = `/history/charts/volume?period=${period}`;
-    if (planId) {
-        url += `&plan_id=${planId}`;
-    }
-    if (anchorDate) {
-        url += `&anchor_date=${anchorDate}`;
-    }
-    return client<ChartPoint[]>(url);
+  let url = `/history/charts/volume?period=${period}`;
+  if (planId) {
+    url += `&plan_id=${planId}`;
+  }
+  if (anchorDate) {
+    url += `&anchor_date=${anchorDate}`;
+  }
+  return client<ChartPoint[]>(url);
 };
+
 export const getHistory = (startDate: string, endDate: string) => {
-  // Query Params: ?start_date=...&end_date=...
   return client<HistorySession[]>(`/history/?start_date=${startDate}&end_date=${endDate}`);
 };
 
@@ -73,12 +74,12 @@ export const getStats = () => {
 };
 
 export const getSessionDetails = (sessionId: string) => {
-    return client<SessionDetail>(`/history/${sessionId}`);
+  return client<SessionDetail>(`/history/${sessionId}`);
 };
 
 export const updateSession = (sessionId: string, data: UpdateSessionDto) => {
-    return client(`/history/${sessionId}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-    });
+  return client(`/history/${sessionId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
 };

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
-import { getExercises } from '../../api/exercises';
+import { getExercisesFiltered } from '../../api/exercises';
 import { addExerciseTarget, deleteRoutine, deleteRoutineExercise, getPlanDetails, reorderExercises, updateRoutine, updateRoutineExercise } from '../../api/plans';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,9 +25,14 @@ export default function RoutineEditorScreen() {
     const [weight, setWeight] = useState('20');
     const [incWeight, setIncWeight] = useState('2.5');
     const [incReps, setIncReps] = useState('0');
+    const [hasDurationTarget, setHasDurationTarget] = useState(false);
+    const [targetDuration, setTargetDuration] = useState('30');
+    const [incDuration, setIncDuration] = useState('5');
     const [isRenameModalVisible, setRenameModalVisible] = useState(false);
     const [newName, setNewName] = useState(routineName);
     const [editingTargetId, setEditingTargetId] = useState<string | null>(null);
+    const [exerciseSearchText, setExerciseSearchText] = useState('');
+    const [debouncedExerciseSearch, setDebouncedExerciseSearch] = useState('');
 
 
     const reorderMutation = useMutation({
@@ -78,9 +83,20 @@ export default function RoutineEditorScreen() {
 
     const existingExercises = currentRoutine?.exercises || [];
 
-    const { data: allExercises, isLoading: loadingEx } = useQuery({
-        queryKey: ['exercises'],
-        queryFn: getExercises,
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedExerciseSearch(exerciseSearchText);
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [exerciseSearchText]);
+
+    const normalizedExerciseSearch = debouncedExerciseSearch.trim();
+    const exerciseBackendQuery = normalizedExerciseSearch.length >= 2 ? normalizedExerciseSearch : undefined;
+
+    const { data: allExercises, isLoading: loadingEx, isFetching: isFetchingExercises } = useQuery({
+        queryKey: ['exercises', exerciseBackendQuery, 'routine-editor'],
+        queryFn: () => getExercisesFiltered({ q: exerciseBackendQuery }),
+        placeholderData: keepPreviousData,
     });
 
     const addMutation = useMutation({
@@ -90,11 +106,13 @@ export default function RoutineEditorScreen() {
             target_sets: parseInt(sets) || 0,
             target_reps: parseInt(reps) || 0,
             target_weight: parseFloat(weight) || 0,
+            target_duration_seconds: hasDurationTarget ? (parseInt(targetDuration) || 0) : null,
             rest_seconds: 90,
 
             // --- FIX: Force 0 if it is a Rest Day ---
             increment_weight: isRest ? 0 : (parseFloat(incWeight) || 0),
-            increment_reps: isRest ? 0 : (parseInt(incReps) || 0)
+            increment_reps: isRest ? 0 : (parseInt(incReps) || 0),
+            increment_duration_seconds: isRest ? 0 : (hasDurationTarget ? (parseInt(incDuration) || 0) : 0),
         }),
         onSuccess: () => {
             setModalVisible(false);
@@ -110,8 +128,10 @@ export default function RoutineEditorScreen() {
             target_sets: parseInt(sets) || 0,
             target_reps: parseInt(reps) || 0,
             target_weight: parseFloat(weight) || 0,
+            target_duration_seconds: hasDurationTarget ? (parseInt(targetDuration) || 0) : null,
             increment_weight: isRest ? 0 : (parseFloat(incWeight) || 0),
             increment_reps: isRest ? 0 : (parseInt(incReps) || 0),
+            increment_duration_seconds: isRest ? 0 : (hasDurationTarget ? (parseInt(incDuration) || 0) : 0),
         };
 
         if (editingTargetId) {
@@ -144,6 +164,10 @@ export default function RoutineEditorScreen() {
         setWeight(String(item.target_weight));
         setIncWeight(String(item.increment_weight));
         setIncReps(String(item.increment_reps));
+        const hasDuration = item.target_duration_seconds !== null && item.target_duration_seconds !== undefined;
+        setHasDurationTarget(hasDuration);
+        setTargetDuration(String(item.target_duration_seconds ?? 30));
+        setIncDuration(String(item.increment_duration_seconds ?? 0));
         setModalVisible(true);
     };
 
@@ -194,11 +218,14 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
             <View>
                 <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
                 <Text style={{ color: theme.colors.textSecondary }}>
-                    {item.target_sets} x {item.target_reps} @ {item.target_weight}kg
+                    {item.target_sets} x {item.target_reps}
+                    {item.target_duration_seconds !== null && item.target_duration_seconds !== undefined ? ` • ${item.target_duration_seconds}s` : ''}
+                    {' @ '}{item.target_weight}kg
                 </Text>
                 {!isRest && (
                     <Text style={{ fontSize: 11, color: theme.colors.primary, marginTop: 4 }}>
                         +{item.increment_weight}kg / week
+                        {item.target_duration_seconds !== null && item.target_duration_seconds !== undefined ? ` • +${item.increment_duration_seconds ?? 0}s / week` : ''}
                     </Text>
                 )}
             </View>
@@ -262,6 +289,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         setEditingTargetId(null);
                         setSelectedExerciseId(null);
                         setSets('3'); setReps('10'); setWeight('20'); setIncWeight('2.5'); setIncReps('0');
+                        setHasDurationTarget(false); setTargetDuration('30'); setIncDuration('5');
                         setModalVisible(true);
                     }}
                 >
@@ -282,6 +310,22 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         {!editingTargetId && (
                             <>
                                 <Text style={[styles.label, { color: theme.colors.text }]}>1. Select Exercise</Text>
+                                <View style={[styles.searchContainer, { backgroundColor: theme.colors.inputBackground, borderColor: theme.colors.border }]}>
+                                    <Text style={{ fontSize: 16, marginRight: 8 }}>🔍</Text>
+                                    <TextInput
+                                        style={{ flex: 1, color: theme.colors.text, fontSize: 15 }}
+                                        placeholder="Search exercises..."
+                                        placeholderTextColor={theme.colors.textSecondary}
+                                        value={exerciseSearchText}
+                                        onChangeText={setExerciseSearchText}
+                                    />
+                                    {isFetchingExercises && <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginRight: 6 }} />}
+                                    {exerciseSearchText.length > 0 && (
+                                        <TouchableOpacity onPress={() => setExerciseSearchText('')}>
+                                            <Text style={{ color: theme.colors.textSecondary }}>✕</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
                                 <View style={{ height: 150, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, marginBottom: 16 }}>
                                     {loadingEx ? <ActivityIndicator /> : (
                                         <FlatList
@@ -306,6 +350,25 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                             </Text>
                         )}
                         <Text style={[styles.label, { color: theme.colors.text }]}>2. Set Targets</Text>
+
+                        <TouchableOpacity
+                            style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                borderWidth: 1,
+                                borderColor: theme.colors.border,
+                                borderRadius: 8,
+                                padding: 12,
+                                marginBottom: 12,
+                            }}
+                            onPress={() => setHasDurationTarget((prev) => !prev)}
+                        >
+                            <Text style={{ color: theme.colors.textSecondary }}>Time-based target</Text>
+                            <Text style={{ color: hasDurationTarget ? theme.colors.primary : theme.colors.textSecondary, fontWeight: 'bold' }}>
+                                {hasDurationTarget ? 'ON' : 'OFF'}
+                            </Text>
+                        </TouchableOpacity>
 
                         {/* Row 1: Sets & Reps */}
                         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
@@ -345,7 +408,6 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         </View>
 
                         {/* Row 3: Rep Increment */}
-
                         <View style={{ flexDirection: 'row', gap: 10 }}>
                             <View style={{ flex: 1 }}>
                                 <Text style={{ color: theme.colors.textSecondary }}>+Reps / Week</Text>
@@ -363,6 +425,35 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                             </View>
                             <View style={{ flex: 1 }} />
                         </View>
+
+                        {hasDurationTarget && (
+                            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{ color: theme.colors.textSecondary }}>Target Time (sec)</Text>
+                                    <TextInput
+                                        style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+                                        value={targetDuration}
+                                        onChangeText={setTargetDuration}
+                                        keyboardType="numeric"
+                                    />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{ color: theme.colors.textSecondary }}>+Sec / Week</Text>
+                                    <TextInput
+                                        style={[
+                                            styles.input,
+                                            { color: theme.colors.text, borderColor: theme.colors.border },
+                                            isRest && { backgroundColor: theme.colors.background, opacity: 0.5 }
+                                        ]}
+                                        value={isRest ? "0" : incDuration}
+                                        onChangeText={setIncDuration}
+                                        keyboardType="numeric"
+                                        editable={!isRest}
+                                        selectTextOnFocus={!isRest}
+                                    />
+                                </View>
+                            </View>
+                        )}
 
 
                         <TouchableOpacity
@@ -417,6 +508,15 @@ const styles = StyleSheet.create({
     header: { fontSize: 20, fontWeight: 'bold' },
     bigButton: { padding: 16, borderRadius: 12, alignItems: 'center' },
     label: { fontWeight: 'bold', marginBottom: 8, fontSize: 16 },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        marginBottom: 10,
+    },
     input: { borderWidth: 1, borderRadius: 8, padding: 12, fontSize: 16 },
     card: { padding: 16, borderRadius: 12, marginBottom: 8 },
     cardTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 },

@@ -4,7 +4,7 @@ export interface Routine {
   id: string;
   name: string;
   day_of_week?: number;
-  last_completed_at?: string | null; // <--- NEW FIELD
+  last_completed_at?: string | null;
   routine_type: 'workout' | 'rest';
 }
 
@@ -12,6 +12,7 @@ export interface SetTarget {
   set_number: number;
   target_reps: number;
   target_weight: number;
+  target_duration_seconds?: number | null;
 }
 
 export interface ExercisePreview {
@@ -20,6 +21,7 @@ export interface ExercisePreview {
   sets: SetTarget[];
   increment_weight: number;
   increment_reps: number;
+  increment_duration_seconds: number;
 }
 
 export interface RoutineStartResponse {
@@ -30,29 +32,25 @@ export interface RoutineStartResponse {
 
 export interface FinishWorkoutDto {
   routine_id: string;
-  start_time: string; // ISO String
-  end_time: string;   // ISO String
+  start_time: string;
+  end_time: string;
   sets: {
     exercise_id: string;
     set_number: number;
     reps: number;
     weight: number;
+    duration_seconds?: number | null;
     is_completed: boolean;
   }[];
 }
 
-
-// 1. Get List of Routines (Pull A, Pull B...)
 export const getRoutines = () => {
   return client<Routine[]>('/workouts/routines');
 };
 
-// 2. Start a specific routine
 export const startRoutine = (routineId: string) => {
   return client<RoutineStartResponse>(`/workouts/start/${routineId}`);
 };
-
-
 
 export const finishWorkout = (data: FinishWorkoutDto) => {
   return client('/workouts/finish', {
