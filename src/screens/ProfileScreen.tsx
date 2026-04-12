@@ -1,15 +1,17 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native'; // Add TouchableOpacity, Alert
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useStorage } from '../context/StorageContext';
 import { useTheme, useThemeToggle } from '../context/ThemeContext';
-import Toast from 'react-native-toast-message'; // <--- Import Toast
+import Toast from 'react-native-toast-message';
 import { deleteAccount } from '../api/auth';
 import { VolumeChart } from '../components/profile/VolumeChart';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useEntitlement } from '../hooks/useEntitlement';
+import { ExportService, type ExportFormat } from '../services/ExportService';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -17,6 +19,8 @@ export default function ProfileScreen() {
   const db = useStorage();
   const { isDark, toggleTheme } = useThemeToggle();
   const { signOut } = useAuth();
+  const { canExport, openPaywall } = useEntitlement();
+  const [exporting, setExporting] = useState(false);
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['stats'],
     queryFn: () => db.getStats(),
@@ -69,6 +73,26 @@ export default function ProfileScreen() {
         }
       ]
     );
+  };
+
+  const handleExport = async (format: ExportFormat) => {
+    if (!canExport) {
+      openPaywall();
+      return;
+    }
+    setExporting(true);
+    try {
+      const svc = new ExportService(db);
+      await svc.export(format);
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Export failed',
+        text2: (err as Error).message,
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
   const StatCard = ({ label, value }: { label: string, value: string | number }) => (
@@ -158,6 +182,51 @@ export default function ProfileScreen() {
           <SettingRow label="Units" value="Metric (kg)" />
           <SettingRow label="Version" value="1.0.0 (Alpha)" />
         </View>
+
+        {/* EXPORT SECTION */}
+        <Text style={[styles.sectionTitle, { color: theme.colors.text, marginTop: 24 }]}>Export Data</Text>
+        <View style={[styles.settingsGroup, { marginBottom: 8 }]}>
+          <TouchableOpacity
+            style={[styles.settingRow, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}
+            onPress={() => handleExport('csv')}
+            disabled={exporting}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Ionicons name="document-text-outline" size={20} color={theme.colors.primary} />
+              <View>
+                <Text style={[styles.settingLabel, { color: theme.colors.text }]}>Export as CSV</Text>
+                <Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>Strong-compatible format</Text>
+              </View>
+            </View>
+            {exporting
+              ? <ActivityIndicator size="small" color={theme.colors.primary} />
+              : <Ionicons name={canExport ? 'share-outline' : 'lock-closed-outline'} size={20} color={theme.colors.textSecondary} />
+            }
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.settingRow, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}
+            onPress={() => handleExport('json')}
+            disabled={exporting}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Ionicons name="code-outline" size={20} color={theme.colors.primary} />
+              <View>
+                <Text style={[styles.settingLabel, { color: theme.colors.text }]}>Export as JSON</Text>
+                <Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>Full-fidelity backup</Text>
+              </View>
+            </View>
+            {exporting
+              ? <ActivityIndicator size="small" color={theme.colors.primary} />
+              : <Ionicons name={canExport ? 'share-outline' : 'lock-closed-outline'} size={20} color={theme.colors.textSecondary} />
+            }
+          </TouchableOpacity>
+        </View>
+        {!canExport && (
+          <Text style={{ color: theme.colors.textSecondary, fontSize: 12, marginBottom: 16, paddingHorizontal: 4 }}>
+            🔒 Export is a Pro feature. Upgrade to unlock.
+          </Text>
+        )}
 
         {/* LOGOUT BUTTON */}
         <TouchableOpacity

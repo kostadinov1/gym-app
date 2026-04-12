@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const fs = require\\('/home/gencho/Web_Development/gym-app/node_modules/expo-file-system/build/index'\\); console.log\\(Object.keys\\(fs\\).filter\\(k => k.match\\(/cache|Cache|encoding|Encoding|write|Write/i\\)\\).slice\\(0,20\\)\\)\")"
+    ]
+  }
+}
