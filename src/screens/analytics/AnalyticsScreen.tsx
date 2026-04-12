@@ -5,6 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
+import { useAuth } from '../../context/AuthContext';
+import { useEntitlement } from '../../hooks/useEntitlement';
 import { BarChart } from 'react-native-gifted-charts';
 import { getSmartChartLayout, Period } from '../../utils/chartLayout';
 
@@ -17,6 +19,8 @@ export default function AnalyticsScreen() {
     const theme = useTheme();
     const db = useStorage();
     const navigation = useNavigation<any>();
+    const { isGuest } = useAuth();
+    const { openPaywall } = useEntitlement();
 
     const [period, setPeriod] = useState<Period>('1M');
     const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>(undefined);
@@ -229,6 +233,35 @@ export default function AnalyticsScreen() {
             </View>
         );
     };
+
+    if (isGuest) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 8 }}>
+                        <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
+                    </TouchableOpacity>
+                    <Text style={[styles.title, { color: theme.colors.text }]}>Analytics</Text>
+                    <View style={{ width: 40 }} />
+                </View>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+                    <Text style={{ fontSize: 40, marginBottom: 16 }}>📊</Text>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.colors.text, marginBottom: 8, textAlign: 'center' }}>
+                        Analytics Locked
+                    </Text>
+                    <Text style={{ color: theme.colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 28 }}>
+                        Create an account to unlock volume charts, full history, and long-term progress tracking.
+                    </Text>
+                    <TouchableOpacity
+                        style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 12 }}
+                        onPress={openPaywall}
+                    >
+                        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Upgrade to Pro</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>

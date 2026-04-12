@@ -1,23 +1,43 @@
 import React, { useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
+import { useAuth } from '../../context/AuthContext';
+import { useEntitlement } from '../../hooks/useEntitlement';
 import { getSmartChartLayout } from '../../utils/chartLayout';
 
 export const VolumeChart = () => {
     const theme = useTheme();
     const db = useStorage();
+    const { isGuest } = useAuth();
+    const { openPaywall } = useEntitlement();
     const [selectedPoint, setSelectedPoint] = useState<{ date: string; value: number } | null>(null);
     const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['volumeChart', 'preview'],
-        queryFn: () => db.getVolumeChart('3M')
+        queryFn: () => db.getVolumeChart('3M'),
+        enabled: !isGuest,
     });
 
     if (isLoading) return <ActivityIndicator color={theme.colors.primary} />;
+
+    // Guest users — show a locked placeholder instead of the empty state
+    if (isGuest) {
+        return (
+            <View style={[styles.container, { backgroundColor: theme.colors.card }, styles.emptyContainer]}>
+                <Text style={{ color: theme.colors.textSecondary, marginBottom: 10 }}>📊 Volume chart</Text>
+                <TouchableOpacity
+                    style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 8 }}
+                    onPress={openPaywall}
+                >
+                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13 }}>Upgrade to unlock</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
 
     if (error || !data || data.length === 0) {
         return (

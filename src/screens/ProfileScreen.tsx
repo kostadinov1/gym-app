@@ -396,16 +396,18 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
 
-        {/* --- NEW: Delete Account Link --- */}
-        <TouchableOpacity
-          style={{ marginBottom: 40, padding: 10, alignItems: 'center' }}
-          onPress={handleDeleteAccountPress}
-          disabled={deleteAccountMutation.isPending}
-        >
-          <Text style={{ color: theme.colors.textSecondary, fontSize: 14, textDecorationLine: 'underline' }}>
-            {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account & Data"}
-          </Text>
-        </TouchableOpacity>
+        {/* Delete Account — only for registered users */}
+        {!isGuest && (
+          <TouchableOpacity
+            style={{ marginBottom: 40, padding: 10, alignItems: 'center' }}
+            onPress={handleDeleteAccountPress}
+            disabled={deleteAccountMutation.isPending}
+          >
+            <Text style={{ color: theme.colors.textSecondary, fontSize: 14, textDecorationLine: 'underline' }}>
+              {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account & Data"}
+            </Text>
+          </TouchableOpacity>
+        )}
 
       </ScrollView>
     </SafeAreaView>
