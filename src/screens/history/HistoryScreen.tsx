@@ -5,6 +5,7 @@ import { Calendar } from 'react-native-calendars';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
+import { AdBanner } from '../../components/AdBanner';
 import { useNavigation } from '@react-navigation/native'; // Add import
 import { Ionicons } from '@expo/vector-icons';
 
@@ -144,6 +145,7 @@ export default function HistoryScreen() {
           />
         )}
       </View>
+      <AdBanner />
     </SafeAreaView>
   );
 }

@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { StorageProvider } from './src/context/StorageContext';
 import { EntitlementProvider } from './src/context/EntitlementContext';
+import { AdsProvider } from './src/components/ConsentManager';
 import { useTheme } from './src/theme';
 import RootNavigator from './src/navigation/RootNavigator';
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -85,9 +86,11 @@ function App() {
                       depending on whether the user is a guest */}
                   <StorageProvider>
                       <EntitlementProvider>
+                      <AdsProvider>
                           <StatusBar barStyle="default" />
                           <NavigationWrapper />
-                      </EntitlementProvider>
+                      </AdsProvider>
+                  </EntitlementProvider>
                   </StorageProvider>
                   <Toast />
               </QueryClientProvider>

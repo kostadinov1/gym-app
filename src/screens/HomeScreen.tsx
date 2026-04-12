@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native'; // Import navigation
 import { useTheme } from '../theme';
 import { useStorage } from '../context/StorageContext';
+import { AdBanner } from '../components/AdBanner';
 
 export default function HomeScreen() {
   const theme = useTheme();
@@ -100,6 +101,7 @@ const isDoneToday = (dateString?: string | null) => {
             );
         }}
       />
+      <AdBanner />
     </SafeAreaView>
   );
 }

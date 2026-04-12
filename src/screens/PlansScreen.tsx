@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTheme } from '../theme';
 import { useStorage } from '../context/StorageContext';
+import { AdBanner } from '../components/AdBanner';
 
 import { useNavigation } from '@react-navigation/native'; // Add this
 import { FAB } from '../components/common/FAB';
@@ -111,6 +112,7 @@ export default function PlansScreen() {
 
             {/* FAB to Create New Plan */}
             {/* <FAB onPress={() => navigation.navigate('CreatePlan')} /> */}
+            <AdBanner />
             {data && data.length > 0 && (
                 <FAB onPress={() => navigation.navigate('CreatePlan')} />
             )}

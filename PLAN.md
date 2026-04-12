@@ -15,7 +15,7 @@
 | 4 | LocalService reads | ✅ Done | 2-3d |
 | 5 | LocalService writes | ✅ Done | 2d |
 | 6 | Subscriptions + feature gating (RevenueCat) | ✅ Done | 3d |
-| 7 | Ads + GDPR consent (AdMob + UMP) | ⬜ Not started | 1-2d |
+| 7 | Ads + GDPR consent (AdMob + UMP) | ✅ Done | 1-2d |
 | 8 | Data export (Strong CSV + JSON) | ⬜ Not started | 1d |
 | 9 | Ghost → Registered migration | ⬜ Not started | 3d |
 | 10 | Google Play prep + EAS build | ⬜ Not started | 2d |
