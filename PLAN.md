@@ -17,7 +17,7 @@
 | 6 | Subscriptions + feature gating (RevenueCat) | ✅ Done | 3d |
 | 7 | Ads + GDPR consent (AdMob + UMP) | ✅ Done | 1-2d |
 | 8 | Data export (Strong CSV + JSON) | ✅ Done | 1d |
-| 9 | Ghost → Registered migration | ⬜ Not started | 3d |
+| 9 | Ghost → Registered migration | ✅ Done | 3d |
 | 10 | Google Play prep + EAS build | ⬜ Not started | 2d |
 
 ---

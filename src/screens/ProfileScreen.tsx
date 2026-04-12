@@ -1,26 +1,43 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import {
+  View, Text, StyleSheet, ScrollView, RefreshControl,
+  TouchableOpacity, Alert, ActivityIndicator, Modal,
+  TextInput,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useStorage } from '../context/StorageContext';
 import { useTheme, useThemeToggle } from '../context/ThemeContext';
 import Toast from 'react-native-toast-message';
-import { deleteAccount } from '../api/auth';
+import { deleteAccount, register, login } from '../api/auth';
 import { VolumeChart } from '../components/profile/VolumeChart';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useEntitlement } from '../hooks/useEntitlement';
 import { ExportService, type ExportFormat } from '../services/ExportService';
+import {
+  getMigrationRecord,
+  runGhostMigration,
+} from '../services/GhostMigrationService';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const theme = useTheme();
   const db = useStorage();
   const { isDark, toggleTheme } = useThemeToggle();
-  const { signOut } = useAuth();
+  const { signOut, isGuest, promoteGuest } = useAuth();
   const { canExport, openPaywall } = useEntitlement();
+  const queryClient = useQueryClient();
   const [exporting, setExporting] = useState(false);
+
+  // ── Ghost → Registered migration state ────────────────────────────────
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [migrationStep, setMigrationStep] = useState<
+    'idle' | 'registering' | 'migrating' | 'done'
+  >('idle');
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['stats'],
     queryFn: () => db.getStats(),
@@ -95,6 +112,57 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleCreateAccount = async () => {
+    if (!regEmail.trim() || !regPassword.trim()) {
+      Toast.show({ type: 'error', text1: 'Missing fields', text2: 'Enter email and password.' });
+      return;
+    }
+
+    // Check idempotency — skip if already migrated
+    const existing = await getMigrationRecord();
+    if (existing) {
+      Toast.show({ type: 'info', text1: 'Already migrated', text2: 'Your data is already synced.' });
+      setShowRegisterModal(false);
+      return;
+    }
+
+    try {
+      // Step 1 — Register
+      setMigrationStep('registering');
+      await register(regEmail.trim(), regPassword.trim());
+
+      // Step 2 — Get token
+      const { access_token } = await login(regEmail.trim(), regPassword.trim());
+
+      // Step 3 — Migrate local data
+      setMigrationStep('migrating');
+      // Store token so GhostMigrationService can use it
+      const { setItemAsync } = await import('expo-secure-store');
+      await setItemAsync('userToken', access_token);
+
+      const result = await runGhostMigration();
+
+      if (!result.success && result.errors.length > 0) {
+        console.warn('[Migration] Partial errors:', result.errors);
+      }
+
+      // Step 4 — Flush cache + promote
+      setMigrationStep('done');
+      queryClient.clear();
+      await promoteGuest(access_token);
+
+      setShowRegisterModal(false);
+      Toast.show({
+        type: 'success',
+        text1: 'Welcome! 🎉',
+        text2: `Synced ${result.counts.sessions} workouts and ${result.counts.plans} plans.`,
+      });
+    } catch (err) {
+      setMigrationStep('idle');
+      Toast.show({ type: 'error', text1: 'Registration failed', text2: (err as Error).message });
+    }
+  };
+
   const StatCard = ({ label, value }: { label: string, value: string | number }) => (
     <View style={[styles.statCard, { backgroundColor: theme.colors.card }]}>
       <Text style={[styles.statValue, { color: theme.colors.primary }]}>{value}</Text>
@@ -119,10 +187,85 @@ export default function ProfileScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Text style={[styles.header, { color: theme.colors.text }]}>Profile</Text>
 
+      {/* ── Syncing modal ──────────────────────────────────────────────── */}
+      <Modal visible={migrationStep !== 'idle' && migrationStep !== 'done'} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
+            <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginBottom: 16 }} />
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+              {migrationStep === 'registering' ? 'Creating account…' : 'Syncing your data…'}
+            </Text>
+            <Text style={{ color: theme.colors.textSecondary, textAlign: 'center', marginTop: 8 }}>
+              {migrationStep === 'registering'
+                ? 'Setting up your account'
+                : 'Uploading workouts, plans and exercises to the cloud'}
+            </Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Register modal ─────────────────────────────────────────────── */}
+      <Modal visible={showRegisterModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Create Account</Text>
+            <Text style={{ color: theme.colors.textSecondary, marginBottom: 20, textAlign: 'center' }}>
+              Your workout data will be synced to the cloud.
+            </Text>
+            <TextInput
+              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}
+              placeholder="Email"
+              placeholderTextColor={theme.colors.textSecondary}
+              value={regEmail}
+              onChangeText={setRegEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+            <TextInput
+              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}
+              placeholder="Password"
+              placeholderTextColor={theme.colors.textSecondary}
+              value={regPassword}
+              onChangeText={setRegPassword}
+              secureTextEntry
+            />
+            <TouchableOpacity
+              style={[styles.ctaButton, { backgroundColor: theme.colors.primary }]}
+              onPress={handleCreateAccount}
+              disabled={migrationStep !== 'idle'}
+            >
+              <Text style={styles.ctaButtonText}>Create Account & Sync</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ marginTop: 12, padding: 8 }}
+              onPress={() => { setShowRegisterModal(false); setMigrationStep('idle'); }}
+            >
+              <Text style={{ color: theme.colors.textSecondary, textAlign: 'center' }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView
         contentContainerStyle={{ padding: 16 }}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
       >
+
+        {/* GUEST CTA BANNER */}
+        {isGuest && (
+          <TouchableOpacity
+            style={[styles.guestBanner, { backgroundColor: theme.colors.primary + '18', borderColor: theme.colors.primary }]}
+            onPress={() => setShowRegisterModal(true)}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.guestBannerTitle, { color: theme.colors.primary }]}>Save your progress</Text>
+              <Text style={{ color: theme.colors.textSecondary, fontSize: 13, marginTop: 2 }}>
+                Create a free account to back up and sync your data.
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.primary} />
+          </TouchableOpacity>
+        )}
 
         {/* STATS GRID */}
         <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>My Progress</Text>
@@ -282,6 +425,48 @@ const styles = StyleSheet.create({
   settingLabel: { fontSize: 16 },
   settingValue: { fontSize: 16 },
 
+  guestBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+    gap: 12,
+  },
+  guestBannerTitle: { fontSize: 16, fontWeight: '700' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: 20,
+    padding: 28,
+    alignItems: 'center',
+  },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 4 },
+  input: {
+    width: '100%',
+    height: 48,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+    fontSize: 15,
+  },
+  ctaButton: {
+    width: '100%',
+    height: 48,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  ctaButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   // NEW STYLE
   logoutButton: {
     marginTop: 32,
