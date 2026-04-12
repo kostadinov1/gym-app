@@ -2,11 +2,11 @@
 // LocalService — IAppService implementation for ghost (offline) users.
 // Reads and writes to the local SQLite database via drizzle-orm.
 //
-// Phase 4: Read methods implemented.
-// Phase 5: Write methods — still TODO stubs (throw on call).
+// Phase 4: Read methods ✅
+// Phase 5: Write methods ✅
 // ---------------------------------------------------------------------------
 
-import { eq, and, like, gte, lte, desc } from 'drizzle-orm';
+import { eq, and, like, gte, lte, lt, gt, desc, inArray } from 'drizzle-orm';
 
 import type { IAppService } from './types';
 import type { Exercise } from '../types/index';
@@ -35,8 +35,15 @@ import { calculateWorkoutTargets } from './progressionEngine';
 // Helpers
 // ---------------------------------------------------------------------------
 
-const TODO = (method: string): never => {
-  throw new Error(`LocalService.${method} is not yet implemented (Phase 5)`);
+/** UUID v4 — crypto.randomUUID() with Math.random() fallback. */
+const randomUUID = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
 };
 
 /** Parse a JSON-encoded text column back to a string array. */
@@ -45,12 +52,42 @@ const parseArr = (raw: string): string[] => {
   catch { return []; }
 };
 
+/** Add N weeks to an ISO date string, return "YYYY-MM-DD". */
+const addWeeks = (isoDate: string, weeks: number): string => {
+  const d = new Date(isoDate);
+  d.setDate(d.getDate() + weeks * 7);
+  return d.toISOString().split('T')[0];
+};
+
+/** Map a raw exercises row to the Exercise API type. */
+const rowToExercise = (r: typeof exercisesTable.$inferSelect): Exercise => ({
+  ...r,
+  status:                  r.status as 'active' | 'deprecated',
+  difficulty:              r.difficulty as Exercise['difficulty'],
+  secondary_muscle_groups: parseArr(r.secondary_muscle_groups),
+  tags:                    parseArr(r.tags),
+  aliases:                 parseArr(r.aliases),
+});
+
+/** Map a raw workout_plans row to the Plan API type. */
+const rowToPlan = (r: typeof workout_plans.$inferSelect): Plan => ({
+  id:             r.id,
+  name:           r.name,
+  description:    r.description ?? undefined,
+  start_date:     r.start_date,
+  end_date:       r.end_date,
+  duration_weeks: r.duration_weeks,
+  is_active:      r.is_active,
+});
+
 // ---------------------------------------------------------------------------
 // LocalService
 // ---------------------------------------------------------------------------
 
 export class LocalService implements IAppService {
-  // ── Exercises ────────────────────────────────────────────────────────────
+  // =========================================================================
+  // Exercises — reads
+  // =========================================================================
 
   async getExercisesFiltered(filters?: ExerciseFilters): Promise<Exercise[]> {
     const conditions = [];
@@ -79,36 +116,148 @@ export class LocalService implements IAppService {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
     const rows = await db.select().from(exercisesTable).where(whereClause);
-
-    return rows.map(r => ({
-      ...r,
-      status:                  r.status as 'active' | 'deprecated',
-      difficulty:              r.difficulty as Exercise['difficulty'],
-      secondary_muscle_groups: parseArr(r.secondary_muscle_groups),
-      tags:                    parseArr(r.tags),
-      aliases:                 parseArr(r.aliases),
-    }));
+    return rows.map(rowToExercise);
   }
 
-  // ── Write stubs (Phase 5) ─────────────────────────────────────────────────
-  createExercise(_data: CreateExerciseDto)                        { return TODO('createExercise'); }
-  updateExercise(_id: string, _data: UpdateExerciseDto)           { return TODO('updateExercise'); }
-  deleteExercise(_id: string)                                     { return TODO('deleteExercise'); }
-  copyExercise(_id: string)                                       { return TODO('copyExercise'); }
+  // =========================================================================
+  // Exercises — writes
+  // =========================================================================
 
-  // ── Plans ─────────────────────────────────────────────────────────────────
+  async createExercise(data: CreateExerciseDto): Promise<Exercise> {
+    const id = randomUUID();
+    await db.insert(exercisesTable).values({
+      id,
+      name:                    data.name,
+      slug:                    data.slug ?? null,
+      primary_muscle_group:    data.primary_muscle_group ?? '',
+      secondary_muscle_groups: JSON.stringify(data.secondary_muscle_groups ?? []),
+      exercise_type:           data.exercise_type ?? '',
+      movement_pattern:        data.movement_pattern ?? '',
+      equipment_type:          data.equipment_type ?? '',
+      force_type:              data.force_type ?? null,
+      status:                  data.status ?? 'active',
+      difficulty:              data.difficulty ?? null,
+      tags:                    JSON.stringify(data.tags ?? []),
+      aliases:                 JSON.stringify(data.aliases ?? []),
+      default_increment:       data.default_increment,
+      unit:                    data.unit,
+      is_custom:               true,
+      is_system_template:      false,
+      user_id:                 'local',
+    });
+
+    const [row] = await db
+      .select()
+      .from(exercisesTable)
+      .where(eq(exercisesTable.id, id))
+      .limit(1);
+
+    return rowToExercise(row);
+  }
+
+  async updateExercise(id: string, data: UpdateExerciseDto): Promise<Exercise> {
+    // Build a partial update — only set fields that are explicitly provided
+    const set: Record<string, unknown> = {};
+    if (data.name                    !== undefined) set.name                    = data.name;
+    if (data.slug                    !== undefined) set.slug                    = data.slug;
+    if (data.primary_muscle_group    !== undefined) set.primary_muscle_group    = data.primary_muscle_group;
+    if (data.exercise_type           !== undefined) set.exercise_type           = data.exercise_type;
+    if (data.movement_pattern        !== undefined) set.movement_pattern        = data.movement_pattern;
+    if (data.equipment_type          !== undefined) set.equipment_type          = data.equipment_type;
+    if (data.force_type              !== undefined) set.force_type              = data.force_type;
+    if (data.status                  !== undefined) set.status                  = data.status;
+    if (data.difficulty              !== undefined) set.difficulty              = data.difficulty;
+    if (data.default_increment       !== undefined) set.default_increment       = data.default_increment;
+    if (data.unit                    !== undefined) set.unit                    = data.unit;
+    if (data.secondary_muscle_groups !== undefined) {
+      set.secondary_muscle_groups = JSON.stringify(data.secondary_muscle_groups);
+    }
+    if (data.tags    !== undefined) set.tags    = JSON.stringify(data.tags);
+    if (data.aliases !== undefined) set.aliases = JSON.stringify(data.aliases);
+
+    if (Object.keys(set).length > 0) {
+      await db.update(exercisesTable).set(set).where(eq(exercisesTable.id, id));
+    }
+
+    const [row] = await db
+      .select()
+      .from(exercisesTable)
+      .where(eq(exercisesTable.id, id))
+      .limit(1);
+
+    if (!row) throw new Error(`Exercise not found: ${id}`);
+    return rowToExercise(row);
+  }
+
+  async deleteExercise(id: string): Promise<void> {
+    await db.delete(exercisesTable).where(eq(exercisesTable.id, id));
+  }
+
+  async copyExercise(id: string): Promise<Exercise> {
+    const [source] = await db
+      .select()
+      .from(exercisesTable)
+      .where(eq(exercisesTable.id, id))
+      .limit(1);
+
+    if (!source) throw new Error(`Exercise not found: ${id}`);
+
+    // Collect all existing custom exercise names to avoid collisions
+    const existingNames = new Set(
+      (await db
+        .select({ name: exercisesTable.name })
+        .from(exercisesTable)
+        .where(eq(exercisesTable.user_id, 'local'))
+      ).map(r => r.name),
+    );
+
+    // Generate a unique name: "Bench Press" → "Bench Press 2" → "Bench Press 3" …
+    const baseName = source.name.trim() || 'Custom Exercise';
+    let uniqueName = baseName;
+    let suffix = 2;
+    while (existingNames.has(uniqueName)) {
+      uniqueName = `${baseName} ${suffix}`;
+      suffix += 1;
+    }
+
+    const newId = randomUUID();
+    await db.insert(exercisesTable).values({
+      id:                      newId,
+      name:                    uniqueName,
+      slug:                    null,
+      primary_muscle_group:    source.primary_muscle_group,
+      secondary_muscle_groups: source.secondary_muscle_groups, // already JSON string
+      exercise_type:           source.exercise_type,
+      movement_pattern:        source.movement_pattern,
+      equipment_type:          source.equipment_type,
+      force_type:              source.force_type,
+      status:                  source.status,
+      difficulty:              source.difficulty,
+      tags:                    source.tags,     // already JSON string
+      aliases:                 source.aliases,  // already JSON string
+      default_increment:       source.default_increment,
+      unit:                    source.unit,
+      is_custom:               true,
+      is_system_template:      false,
+      user_id:                 'local',
+    });
+
+    const [row] = await db
+      .select()
+      .from(exercisesTable)
+      .where(eq(exercisesTable.id, newId))
+      .limit(1);
+
+    return rowToExercise(row);
+  }
+
+  // =========================================================================
+  // Plans — reads
+  // =========================================================================
 
   async getPlans(): Promise<Plan[]> {
     const rows = await db.select().from(workout_plans);
-    return rows.map(r => ({
-      id:             r.id,
-      name:           r.name,
-      description:    r.description ?? undefined,
-      start_date:     r.start_date,
-      end_date:       r.end_date,
-      duration_weeks: r.duration_weeks,
-      is_active:      r.is_active,
-    }));
+    return rows.map(rowToPlan);
   }
 
   async getPlanDetails(id: string): Promise<PlanDetail> {
@@ -170,27 +319,131 @@ export class LocalService implements IAppService {
       }),
     );
 
-    return {
-      id:             plan.id,
-      name:           plan.name,
-      description:    plan.description ?? undefined,
-      start_date:     plan.start_date,
-      end_date:       plan.end_date,
-      duration_weeks: plan.duration_weeks,
-      is_active:      plan.is_active,
-      routines,
-    };
+    return { ...rowToPlan(plan), routines };
   }
 
-  // ── Write stubs (Phase 5) ─────────────────────────────────────────────────
-  createPlan(_data: CreatePlanDto)                { return TODO('createPlan'); }
-  updatePlan(_id: string, _data: UpdatePlanDto)   { return TODO('updatePlan'); }
-  deletePlan(_id: string)                         { return TODO('deletePlan'); }
+  // =========================================================================
+  // Plans — writes
+  // =========================================================================
 
-  // ── Routines ──────────────────────────────────────────────────────────────
+  async createPlan(data: CreatePlanDto): Promise<Plan> {
+    const startDate = data.start_date;
+    const endDate   = addWeeks(startDate, data.duration_weeks);
+
+    // Mirror plans.py:44-58 — reject if dates overlap with any active plan
+    const conflicts = await db
+      .select({ name: workout_plans.name })
+      .from(workout_plans)
+      .where(
+        and(
+          eq(workout_plans.is_active, true),
+          lt(workout_plans.start_date, endDate),
+          gt(workout_plans.end_date,   startDate),
+        ),
+      );
+
+    if (conflicts.length > 0) {
+      const names = conflicts.map(c => c.name).join(', ');
+      throw new Error(`Plan dates overlap with existing active plans: ${names}`);
+    }
+
+    const id  = randomUUID();
+    const now = new Date().toISOString();
+
+    await db.insert(workout_plans).values({
+      id,
+      name:           data.name,
+      description:    data.description ?? null,
+      duration_weeks: data.duration_weeks,
+      start_date:     startDate,
+      end_date:       endDate,
+      is_active:      true,
+      created_at:     now,
+    });
+
+    const [row] = await db
+      .select()
+      .from(workout_plans)
+      .where(eq(workout_plans.id, id))
+      .limit(1);
+
+    return rowToPlan(row);
+  }
+
+  async updatePlan(id: string, data: UpdatePlanDto): Promise<Plan> {
+    const set: Record<string, unknown> = {};
+    if (data.name        !== undefined) set.name        = data.name;
+    if (data.description !== undefined) set.description = data.description;
+    if (data.is_active   !== undefined) set.is_active   = data.is_active;
+
+    // Recalculate end_date when start_date changes
+    if (data.start_date !== undefined) {
+      set.start_date = data.start_date;
+      const [existing] = await db
+        .select({ duration_weeks: workout_plans.duration_weeks })
+        .from(workout_plans)
+        .where(eq(workout_plans.id, id))
+        .limit(1);
+      if (existing) {
+        set.end_date = addWeeks(data.start_date, existing.duration_weeks);
+      }
+    }
+
+    if (Object.keys(set).length > 0) {
+      await db.update(workout_plans).set(set).where(eq(workout_plans.id, id));
+    }
+
+    const [row] = await db
+      .select()
+      .from(workout_plans)
+      .where(eq(workout_plans.id, id))
+      .limit(1);
+
+    if (!row) throw new Error(`Plan not found: ${id}`);
+    return rowToPlan(row);
+  }
+
+  async deletePlan(id: string): Promise<void> {
+    // Mirror plans.py:120-153 — archive if has history, hard-delete if not
+    const routineRows = await db
+      .select({ id: workout_routines.id })
+      .from(workout_routines)
+      .where(eq(workout_routines.plan_id, id));
+
+    const routineIds = routineRows.map(r => r.id);
+
+    let hasHistory = false;
+    if (routineIds.length > 0) {
+      const [historyRow] = await db
+        .select({ id: workout_sessions.id })
+        .from(workout_sessions)
+        .where(
+          and(
+            inArray(workout_sessions.routine_id, routineIds),
+            eq(workout_sessions.status, 'completed'),
+          ),
+        )
+        .limit(1);
+      hasHistory = !!historyRow;
+    }
+
+    if (hasHistory) {
+      // Soft-delete: preserve history by archiving the plan
+      await db
+        .update(workout_plans)
+        .set({ is_active: false })
+        .where(eq(workout_plans.id, id));
+    } else {
+      // Hard-delete: cascade via schema FK (onDelete: 'cascade')
+      await db.delete(workout_plans).where(eq(workout_plans.id, id));
+    }
+  }
+
+  // =========================================================================
+  // Routines — reads
+  // =========================================================================
 
   async getRoutines(): Promise<Routine[]> {
-    // Only routines that belong to active plans
     const routineRows = await db
       .select({
         id:           workout_routines.id,
@@ -217,11 +470,11 @@ export class LocalService implements IAppService {
           .limit(1);
 
         return {
-          id:               r.id,
-          name:             r.name,
-          day_of_week:      r.day_of_week ?? undefined,
+          id:                r.id,
+          name:              r.name,
+          day_of_week:       r.day_of_week ?? undefined,
           last_completed_at: lastSession?.end_time ?? null,
-          routine_type:     r.routine_type as 'workout' | 'rest',
+          routine_type:      r.routine_type as 'workout' | 'rest',
         };
       }),
     );
@@ -278,20 +531,133 @@ export class LocalService implements IAppService {
     });
   }
 
-  // ── Write stubs (Phase 5) ─────────────────────────────────────────────────
-  createRoutine(
-    _planId: string, _name: string, _dayOfWeek: number, _type?: 'workout' | 'rest',
-  ) { return TODO('createRoutine'); }
-  updateRoutine(_routineId: string, _name: string)                   { return TODO('updateRoutine'); }
-  deleteRoutine(_routineId: string)                                   { return TODO('deleteRoutine'); }
-  moveRoutine(_routineId: string, _newDay: number)                   { return TODO('moveRoutine'); }
-  addExerciseTarget(_routineId: string, _data: AddExerciseDto)       { return TODO('addExerciseTarget'); }
-  updateRoutineExercise(_targetId: string, _data: Partial<AddExerciseDto>) { return TODO('updateRoutineExercise'); }
-  deleteRoutineExercise(_targetId: string)                           { return TODO('deleteRoutineExercise'); }
-  reorderExercises(_routineId: string, _exerciseIds: string[])       { return TODO('reorderExercises'); }
-  finishWorkout(_data: FinishWorkoutDto)                             { return TODO('finishWorkout'); }
+  // =========================================================================
+  // Routines — writes
+  // =========================================================================
 
-  // ── History ───────────────────────────────────────────────────────────────
+  async createRoutine(
+    planId: string,
+    name: string,
+    dayOfWeek: number,
+    type: 'workout' | 'rest' = 'workout',
+  ): Promise<RoutineDetail> {
+    const id = randomUUID();
+    await db.insert(workout_routines).values({
+      id,
+      plan_id:      planId,
+      name,
+      day_of_week:  dayOfWeek,
+      routine_type: type,
+    });
+    return { id, name, day_of_week: dayOfWeek, routine_type: type, exercises: [] };
+  }
+
+  async updateRoutine(routineId: string, name: string): Promise<void> {
+    await db
+      .update(workout_routines)
+      .set({ name })
+      .where(eq(workout_routines.id, routineId));
+  }
+
+  async deleteRoutine(routineId: string): Promise<void> {
+    // routine_exercises cascades via FK onDelete; just delete the routine
+    await db.delete(workout_routines).where(eq(workout_routines.id, routineId));
+  }
+
+  async moveRoutine(routineId: string, newDay: number): Promise<void> {
+    await db
+      .update(workout_routines)
+      .set({ day_of_week: newDay })
+      .where(eq(workout_routines.id, routineId));
+  }
+
+  async addExerciseTarget(routineId: string, data: AddExerciseDto): Promise<void> {
+    await db.insert(routine_exercises).values({
+      id:                         randomUUID(),
+      routine_id:                 routineId,
+      exercise_id:                data.exercise_id,
+      order_index:                data.order_index,
+      target_sets:                data.target_sets,
+      target_reps:                data.target_reps,
+      target_weight:              data.target_weight,
+      target_duration_seconds:    data.target_duration_seconds ?? null,
+      rest_seconds:               data.rest_seconds,
+      increment_weight:           data.increment_weight,
+      increment_reps:             data.increment_reps,
+      increment_duration_seconds: data.increment_duration_seconds ?? 0,
+    });
+  }
+
+  async updateRoutineExercise(targetId: string, data: Partial<AddExerciseDto>): Promise<void> {
+    const set: Record<string, unknown> = {};
+    if (data.exercise_id             !== undefined) set.exercise_id             = data.exercise_id;
+    if (data.order_index             !== undefined) set.order_index             = data.order_index;
+    if (data.target_sets             !== undefined) set.target_sets             = data.target_sets;
+    if (data.target_reps             !== undefined) set.target_reps             = data.target_reps;
+    if (data.target_weight           !== undefined) set.target_weight           = data.target_weight;
+    if (data.target_duration_seconds !== undefined) set.target_duration_seconds = data.target_duration_seconds;
+    if (data.rest_seconds            !== undefined) set.rest_seconds            = data.rest_seconds;
+    if (data.increment_weight        !== undefined) set.increment_weight        = data.increment_weight;
+    if (data.increment_reps          !== undefined) set.increment_reps          = data.increment_reps;
+    if (data.increment_duration_seconds !== undefined) {
+      set.increment_duration_seconds = data.increment_duration_seconds;
+    }
+    if (Object.keys(set).length > 0) {
+      await db.update(routine_exercises).set(set).where(eq(routine_exercises.id, targetId));
+    }
+  }
+
+  async deleteRoutineExercise(targetId: string): Promise<void> {
+    await db.delete(routine_exercises).where(eq(routine_exercises.id, targetId));
+  }
+
+  async reorderExercises(_routineId: string, exerciseIds: string[]): Promise<void> {
+    // exerciseIds are routine_exercises.id values in the desired display order.
+    // Update each row's order_index to its new position.
+    await Promise.all(
+      exerciseIds.map((targetId, index) =>
+        db
+          .update(routine_exercises)
+          .set({ order_index: index })
+          .where(eq(routine_exercises.id, targetId)),
+      ),
+    );
+  }
+
+  // =========================================================================
+  // Workouts — writes
+  // =========================================================================
+
+  async finishWorkout(data: FinishWorkoutDto): Promise<void> {
+    const sessionId = randomUUID();
+
+    await db.insert(workout_sessions).values({
+      id:         sessionId,
+      routine_id: data.routine_id,
+      start_time: data.start_time,
+      end_time:   data.end_time,
+      status:     'completed',
+    });
+
+    if (data.sets.length > 0) {
+      await db.insert(session_sets).values(
+        data.sets.map(s => ({
+          id:               randomUUID(),
+          session_id:       sessionId,
+          exercise_id:      s.exercise_id,
+          set_number:       s.set_number,
+          reps:             s.reps,
+          weight:           s.weight,
+          duration_seconds: s.duration_seconds ?? null,
+          is_completed:     s.is_completed,
+        })),
+      );
+    }
+  }
+
+  // =========================================================================
+  // History — reads
+  // =========================================================================
 
   async getHistory(startDate: string, endDate: string): Promise<HistorySession[]> {
     // Pad date-only strings so "2026-04-30" covers the full day
@@ -314,17 +680,12 @@ export class LocalService implements IAppService {
       )
       .orderBy(desc(workout_sessions.start_time));
 
-    return rows.map(r => ({
-      id:           r.id,
-      routine_name: r.routine_name,
-      date:         r.date,
-      status:       r.status,
-    }));
+    return rows;
   }
 
   async getStats(): Promise<UserStats> {
     const allCompleted = await db
-      .select({ start_time: workout_sessions.start_time, end_time: workout_sessions.end_time })
+      .select({ start_time: workout_sessions.start_time })
       .from(workout_sessions)
       .where(eq(workout_sessions.status, 'completed'));
 
@@ -334,7 +695,6 @@ export class LocalService implements IAppService {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const workouts_this_month = allCompleted.filter(s => s.start_time >= startOfMonth).length;
 
-    // Last completed session by end_time
     const [lastRow] = await db
       .select({ end_time: workout_sessions.end_time })
       .from(workout_sessions)
@@ -402,16 +762,42 @@ export class LocalService implements IAppService {
     };
   }
 
-  // ── Write stub (Phase 5) ──────────────────────────────────────────────────
-  updateSession(_sessionId: string, _data: UpdateSessionDto) { return TODO('updateSession'); }
+  // =========================================================================
+  // History — writes
+  // =========================================================================
 
-  // ── Analytics — deferred for ghost users ─────────────────────────────────
-  // Ghost users see an empty state; chart computation is ported in a later phase.
+  async updateSession(sessionId: string, data: UpdateSessionDto): Promise<void> {
+    // Mirror history.py:171-189 — replace all sets atomically
+    await db.transaction(async tx => {
+      await tx.delete(session_sets).where(eq(session_sets.session_id, sessionId));
+
+      if (data.sets.length > 0) {
+        await tx.insert(session_sets).values(
+          data.sets.map(s => ({
+            id:               randomUUID(),
+            session_id:       sessionId,
+            exercise_id:      s.exercise_id,
+            set_number:       s.set_number,
+            reps:             s.reps,
+            weight:           s.weight,
+            duration_seconds: s.duration_seconds ?? null,
+            is_completed:     s.is_completed,
+          })),
+        );
+      }
+    });
+  }
+
+  // =========================================================================
+  // Analytics — deferred for ghost users
+  // =========================================================================
+
   async getVolumeChart(
     _period: '1M' | '3M' | '6M' | '1Y' | 'ALL',
     _planId?: string,
     _anchorDate?: string,
   ): Promise<ChartPoint[]> {
+    // Ghost users see the empty state; chart computation is deferred.
     return [];
   }
 }
