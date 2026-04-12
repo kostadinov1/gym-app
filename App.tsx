@@ -4,6 +4,7 @@ import { StatusBar, View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { StorageProvider } from './src/context/StorageContext';
+import { EntitlementProvider } from './src/context/EntitlementContext';
 import { useTheme } from './src/theme';
 import RootNavigator from './src/navigation/RootNavigator';
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -83,8 +84,10 @@ function App() {
                   {/* StorageProvider injects RemoteService or LocalService
                       depending on whether the user is a guest */}
                   <StorageProvider>
-                      <StatusBar barStyle="default" />
-                      <NavigationWrapper />
+                      <EntitlementProvider>
+                          <StatusBar barStyle="default" />
+                          <NavigationWrapper />
+                      </EntitlementProvider>
                   </StorageProvider>
                   <Toast />
               </QueryClientProvider>
