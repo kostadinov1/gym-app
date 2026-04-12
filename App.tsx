@@ -56,7 +56,7 @@ const queryClient = new QueryClient({
 });
 
 const NavigationWrapper = () => {
-  const { userToken, isLoading } = useAuth();
+  const { userToken, isGuest, isLoading } = useAuth();
   const theme = useTheme();
 
   if (isLoading) {
@@ -67,7 +67,8 @@ const NavigationWrapper = () => {
     );
   }
 
-  return userToken ? <RootNavigator /> : <LoginScreen />;
+  // Both registered users (userToken) and ghost users (isGuest) enter the app
+  return (userToken || isGuest) ? <RootNavigator /> : <LoginScreen />;
 };
 
 function App() {

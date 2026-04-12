@@ -13,7 +13,7 @@ import Toast from 'react-native-toast-message';
 
 export default function LoginScreen() {
   const theme = useTheme();
-  const { signIn } = useAuth();
+  const { signIn, guestSignIn } = useAuth();
   
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
@@ -101,7 +101,7 @@ export default function LoginScreen() {
             )}
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
             style={{ marginTop: 20 }}
             onPress={() => setIsRegistering(!isRegistering)}
         >
@@ -109,6 +109,26 @@ export default function LoginScreen() {
                 {isRegistering ? "Already have an account? Log In" : "Don't have an account? Sign Up"}
             </Text>
         </TouchableOpacity>
+
+        {/* Divider */}
+        <View style={styles.dividerRow}>
+          <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
+          <Text style={[styles.dividerText, { color: theme.colors.textSecondary }]}>or</Text>
+          <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
+        </View>
+
+        {/* Guest access */}
+        <TouchableOpacity
+          style={[styles.guestButton, { borderColor: theme.colors.border }]}
+          onPress={guestSignIn}
+        >
+          <Text style={[styles.guestButtonText, { color: theme.colors.textSecondary }]}>
+            Continue as Guest
+          </Text>
+        </TouchableOpacity>
+        <Text style={[styles.guestNote, { color: theme.colors.textSecondary }]}>
+          Your data will be saved on this device. Register later to sync to the cloud.
+        </Text>
       </View>
     </Container>
   );
@@ -140,4 +160,26 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   buttonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 28,
+    marginBottom: 16,
+  },
+  dividerLine: { flex: 1, height: 1 },
+  dividerText: { marginHorizontal: 12, fontSize: 13 },
+  guestButton: {
+    height: 50,
+    borderRadius: 12,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  guestButtonText: { fontWeight: '600', fontSize: 16 },
+  guestNote: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 10,
+    lineHeight: 17,
+  },
 });
