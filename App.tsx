@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import React from 'react';
 import { StatusBar, View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -9,6 +10,21 @@ import { ThemeProvider } from './src/context/ThemeContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  environment: process.env.EXPO_PUBLIC_ENV ?? 'development',
+  // Only send events in production builds
+  enabled: process.env.EXPO_PUBLIC_ENV === 'production',
+  // Strip PII before sending (GDPR compliance)
+  beforeSend(event) {
+    if (event.user) {
+      delete event.user.email;
+      delete event.user.username;
+    }
+    return event;
+  },
+});
 
 // 1. Define Global Error Handler OUTSIDE the components
 const handleError = (error: Error) => {
@@ -54,7 +70,7 @@ const NavigationWrapper = () => {
   return userToken ? <RootNavigator /> : <LoginScreen />;
 };
 
-export default function App() {
+function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -72,3 +88,6 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
+// Wrap with Sentry for automatic crash boundary and error reporting
+export default Sentry.wrap(App);

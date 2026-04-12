@@ -8,7 +8,7 @@
 
 | # | Phase | Status | Est. |
 |---|---|---|---|
-| 0 | Project docs + Sentry logging | ⬜ Not started | 0.5d |
+| 0 | Project docs + Sentry logging | ✅ Done | 0.5d |
 | 1 | Local DB foundation (SQLite + drizzle) | ⬜ Not started | 2d |
 | 2 | Auth flow changes (ghost user) | ⬜ Not started | 1d |
 | 3 | Storage abstraction (IAppService) | ⬜ Not started | 1d |
@@ -28,12 +28,14 @@
 
 - [x] Create `APP_REQUIREMENTS.md`
 - [x] Create `PLAN.md`
-- [ ] Add to frontend `.env`: `EXPO_PUBLIC_ENV`, `EXPO_PUBLIC_SENTRY_DSN`
-- [ ] Add to backend `.env`: `ENVIRONMENT`, `SENTRY_DSN`
-- [ ] `npm install @sentry/react-native`
-- [ ] `pip install sentry-sdk[fastapi]`
-- [ ] Wire Sentry in `App.tsx` (disabled when `EXPO_PUBLIC_ENV !== 'production'`)
-- [ ] Wire Sentry in `gym-backend/app/main.py`
+- [x] Add to frontend `.env`: `EXPO_PUBLIC_ENV`, `EXPO_PUBLIC_SENTRY_DSN` (+ RevenueCat + AdMob keys)
+- [x] Create `.env.production` for frontend
+- [x] Add to backend `.env`: `ENVIRONMENT`, `SENTRY_DSN`
+- [x] `npx expo install @sentry/react-native`
+- [x] `uv add sentry-sdk[fastapi]`
+- [x] Wire Sentry in `App.tsx` (disabled when `EXPO_PUBLIC_ENV !== 'production'`, PII stripped)
+- [x] Wire Sentry in `gym-backend/app/main.py` (only if `SENTRY_DSN` is set)
+- [x] Add `ENVIRONMENT` + `SENTRY_DSN` to `gym-backend/app/config.py`
 
 **Verify:** Test error in dev → NOT sent to Sentry ✓
 
