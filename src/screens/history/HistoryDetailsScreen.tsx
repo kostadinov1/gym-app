@@ -3,18 +3,19 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'rea
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
-import { getSessionDetails } from '../../api/history';
+import { useStorage } from '../../context/StorageContext';
 import { Container } from '../../components/common/Container';
 
 export default function HistoryDetailsScreen() {
   const theme = useTheme();
+  const db = useStorage();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { sessionId } = route.params;
 
   const { data, isLoading } = useQuery({
     queryKey: ['sessionDetails', sessionId],
-    queryFn: () => getSessionDetails(sessionId),
+    queryFn: () => db.getSessionDetails(sessionId),
   });
 
   if (isLoading || !data) {

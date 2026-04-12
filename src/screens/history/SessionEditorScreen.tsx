@@ -4,11 +4,12 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { SetRow } from '../../components/workout/SetRow';
-import { getSessionDetails, updateSession } from '../../api/history';
+import { useStorage } from '../../context/StorageContext';
 import { Container } from '../../components/common/Container';
 
 export default function SessionEditorScreen() {
   const theme = useTheme();
+  const db = useStorage();
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const { sessionId } = route.params;
@@ -16,7 +17,7 @@ export default function SessionEditorScreen() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['sessionDetails', sessionId],
-    queryFn: () => getSessionDetails(sessionId),
+    queryFn: () => db.getSessionDetails(sessionId),
   });
 
   const [exercises, setExercises] = useState<any[]>([]);
@@ -53,7 +54,7 @@ export default function SessionEditorScreen() {
   }, [data]);
 
   const updateMutation = useMutation({
-    mutationFn: (payload: any) => updateSession(sessionId, payload),
+    mutationFn: (payload: any) => db.updateSession(sessionId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['history'] });
       queryClient.invalidateQueries({ queryKey: ['sessionDetails', sessionId] });

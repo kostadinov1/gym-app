@@ -4,8 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
-import { getStats, getVolumeChart } from '../../api/history';
-import { getPlans } from '../../api/plans';
+import { useStorage } from '../../context/StorageContext';
 import { BarChart } from 'react-native-gifted-charts';
 import { getSmartChartLayout, Period } from '../../utils/chartLayout';
 
@@ -16,6 +15,7 @@ const WINDOW_WITH_YEAR_FMT: Intl.DateTimeFormatOptions = { day: '2-digit', month
 
 export default function AnalyticsScreen() {
     const theme = useTheme();
+    const db = useStorage();
     const navigation = useNavigation<any>();
 
     const [period, setPeriod] = useState<Period>('1M');
@@ -46,11 +46,11 @@ export default function AnalyticsScreen() {
         return `${year}-${month}-${day}`;
     };
 
-    const { data: plans } = useQuery({ queryKey: ['plans'], queryFn: getPlans });
-    const { data: stats } = useQuery({ queryKey: ['stats'], queryFn: getStats });
+    const { data: plans } = useQuery({ queryKey: ['plans'], queryFn: () => db.getPlans() });
+    const { data: stats } = useQuery({ queryKey: ['stats'], queryFn: () => db.getStats() });
     const { data: chartData, isLoading } = useQuery({
         queryKey: ['volumeChart', period, selectedPlanId, toApiDate(anchorDate)],
-        queryFn: () => getVolumeChart(period, selectedPlanId, toApiDate(anchorDate))
+        queryFn: () => db.getVolumeChart(period, selectedPlanId, toApiDate(anchorDate))
     });
 
     const latestDataDate = stats?.last_workout_date ? new Date(stats.last_workout_date) : null;

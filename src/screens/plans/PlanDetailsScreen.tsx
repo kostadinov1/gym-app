@@ -6,7 +6,7 @@ import Toast from 'react-native-toast-message';
 import { Calendar } from 'react-native-calendars'; // <--- Restored Import
 
 import { useTheme } from '../../theme';
-import { getPlanDetails, createRoutine, updatePlan } from '../../api/plans';
+import { useStorage } from '../../context/StorageContext';
 import { Container } from '../../components/common/Container';
 import { SwipeWrapper } from '../../components/common/SwipeWrapper';
 
@@ -19,6 +19,7 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 
 export default function PlanDetailsScreen() {
     const theme = useTheme();
+    const db = useStorage();
     const route = useRoute<any>();
     const navigation = useNavigation<any>();
     const { planId } = route.params;
@@ -41,12 +42,12 @@ export default function PlanDetailsScreen() {
     // 1. DATA FETCHING
     const { data, isLoading } = useQuery({
         queryKey: ['planDetails', planId],
-        queryFn: () => getPlanDetails(planId),
+        queryFn: () => db.getPlanDetails(planId),
     });
 
     // 2. MUTATIONS
     const updatePlanMutation = useMutation({
-        mutationFn: () => updatePlan(planId, { name: editName, start_date: editDate }),
+        mutationFn: () => db.updatePlan(planId, { name: editName, start_date: editDate }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['planDetails', planId] });
             // Invalidate routines so Active Workout recalculates math immediately
@@ -62,7 +63,7 @@ export default function PlanDetailsScreen() {
         mutationFn: () => {
             // DEBUG: This confirms what we send to the API function
             console.log("Creating Routine:", { routineName, selectedDayIndex, routineType });
-            return createRoutine(planId, routineName, selectedDayIndex!, routineType);
+            return db.createRoutine(planId, routineName, selectedDayIndex!, routineType);
 
         },
         onSuccess: () => {

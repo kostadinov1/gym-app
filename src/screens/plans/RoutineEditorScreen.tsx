@@ -4,8 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
-import { getExercisesFiltered } from '../../api/exercises';
-import { addExerciseTarget, deleteRoutine, deleteRoutineExercise, getPlanDetails, reorderExercises, updateRoutine, updateRoutineExercise } from '../../api/plans';
+import { useStorage } from '../../context/StorageContext';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -13,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function RoutineEditorScreen() {
     const theme = useTheme();
+    const db = useStorage();
     const route = useRoute<any>();
     const navigation = useNavigation<any>();
     const { routineId, routineName, planId } = route.params;
@@ -36,7 +36,7 @@ export default function RoutineEditorScreen() {
 
 
     const reorderMutation = useMutation({
-    mutationFn: (newIds: string[]) => reorderExercises(routineId, newIds),
+    mutationFn: (newIds: string[]) => db.reorderExercises(routineId, newIds),
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['planDetails'] });
     }
@@ -44,7 +44,7 @@ export default function RoutineEditorScreen() {
 
     // Update Mutation
     const updateExParamsMutation = useMutation({
-        mutationFn: (payload: any) => updateRoutineExercise(editingTargetId!, payload),
+        mutationFn: (payload: any) => db.updateRoutineExercise(editingTargetId!, payload),
         onSuccess: () => {
             setModalVisible(false);
             setEditingTargetId(null);
@@ -54,7 +54,7 @@ export default function RoutineEditorScreen() {
     });
 
     const updateRoutineMutation = useMutation({
-        mutationFn: () => updateRoutine(routineId, newName),
+        mutationFn: () => db.updateRoutine(routineId, newName),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['planDetails'] });
             setRenameModalVisible(false);
@@ -63,7 +63,7 @@ export default function RoutineEditorScreen() {
     });
 
     const deleteRoutineMutation = useMutation({
-        mutationFn: () => deleteRoutine(routineId),
+        mutationFn: () => db.deleteRoutine(routineId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['planDetails'] });
             navigation.goBack();
@@ -73,7 +73,7 @@ export default function RoutineEditorScreen() {
 
     const { data: planData } = useQuery({
         queryKey: ['planDetails', planId],
-        queryFn: () => getPlanDetails(planId),
+        queryFn: () => db.getPlanDetails(planId),
         enabled: !!planId
     });
 
@@ -95,12 +95,12 @@ export default function RoutineEditorScreen() {
 
     const { data: allExercises, isLoading: loadingEx, isFetching: isFetchingExercises } = useQuery({
         queryKey: ['exercises', exerciseBackendQuery, 'routine-editor'],
-        queryFn: () => getExercisesFiltered({ q: exerciseBackendQuery }),
+        queryFn: () => db.getExercisesFiltered({ q: exerciseBackendQuery }),
         placeholderData: keepPreviousData,
     });
 
     const addMutation = useMutation({
-        mutationFn: () => addExerciseTarget(routineId, {
+        mutationFn: () => db.addExerciseTarget(routineId, {
             exercise_id: selectedExerciseId!,
             order_index: existingExercises.length + 1,
             target_sets: parseInt(sets) || 0,
@@ -142,7 +142,7 @@ export default function RoutineEditorScreen() {
     };
 
     const deleteExMutation = useMutation({
-        mutationFn: (id: string) => deleteRoutineExercise(id),
+        mutationFn: (id: string) => db.deleteRoutineExercise(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['planDetails'] });
             Toast.show({ type: 'success', text1: 'Exercise removed' });

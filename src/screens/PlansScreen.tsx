@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTheme } from '../theme';
-import { getPlans, deletePlan } from '../api/plans';
+import { useStorage } from '../context/StorageContext';
 
 import { useNavigation } from '@react-navigation/native'; // Add this
 import { FAB } from '../components/common/FAB';
@@ -13,14 +13,15 @@ export default function PlansScreen() {
     const navigation = useNavigation<any>()
 
     const theme = useTheme();
+    const db = useStorage();
 
     const { data, isLoading, refetch, error, isError } = useQuery({
         queryKey: ['plans'],
-        queryFn: getPlans,
+        queryFn: () => db.getPlans(),
     });
 
     const deleteMutation = useMutation({
-        mutationFn: deletePlan,
+        mutationFn: (id: string) => db.deletePlan(id),
         onSuccess: () => refetch(),
         onError: (err) => Alert.alert("Error", (err as Error).message)
     });

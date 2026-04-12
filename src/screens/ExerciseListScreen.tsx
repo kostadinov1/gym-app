@@ -16,11 +16,12 @@ import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 
 import { FAB } from '../components/common/FAB';
-import { createExercise, copyExercise, deleteExercise, getExercisesFiltered, updateExercise } from '../api/exercises';
 import { useTheme } from '../theme';
+import { useStorage } from '../context/StorageContext';
 
 export default function ExerciseListScreen() {
   const theme = useTheme();
+  const db = useStorage();
   const queryClient = useQueryClient();
 
   const [isModalVisible, setModalVisible] = useState(false);
@@ -45,7 +46,7 @@ export default function ExerciseListScreen() {
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['exercises', backendQuery, libraryFilter],
     queryFn: () =>
-      getExercisesFiltered({
+      db.getExercisesFiltered({
         q: backendQuery,
         is_system: libraryFilter === 'all' ? undefined : libraryFilter === 'system',
       }),
@@ -63,7 +64,7 @@ export default function ExerciseListScreen() {
   const refetchExercises = () => queryClient.invalidateQueries({ queryKey: ['exercises'] });
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { id: string; data: any }) => updateExercise(payload.id, payload.data),
+    mutationFn: (payload: { id: string; data: any }) => db.updateExercise(payload.id, payload.data),
     onSuccess: () => {
       closeModal();
       refetchExercises();
@@ -75,7 +76,7 @@ export default function ExerciseListScreen() {
   });
 
   const createMutation = useMutation({
-    mutationFn: createExercise,
+    mutationFn: (data: Parameters<typeof db.createExercise>[0]) => db.createExercise(data),
     onSuccess: () => {
       closeModal();
       refetchExercises();
@@ -89,7 +90,7 @@ export default function ExerciseListScreen() {
   const copyMutation = useMutation({
     mutationFn: async (id: string) => {
       setCopyingId(id);
-      return copyExercise(id);
+      return db.copyExercise(id);
     },
     onSuccess: () => {
       refetchExercises();
@@ -104,7 +105,7 @@ export default function ExerciseListScreen() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteExercise,
+    mutationFn: (id: string) => db.deleteExercise(id),
     onSuccess: () => {
       refetchExercises();
       Toast.show({ type: 'success', text1: 'Deleted', text2: 'Exercise removed successfully' });

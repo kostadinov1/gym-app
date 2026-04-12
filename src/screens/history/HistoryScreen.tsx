@@ -4,13 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
-import { getHistory } from '../../api/history';
+import { useStorage } from '../../context/StorageContext';
 import { useNavigation } from '@react-navigation/native'; // Add import
 import { Ionicons } from '@expo/vector-icons';
 
 
 export default function HistoryScreen() {
   const theme = useTheme();
+  const db = useStorage();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const navigation = useNavigation<any>();
   // 1. Calculate Date Range (Simplification for V1)
@@ -26,7 +27,7 @@ export default function HistoryScreen() {
   // 2. Fetch Data
   const { data, isLoading } = useQuery({
     queryKey: ['history'],
-    queryFn: () => getHistory(startDate, endDate),
+    queryFn: () => db.getHistory(startDate, endDate),
   });
 
   // 3. Transform Data for Calendar

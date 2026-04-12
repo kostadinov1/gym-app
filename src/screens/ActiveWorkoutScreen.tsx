@@ -5,14 +5,14 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../theme';
 import { SetRow } from '../components/workout/SetRow';
-import { startRoutine, finishWorkout } from '../api/workouts';
-import { getExercises } from '../api/exercises';
+import { useStorage } from '../context/StorageContext';
 import { FAB } from '../components/common/FAB';
 import Toast from 'react-native-toast-message';
 
 export default function ActiveWorkoutScreen() {
   const [isAddModalVisible, setAddModalVisible] = useState(false);
   const theme = useTheme();
+  const db = useStorage();
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const { routineId } = route.params;
@@ -22,14 +22,14 @@ export default function ActiveWorkoutScreen() {
   const startTime = useRef(new Date());
   const { data, isLoading } = useQuery({
     queryKey: ['activeSession', routineId],
-    queryFn: () => startRoutine(routineId),
+    queryFn: () => db.startRoutine(routineId),
   });
 
   const [exercises, setExercises] = useState<any[]>([]);
 
   const { data: allExercises } = useQuery({
     queryKey: ['exercises'],
-    queryFn: getExercises,
+    queryFn: () => db.getExercisesFiltered(),
   });
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function ActiveWorkoutScreen() {
   }, [data]);
 
   const finishMutation = useMutation({
-    mutationFn: finishWorkout,
+    mutationFn: (payload: Parameters<typeof db.finishWorkout>[0]) => db.finishWorkout(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['history'] });
       queryClient.invalidateQueries({ queryKey: ['routines'] });

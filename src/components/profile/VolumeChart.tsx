@@ -3,17 +3,18 @@ import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
-import { getVolumeChart } from '../../api/history';
+import { useStorage } from '../../context/StorageContext';
 import { getSmartChartLayout } from '../../utils/chartLayout';
 
 export const VolumeChart = () => {
     const theme = useTheme();
+    const db = useStorage();
     const [selectedPoint, setSelectedPoint] = useState<{ date: string; value: number } | null>(null);
     const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['volumeChart', 'preview'],
-        queryFn: () => getVolumeChart('3M') 
+        queryFn: () => db.getVolumeChart('3M')
     });
 
     if (isLoading) return <ActivityIndicator color={theme.colors.primary} />;

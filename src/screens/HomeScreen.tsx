@@ -4,15 +4,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native'; // Import navigation
 import { useTheme } from '../theme';
-import { getRoutines } from '../api/workouts';
+import { useStorage } from '../context/StorageContext';
 
 export default function HomeScreen() {
   const theme = useTheme();
   const navigation = useNavigation<any>();
+  const db = useStorage();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['routines'],
-    queryFn: getRoutines,
+    queryFn: () => db.getRoutines(),
   });
 
   React.useEffect(() => {

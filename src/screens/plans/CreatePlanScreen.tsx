@@ -5,10 +5,11 @@ import { useNavigation } from '@react-navigation/native';
 import { Calendar } from 'react-native-calendars';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
-import { createPlan } from '../../api/plans';
+import { useStorage } from '../../context/StorageContext';
 
 export default function CreatePlanScreen() {
   const theme = useTheme();
+  const db = useStorage();
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
 
@@ -17,7 +18,7 @@ export default function CreatePlanScreen() {
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
 
   const mutation = useMutation({
-    mutationFn: createPlan,
+    mutationFn: (data: Parameters<typeof db.createPlan>[0]) => db.createPlan(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plans'] });
       navigation.goBack();

@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native'; // Add TouchableOpacity, Alert
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { getStats } from '../api/history';
 import { useAuth } from '../context/AuthContext';
+import { useStorage } from '../context/StorageContext';
 import { useTheme, useThemeToggle } from '../context/ThemeContext';
 import Toast from 'react-native-toast-message'; // <--- Import Toast
 import { deleteAccount } from '../api/auth';
@@ -14,11 +14,12 @@ import { useNavigation } from '@react-navigation/native';
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const theme = useTheme();
+  const db = useStorage();
   const { isDark, toggleTheme } = useThemeToggle();
   const { signOut } = useAuth();
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['stats'],
-    queryFn: getStats,
+    queryFn: () => db.getStats(),
   });
 
   // Handler to confirm logout

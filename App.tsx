@@ -3,6 +3,7 @@ import React from 'react';
 import { StatusBar, View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { StorageProvider } from './src/context/StorageContext';
 import { useTheme } from './src/theme';
 import RootNavigator from './src/navigation/RootNavigator';
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -79,8 +80,12 @@ function App() {
           <ThemeProvider>
               {/* 3. Pass the configured client here */}
               <QueryClientProvider client={queryClient}>
-                  <StatusBar barStyle="default" />
-                  <NavigationWrapper />
+                  {/* StorageProvider injects RemoteService or LocalService
+                      depending on whether the user is a guest */}
+                  <StorageProvider>
+                      <StatusBar barStyle="default" />
+                      <NavigationWrapper />
+                  </StorageProvider>
                   <Toast />
               </QueryClientProvider>
           </ThemeProvider>
