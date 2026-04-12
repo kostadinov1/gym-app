@@ -9,7 +9,7 @@
 | # | Phase | Status | Est. |
 |---|---|---|---|
 | 0 | Project docs + Sentry logging | ✅ Done | 0.5d |
-| 1 | Local DB foundation (SQLite + drizzle) | ⬜ Not started | 2d |
+| 1 | Local DB foundation (SQLite + drizzle) | ✅ Done | 2d |
 | 2 | Auth flow changes (ghost user) | ⬜ Not started | 1d |
 | 3 | Storage abstraction (IAppService) | ⬜ Not started | 1d |
 | 4 | LocalService reads | ⬜ Not started | 2-3d |
