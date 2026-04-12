@@ -18,7 +18,7 @@
 | 7 | Ads + GDPR consent (AdMob + UMP) | ✅ Done | 1-2d |
 | 8 | Data export (Strong CSV + JSON) | ✅ Done | 1d |
 | 9 | Ghost → Registered migration | ✅ Done | 3d |
-| 10 | Google Play prep + EAS build | ⬜ Not started | 2d |
+| 10 | Google Play prep + EAS build | 🔧 In progress | 2d |
 
 ---
 
@@ -311,11 +311,13 @@ app.include_router(migration.router)
 
 **Goal:** Production build ready for internal testing track submission.
 
-- [ ] Host privacy policy + terms of service (Notion public page or simple static site)
-- [ ] Add privacy policy link to ProfileScreen
-- [ ] Add in-app subscription management link (Play Store deep link)
-- [ ] Create `eas.json` with `production` profile
+- [ ] Host privacy policy + terms of service (Notion public page or simple static site) — update URL in ProfileScreen + PaywallScreen
+- [x] Add privacy policy link to ProfileScreen
+- [x] Add in-app subscription management link (Play Store deep link)
+- [x] Create `eas.json` with `production` profile
+- [x] `app.json` — versionCode 1, targetSdkVersion 35
 - [ ] `eas build --platform android --profile production` → download `.aab`
+- [ ] app.json — replace test AdMob androidAppId with real production App ID
 - [ ] Play Console: complete data safety form
 - [ ] Play Console: configure `monthly_pro` product with 14-day free trial
 - [ ] Play Console: add internal test track → upload AAB → add test accounts

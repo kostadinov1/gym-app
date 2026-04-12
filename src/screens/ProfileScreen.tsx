@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
   TouchableOpacity, Alert, ActivityIndicator, Modal,
-  TextInput,
+  TextInput, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -323,7 +323,23 @@ export default function ProfileScreen() {
           />
 
           <SettingRow label="Units" value="Metric (kg)" />
-          <SettingRow label="Version" value="1.0.0 (Alpha)" />
+          <SettingRow label="Version" value="1.0.0" />
+          <SettingRow
+            label="Privacy Policy"
+            value=""
+            onPress={() => Linking.openURL('https://your-domain.com/privacy')}
+          />
+          {!isGuest && (
+            <SettingRow
+              label="Manage Subscription"
+              value=""
+              onPress={() =>
+                Linking.openURL(
+                  'https://play.google.com/store/account/subscriptions?package=com.gencho.gymtracker',
+                )
+              }
+            />
+          )}
         </View>
 
         {/* EXPORT SECTION */}

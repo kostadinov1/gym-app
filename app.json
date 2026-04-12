@@ -23,7 +23,9 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.gencho.gymtracker"
+      "package": "com.gencho.gymtracker",
+      "versionCode": 1,
+      "targetSdkVersion": 35
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -37,7 +39,8 @@
         {
           "androidAppId": "ca-app-pub-3940256099942544~3347511713"
         }
-      ]
+      ],
+      "expo-file-system"
     ],
     "extra": {
       "eas": {
