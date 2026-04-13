@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Container } from '../../components/common/Container';
 import { Calendar } from 'react-native-calendars';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
@@ -48,7 +48,7 @@ export default function CreatePlanScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <Container backgroundColor={theme.colors.background} isScrollable>
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
@@ -56,7 +56,7 @@ export default function CreatePlanScreen() {
         <Text style={[styles.header, { color: theme.colors.text }]}>New Workout Plan</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <View style={{ padding: 16 }}>
         
         {/* NAME INPUT */}
         <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Plan Name</Text>
@@ -105,13 +105,12 @@ export default function CreatePlanScreen() {
           </Text>
         </TouchableOpacity>
 
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
   headerRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16 },
   header: { fontSize: 24, fontWeight: 'bold' },
   label: { fontSize: 14, marginBottom: 8, fontWeight: '600' },

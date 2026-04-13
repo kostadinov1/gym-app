@@ -3,7 +3,9 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -250,6 +252,7 @@ export default function ExerciseListScreen() {
       />
 
       <Modal visible={isModalVisible} animationType="slide" transparent onRequestClose={closeModal}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}> 
             <Text style={[styles.modalHeader, { color: theme.colors.text }]}>{editingId ? 'Edit Exercise' : 'Exercise'}</Text>
@@ -274,6 +277,7 @@ export default function ExerciseListScreen() {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );

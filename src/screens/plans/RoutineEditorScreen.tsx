@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -306,7 +307,13 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         </TouchableOpacity>
                     </View>
 
-                    <View style={{ padding: 16 }}>
+                    <KeyboardAwareScrollView
+                        enableOnAndroid={true}
+                        enableAutomaticScroll={true}
+                        extraScrollHeight={20}
+                        keyboardShouldPersistTaps="handled"
+                        contentContainerStyle={{ padding: 16 }}
+                    >
                         {!editingTargetId && (
                             <>
                                 <Text style={[styles.label, { color: theme.colors.text }]}>1. Select Exercise</Text>
@@ -462,11 +469,12 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         >
                             <Text style={{ color: 'white', fontWeight: 'bold' }}>Save to Routine</Text>
                         </TouchableOpacity>
-                    </View>
+                    </KeyboardAwareScrollView>
                 </SafeAreaView>
             </Modal>
             {/* --- RENAME ROUTINE MODAL --- */}
             <Modal visible={isRenameModalVisible} transparent animationType="fade">
+                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
                         <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Rename Routine</Text>
@@ -497,6 +505,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         </View>
                     </View>
                 </View>
+                </KeyboardAvoidingView>
             </Modal>
         </SafeAreaView>
     );
