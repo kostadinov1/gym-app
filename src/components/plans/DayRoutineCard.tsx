@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Moon, ChevronUp, ChevronDown } from 'lucide-react-native';
 import { useTheme } from '../../theme';
 
 // Enable LayoutAnimation for Android
@@ -56,7 +56,7 @@ export const DayRoutineCard = ({ dayName, routine, currentWeek, onPress, onAddPr
           >
             <View style={styles.cardHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                {isRest && <Ionicons name="battery-charging" size={18} color={theme.colors.success} />}
+                {isRest && <Moon size={18} color={theme.colors.success} />}
                 <Text style={{ fontSize: 16, fontWeight: '600', color: theme.colors.text }} numberOfLines={1}>
                   {routine.name}
                 </Text>
@@ -113,12 +113,10 @@ export const DayRoutineCard = ({ dayName, routine, currentWeek, onPress, onAddPr
       <Text style={{ fontSize: 12, color: theme.colors.primary, fontWeight: '600' }}>
         {isExpanded ? "Show less" : `+ ${exercises.length - 3} more exercises`}
       </Text>
-      <Ionicons 
-          name={isExpanded ? "chevron-up" : "chevron-down"} 
-          size={14} // Slightly smaller icon
-          color={theme.colors.primary} 
-          style={{ marginLeft: 4, marginTop: 1 }} // Fine-tuned alignment
-      />
+      {isExpanded
+        ? <ChevronUp size={14} color={theme.colors.primary} style={{ marginLeft: 4, marginTop: 1 }} />
+        : <ChevronDown size={14} color={theme.colors.primary} style={{ marginLeft: 4, marginTop: 1 }} />
+      }
     </View>
   </TouchableOpacity>
 )}

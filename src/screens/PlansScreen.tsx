@@ -8,7 +8,7 @@ import { AdBanner } from '../components/AdBanner';
 
 import { useNavigation } from '@react-navigation/native'; // Add this
 import { FAB } from '../components/common/FAB';
-import { Ionicons } from '@expo/vector-icons';
+import { Trash2 } from 'lucide-react-native';
 
 export default function PlansScreen() {
     const navigation = useNavigation<any>()
@@ -104,7 +104,7 @@ export default function PlansScreen() {
                         </TouchableOpacity>
                         {/* Delete Button */}
 <TouchableOpacity onPress={() => handleDelete(item.id, item.name)} style={{ padding: 8 }}>
-    <Ionicons name="trash-outline" size={22} color={theme.colors.error} />
+    <Trash2 size={22} color={theme.colors.error} />
 </TouchableOpacity>
                     </View>
                 )}

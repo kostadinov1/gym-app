@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Plus } from 'lucide-react-native';
 import { useTheme } from '../../theme';
 
 interface FABProps {
@@ -18,7 +18,7 @@ export const FAB = ({ onPress, style }: FABProps) => {
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <Ionicons name="add" size={32} color="white" />
+      <Plus size={32} color="white" />
     </TouchableOpacity>
   );
 };

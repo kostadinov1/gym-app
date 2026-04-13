@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { X, Dumbbell, Infinity, Cloud, Download, BarChart2, Ban, Gift } from 'lucide-react-native';
 import Purchases from 'react-native-purchases';
 
 import { useTheme } from '../theme';
@@ -22,12 +22,12 @@ import { useEntitlements } from '../context/EntitlementContext';
 // ---------------------------------------------------------------------------
 
 const PRO_FEATURES = [
-  { icon: 'infinite-outline',   label: 'Unlimited plans & workout history' },
-  { icon: 'cloud-outline',      label: 'Cloud sync across devices' },
-  { icon: 'download-outline',   label: 'Export to CSV & JSON (Strong-compatible)' },
-  { icon: 'bar-chart-outline',  label: 'Full analytics — all-time history' },
-  { icon: 'ban-outline',        label: 'No ads' },
-] as const;
+  { Icon: Infinity,  label: 'Unlimited plans & workout history' },
+  { Icon: Cloud,     label: 'Cloud sync across devices' },
+  { Icon: Download,  label: 'Export to CSV & JSON (Strong-compatible)' },
+  { Icon: BarChart2, label: 'Full analytics — all-time history' },
+  { Icon: Ban,       label: 'No ads' },
+];
 
 // ---------------------------------------------------------------------------
 // Screen
@@ -93,13 +93,13 @@ export default function PaywallScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Close button */}
       <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-        <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
+        <X size={24} color={theme.colors.textSecondary} />
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Ionicons name="barbell" size={52} color={theme.colors.primary} />
+          <Dumbbell size={52} color={theme.colors.primary} />
           <Text style={[styles.title, { color: theme.colors.text }]}>Hardlog Pro</Text>
           <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
             Everything you need, no limits.
@@ -108,17 +108,17 @@ export default function PaywallScreen() {
 
         {/* Features */}
         <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-          {PRO_FEATURES.map(f => (
-            <View key={f.icon} style={styles.featureRow}>
-              <Ionicons name={f.icon} size={20} color={theme.colors.primary} style={styles.featureIcon} />
-              <Text style={[styles.featureLabel, { color: theme.colors.text }]}>{f.label}</Text>
+          {PRO_FEATURES.map(({ Icon, label }) => (
+            <View key={label} style={styles.featureRow}>
+              <Icon size={20} color={theme.colors.primary} style={styles.featureIcon} />
+              <Text style={[styles.featureLabel, { color: theme.colors.text }]}>{label}</Text>
             </View>
           ))}
         </View>
 
         {/* Trial badge */}
         <View style={[styles.trialBadge, { backgroundColor: theme.colors.primary + '22', borderColor: theme.colors.primary }]}>
-          <Ionicons name="gift-outline" size={16} color={theme.colors.primary} />
+          <Gift size={16} color={theme.colors.primary} />
           <Text style={[styles.trialText, { color: theme.colors.primary }]}>
             {' '}Start with a {trialText}
           </Text>

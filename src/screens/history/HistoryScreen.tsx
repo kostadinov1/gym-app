@@ -7,7 +7,7 @@ import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
 import { AdBanner } from '../../components/AdBanner';
 import { useNavigation } from '@react-navigation/native'; // Add import
-import { Ionicons } from '@expo/vector-icons';
+import { TrendingUp } from 'lucide-react-native';
 
 
 export default function HistoryScreen() {
@@ -66,7 +66,7 @@ export default function HistoryScreen() {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', margin: 16 }}>
           <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.colors.text }}>History</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Analytics')}>
-              <Ionicons name="stats-chart" size={24} color={theme.colors.primary} />
+              <TrendingUp size={24} color={theme.colors.primary} />
           </TouchableOpacity>
       </View>
 

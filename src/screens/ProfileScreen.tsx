@@ -12,7 +12,7 @@ import { useTheme, useThemeToggle } from '../context/ThemeContext';
 import Toast from 'react-native-toast-message';
 import { deleteAccount, register, login } from '../api/auth';
 import { VolumeChart } from '../components/profile/VolumeChart';
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronRight, FileText, Share2, Lock, Code2 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useEntitlement } from '../hooks/useEntitlement';
 import { ExportService, type ExportFormat } from '../services/ExportService';
@@ -265,7 +265,7 @@ export default function ProfileScreen() {
                 Create a free account to back up and sync your data.
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.primary} />
+            <ChevronRight size={20} color={theme.colors.primary} />
           </TouchableOpacity>
         )}
 
@@ -298,7 +298,7 @@ export default function ProfileScreen() {
                     <Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>Check your long term progress</Text>
                 </View>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+            <ChevronRight size={20} color={theme.colors.textSecondary} />
         </TouchableOpacity>
         {/* --- NEW CHART --- */}
         <VolumeChart />
@@ -353,7 +353,7 @@ export default function ProfileScreen() {
             disabled={exporting}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Ionicons name="document-text-outline" size={20} color={theme.colors.primary} />
+              <FileText size={20} color={theme.colors.primary} />
               <View>
                 <Text style={[styles.settingLabel, { color: theme.colors.text }]}>Export as CSV</Text>
                 <Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>Strong-compatible format</Text>
@@ -361,7 +361,7 @@ export default function ProfileScreen() {
             </View>
             {exporting
               ? <ActivityIndicator size="small" color={theme.colors.primary} />
-              : <Ionicons name={canExport ? 'share-outline' : 'lock-closed-outline'} size={20} color={theme.colors.textSecondary} />
+              : canExport ? <Share2 size={20} color={theme.colors.textSecondary} /> : <Lock size={20} color={theme.colors.textSecondary} />
             }
           </TouchableOpacity>
 
@@ -371,7 +371,7 @@ export default function ProfileScreen() {
             disabled={exporting}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Ionicons name="code-outline" size={20} color={theme.colors.primary} />
+              <Code2 size={20} color={theme.colors.primary} />
               <View>
                 <Text style={[styles.settingLabel, { color: theme.colors.text }]}>Export as JSON</Text>
                 <Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>Full-fidelity backup</Text>
@@ -379,7 +379,7 @@ export default function ProfileScreen() {
             </View>
             {exporting
               ? <ActivityIndicator size="small" color={theme.colors.primary} />
-              : <Ionicons name={canExport ? 'share-outline' : 'lock-closed-outline'} size={20} color={theme.colors.textSecondary} />
+              : canExport ? <Share2 size={20} color={theme.colors.textSecondary} /> : <Lock size={20} color={theme.colors.textSecondary} />
             }
           </TouchableOpacity>
         </View>

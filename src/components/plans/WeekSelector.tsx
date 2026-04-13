@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../../theme';
 
 interface WeekSelectorProps {
@@ -15,7 +15,7 @@ export const WeekSelector = ({ currentWeek, totalWeeks, onPrev, onNext }: WeekSe
   return (
     <View style={[styles.weekSelector, { backgroundColor: theme.colors.card }]}>
       <TouchableOpacity onPress={onPrev} disabled={currentWeek === 1} style={{ padding: 8 }}>
-        <Ionicons name="chevron-back" size={24} color={currentWeek === 1 ? theme.colors.border : theme.colors.primary} />
+        <ChevronLeft size={24} color={currentWeek === 1 ? theme.colors.border : theme.colors.primary} />
       </TouchableOpacity>
 
       <View style={{ alignItems: 'center' }}>
@@ -24,7 +24,7 @@ export const WeekSelector = ({ currentWeek, totalWeeks, onPrev, onNext }: WeekSe
       </View>
 
       <TouchableOpacity onPress={onNext} disabled={currentWeek === totalWeeks} style={{ padding: 8 }}>
-        <Ionicons name="chevron-forward" size={24} color={currentWeek === totalWeeks ? theme.colors.border : theme.colors.primary} />
+        <ChevronRight size={24} color={currentWeek === totalWeeks ? theme.colors.border : theme.colors.primary} />
       </TouchableOpacity>
     </View>
   );

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Ionicons } from '@expo/vector-icons';
+import { Pencil, Trash2, Copy } from 'lucide-react-native';
 import Toast from 'react-native-toast-message';
 
 import { FAB } from '../components/common/FAB';
@@ -221,10 +221,10 @@ export default function ExerciseListScreen() {
             {item.is_custom ? (
               <View style={{ flexDirection: 'row', gap: 20 }}>
                 <TouchableOpacity onPress={() => handleEditPress(item)}>
-                  <Ionicons name="create-outline" size={22} color={theme.colors.textSecondary} />
+                  <Pencil size={22} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleDelete(item.id, item.name)}>
-                  <Ionicons name="trash-outline" size={22} color={theme.colors.error} />
+                  <Trash2 size={22} color={theme.colors.error} />
                 </TouchableOpacity>
               </View>
             ) : (
@@ -235,7 +235,7 @@ export default function ExerciseListScreen() {
                 {copyMutation.isPending && copyingId === item.id ? (
                   <ActivityIndicator size="small" color={theme.colors.primary} />
                 ) : (
-                  <Ionicons name="copy-outline" size={22} color={theme.colors.primary} />
+                  <Copy size={22} color={theme.colors.primary} />
                 )}
               </TouchableOpacity>
             )}

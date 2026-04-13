@@ -13,7 +13,8 @@
       "Read(//home/gencho/Web_Development/gym-backend/**)",
       "Bash(ls /home/gencho/Web_Development/gym-app/*.config.js)",
       "Bash(rm /home/gencho/Web_Development/gym-app/babel.config.js)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(grep -E \"\\\\.\\(png|jpg|jpeg|gif|svg\\)$\")"
     ],
     "additionalDirectories": [
       "/home/gencho/Web_Development/gym-backend"

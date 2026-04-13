@@ -7,7 +7,7 @@ import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tansta
 import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
 import Toast from 'react-native-toast-message';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeft, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react-native';
 
 
 
@@ -199,7 +199,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                 disabled={index === 0 || reorderMutation.isPending}
                 style={{ opacity: index === 0 ? 0.2 : 1 }}
             >
-                <Ionicons name="chevron-up" size={24} color={theme.colors.primary} />
+                <ChevronUp size={24} color={theme.colors.primary} />
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -207,7 +207,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                 disabled={index === existingExercises.length - 1 || reorderMutation.isPending}
                 style={{ opacity: index === existingExercises.length - 1 ? 0.2 : 1 }}
             >
-                <Ionicons name="chevron-down" size={24} color={theme.colors.primary} />
+                <ChevronDown size={24} color={theme.colors.primary} />
             </TouchableOpacity>
         </View>
 
@@ -237,7 +237,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
             onPress={() => handleDeleteExercise(item.id, item.name)} 
             style={{ padding: 16 }}
         >
-            <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+            <Trash2 size={20} color={theme.colors.error} />
         </TouchableOpacity>
     </View>
 );
@@ -246,7 +246,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <View style={styles.headerRow}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
+                    <ArrowLeft size={24} color={theme.colors.primary} />
                 </TouchableOpacity>
 
                 <View style={{ flex: 1 }}>
@@ -258,7 +258,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
 
                 <View style={{ flexDirection: 'row', gap: 15 }}>
                     <TouchableOpacity onPress={() => setRenameModalVisible(true)}>
-                        <Ionicons name="create-outline" size={24} color={theme.colors.textSecondary} />
+                        <Pencil size={24} color={theme.colors.textSecondary} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => {
                         Alert.alert("Delete Routine", "Are you sure? This will remove all exercises in this day.", [
@@ -266,7 +266,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                             { text: "Delete", style: "destructive", onPress: () => deleteRoutineMutation.mutate() }
                         ]);
                     }}>
-                        <Ionicons name="trash-outline" size={24} color={theme.colors.error} />
+                        <Trash2 size={24} color={theme.colors.error} />
                     </TouchableOpacity>
                 </View>
             </View>

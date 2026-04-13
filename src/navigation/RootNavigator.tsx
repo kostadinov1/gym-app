@@ -3,7 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme';
-import { Ionicons } from '@expo/vector-icons';
+import { Dumbbell, Calendar, LayoutList, Layers, User } from 'lucide-react-native';
 
 import ActiveWorkoutScreen from '../screens/ActiveWorkoutScreen';
 import ExerciseListScreen from '../screens/ExerciseListScreen';
@@ -86,13 +86,15 @@ function TabNavigator() {
                 tabBarActiveTintColor: theme.colors.primary,
                 tabBarInactiveTintColor: theme.colors.textSecondary,
                 tabBarIcon: ({ focused, color, size }) => {
-                    let iconName: keyof typeof Ionicons.glyphMap = 'home';
-                    if (route.name === 'Workout')   iconName = focused ? 'barbell'   : 'barbell-outline';
-                    else if (route.name === 'History')  iconName = focused ? 'calendar'  : 'calendar-outline';
-                    else if (route.name === 'Plans')    iconName = focused ? 'list'      : 'list-outline';
-                    else if (route.name === 'Exercises')iconName = focused ? 'library'   : 'library-outline';
-                    else if (route.name === 'Profile')  iconName = focused ? 'person'    : 'person-outline';
-                    return <Ionicons name={iconName} size={size} color={color} />;
+                    const TAB_ICONS = {
+                        Workout:   Dumbbell,
+                        History:   Calendar,
+                        Plans:     LayoutList,
+                        Exercises: Layers,
+                        Profile:   User,
+                    };
+                    const Icon = TAB_ICONS[route.name as keyof typeof TAB_ICONS];
+                    return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 1.5} />;
                 },
             })}
         >

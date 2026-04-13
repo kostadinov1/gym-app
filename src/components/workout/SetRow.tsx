@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Trash2 } from 'lucide-react-native';
 import { useTheme } from '../../theme';
 import { Stepper } from './Stepper';
 
@@ -64,7 +64,7 @@ export const SetRow = ({
 
         {onDelete && (
           <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
-            <Ionicons name="trash-outline" size={20} color={theme.colors.textSecondary} />
+            <Trash2 size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
         )}
       </View>
