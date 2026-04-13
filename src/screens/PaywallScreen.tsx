@@ -100,7 +100,7 @@ export default function PaywallScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Ionicons name="barbell" size={52} color={theme.colors.primary} />
-          <Text style={[styles.title, { color: theme.colors.text }]}>Gym Tracker Pro</Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>Hardlog Pro</Text>
           <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
             Everything you need, no limits.
           </Text>

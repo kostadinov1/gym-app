@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Gym Tracker",
+    "name": "Hardlog",
     "slug": "gym-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -23,9 +23,14 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.gencho.gymtracker",
+      "package": "com.gencho.hardlog",
       "versionCode": 1,
-      "targetSdkVersion": 35
+      "targetSdkVersion": 35,
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -37,7 +42,8 @@
       [
         "react-native-google-mobile-ads",
         {
-          "androidAppId": "ca-app-pub-3940256099942544~3347511713"
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ],
       "expo-file-system"
@@ -46,6 +52,7 @@
       "eas": {
         "projectId": "2abbc351-a1c4-41ec-8263-a6b424a2ab29"
       }
-    }
+    },
+    "owner": "gencho"
   }
 }

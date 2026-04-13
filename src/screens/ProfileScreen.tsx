@@ -335,7 +335,7 @@ export default function ProfileScreen() {
               value=""
               onPress={() =>
                 Linking.openURL(
-                  'https://play.google.com/store/account/subscriptions?package=com.gencho.gymtracker',
+                  'https://play.google.com/store/account/subscriptions?package=com.gencho.hardlog',
                 )
               }
             />

@@ -25,17 +25,31 @@ export const StorageProvider = ({ children }: { children: React.ReactNode }) => 
     // Wait until auth state is resolved before initialising the DB.
     if (authLoading) return;
 
-    // Always run migrations — fast, idempotent, tracks applied state.
-    runMigrations();
+    const initDb = async () => {
+      // Always run migrations — fast, idempotent, tracks applied state.
+      // Wrapped in try/catch so a migration failure never permanently hangs the app.
+      try {
+        runMigrations();
+      } catch (e) {
+        console.error('[DB] Migration failed:', e);
+        // Don't block — tables may already exist from a previous successful run.
+      }
 
-    if (isGuest) {
-      // Guest users need the system exercise catalog seeded before any
-      // screen renders. seedSystemExercises() is a no-op if already done.
-      seedSystemExercises().then(() => setDbReady(true));
-    } else {
-      // Logged-in users go straight to the remote service — no local DB needed.
+      if (isGuest) {
+        // Guest users need the system exercise catalog seeded before any
+        // screen renders. seedSystemExercises() is a no-op if already done.
+        try {
+          await seedSystemExercises();
+        } catch (e) {
+          console.error('[DB] Seeding failed:', e);
+        }
+      }
+
+      // Always unblock the app — even if something above failed.
       setDbReady(true);
-    }
+    };
+
+    initDb();
   }, [isGuest, authLoading]);
 
   const service: IAppService = useMemo(

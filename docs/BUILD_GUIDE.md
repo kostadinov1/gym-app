@@ -4,6 +4,7 @@
 
 | Scenario | Backend | API target | Script |
 |---|---|---|---|
+| 0. Dev client (one-time setup) | — | — | `build-dev-client.sh` → install APK on phone |
 | 1. Local development | Local uvicorn | `http://192.168.x.x:8000` | `dev-backend.sh` + `dev-frontend.sh` |
 | 2. APK for friends | Render (live) | `gym-api-m6vx.onrender.com` | `build-apk.sh` |
 | 3. Internal test track | Render (live) | `gym-api-m6vx.onrender.com` | `build-aab.sh` → upload to Play Console |
@@ -11,11 +12,33 @@
 
 ---
 
+## Scenario 0 — Dev Client (One-Time Setup)
+
+The app uses native modules (AdMob, RevenueCat, Sentry) that **cannot run in the standard Expo Go app**.
+You need a custom dev client — a version of Expo Go compiled with your native modules.
+Build it once, install on your phone, then use it for all local development.
+
+**Build + install (do this once, or when you add a new native module):**
+```bash
+./scripts/build-dev-client.sh
+# eas build --platform android --profile development
+```
+Download the APK from the EAS link → install on your phone (enable "Install unknown apps" if needed).
+
+**Rebuild the dev client when:**
+- You add or remove a package that has native code (`npm install something-with-native`)
+- You change `plugins` in `app.json`
+- First time setting up on a new phone
+
+---
+
 ## Scenario 1 — Local Development
 
 Used for active coding and debugging. Hot reload on both frontend and backend.
+Requires the dev client APK installed on your phone (Scenario 0).
 
 **Prerequisites:**
+- Dev client APK installed on your phone (see Scenario 0)
 - Docker running (for PostgreSQL)
 - `uv` installed
 - `EXPO_PUBLIC_API_URL` in `.env` set to your machine's local IP
@@ -35,7 +58,7 @@ ip addr | grep 192
 **Step 2 — Start the frontend (Terminal 2):**
 ```bash
 ./scripts/dev-frontend.sh
-# Opens Expo Metro bundler — scan QR with Expo Go, or press 'a' for Android emulator
+# Opens Expo Metro bundler — open the dev client app on your phone and scan the QR
 ```
 
 **Flags for the frontend script:**
@@ -73,7 +96,7 @@ EAS builds in the cloud (~10–15 min). When done, you get a download link on ex
 
 Option A — Share the expo.dev link (easiest):
 ```
-EAS prints a URL like: https://expo.dev/accounts/YOUR_ACCOUNT/projects/gym-tracker/builds/...
+EAS prints a URL like: https://expo.dev/accounts/YOUR_ACCOUNT/projects/hardlog/builds/...
 Friends open it in a browser → tap "Download" → install
 ```
 
@@ -175,3 +198,28 @@ eas credentials --platform android
 
 **`.env.production` values missing (build-aab.sh warns you):**
 - See `docs/PRE_PRODUCTION_CHECKLIST.md` for where to get each value
+
+---
+
+## Adding a New Database Migration
+
+When you change the SQLite schema (add a column, new table, etc.):
+
+1. Edit `src/db/schema.ts`
+2. Run `npx drizzle-kit generate` — creates a new `.sql` file in `src/db/migrations/`
+3. Open `src/db/migrations/migrations.js` and add the new migration as an inlined string:
+
+```js
+// Copy the content of the new .sql file into a const:
+const m0001 = `ALTER TABLE \`workout_plans\` ADD COLUMN \`notes\` text;`;
+
+export default {
+  journal,
+  migrations: { m0000, m0001 },  // ← add m0001 here
+};
+```
+
+4. Rebuild the dev client if the schema change requires a native rebuild (it usually doesn't — schema changes are pure JS/SQL)
+5. Clear app data on your test device — the migration will run on next launch
+
+**Why not import the .sql file directly?** Metro can't import `.sql` files as text strings without tooling that conflicts with Expo SDK 54's Babel setup. Inlining the SQL as a JS string constant is simpler and works identically in dev and production.

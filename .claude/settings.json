@@ -8,7 +8,15 @@
       "Bash(sudo ss:*)",
       "Read(//proc/108932/net/**)",
       "Bash(awk '$2 ~ /00000000000000000000000000001F40/ {print $NF}')",
-      "Bash(awk '$2 ~ /00001F40/ {print}')"
+      "Bash(awk '$2 ~ /00001F40/ {print}')",
+      "Bash(systemd-inhibit --list)",
+      "Read(//home/gencho/Web_Development/gym-backend/**)",
+      "Bash(ls /home/gencho/Web_Development/gym-app/*.config.js)",
+      "Bash(rm /home/gencho/Web_Development/gym-app/babel.config.js)",
+      "Bash(npm uninstall:*)"
+    ],
+    "additionalDirectories": [
+      "/home/gencho/Web_Development/gym-backend"
     ]
   }
 }

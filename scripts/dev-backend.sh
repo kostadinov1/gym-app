@@ -23,6 +23,13 @@ echo "Starting PostgreSQL (docker compose)..."
 cd "$BACKEND_DIR"
 docker compose up -d
 
+# Wait briefly for Postgres to be ready before running migrations
+sleep 2
+
+echo ""
+echo "Running Alembic migrations..."
+uv run alembic upgrade head
+
 echo ""
 # Free port 8000 if something is already using it (e.g. a ghost uvicorn process)
 if lsof -ti :8000 &>/dev/null; then
