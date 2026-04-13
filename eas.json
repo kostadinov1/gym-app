@@ -12,6 +12,10 @@
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENV": "preview",
+        "EXPO_PUBLIC_API_URL": "https://gym-api-m6vx.onrender.com"
       }
     },
     "production": {

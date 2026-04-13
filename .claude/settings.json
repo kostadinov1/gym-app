@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node -e \"const fs = require\\('/home/gencho/Web_Development/gym-app/node_modules/expo-file-system/build/index'\\); console.log\\(Object.keys\\(fs\\).filter\\(k => k.match\\(/cache|Cache|encoding|Encoding|write|Write/i\\)\\).slice\\(0,20\\)\\)\")"
+      "Bash(node -e \"const fs = require\\('/home/gencho/Web_Development/gym-app/node_modules/expo-file-system/build/index'\\); console.log\\(Object.keys\\(fs\\).filter\\(k => k.match\\(/cache|Cache|encoding|Encoding|write|Write/i\\)\\).slice\\(0,20\\)\\)\")",
+      "Bash(ls /home/gencho/Web_Development/gym-app/*.md)",
+      "Bash(chmod +x /home/gencho/Web_Development/gym-app/scripts/*.sh)",
+      "Bash(fuser 8000/tcp)",
+      "Bash(sudo ss:*)",
+      "Read(//proc/108932/net/**)",
+      "Bash(awk '$2 ~ /00000000000000000000000000001F40/ {print $NF}')",
+      "Bash(awk '$2 ~ /00001F40/ {print}')"
     ]
   }
 }
