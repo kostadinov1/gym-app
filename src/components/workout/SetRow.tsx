@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
 import { useTheme } from '../../theme';
+import { useUnits } from '../../context/UnitsContext';
 import { Stepper } from './Stepper';
 
 interface SetRowProps {
@@ -28,6 +29,7 @@ export const SetRow = ({
   onDelete,
 }: SetRowProps) => {
   const theme = useTheme();
+  const { unitLabel, weightStep } = useUnits();
 
   return (
     <View style={[styles.container, isCompleted && { backgroundColor: theme.colors.successBackground }]}> 
@@ -39,7 +41,7 @@ export const SetRow = ({
 
       <View style={styles.controls}>
         <View style={{ flex: 1.1 }}>
-          <Stepper value={weight} step={2.5} unit="kg" onChange={(val) => onUpdate('weight', val)} />
+          <Stepper value={weight} step={weightStep} unit={unitLabel} onChange={(val) => onUpdate('weight', val)} />
         </View>
 
         <View style={{ width: 8 }} />

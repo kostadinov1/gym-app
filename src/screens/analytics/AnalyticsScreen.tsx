@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useEntitlement } from '../../hooks/useEntitlement';
 import { BarChart } from 'react-native-gifted-charts';
 import { getSmartChartLayout, Period } from '../../utils/chartLayout';
+import { useUnits } from '../../context/UnitsContext';
 
 const PERIODS: Period[] = ['1M', '3M', '6M', '1Y', 'ALL'];
 const DATE_FMT: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short' };
@@ -21,6 +22,7 @@ export default function AnalyticsScreen() {
     const navigation = useNavigation<any>();
     const { isGuest } = useAuth();
     const { openPaywall } = useEntitlement();
+    const { kgToDisplay, unitLabel } = useUnits();
 
     const [period, setPeriod] = useState<Period>('1M');
     const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>(undefined);
@@ -153,7 +155,7 @@ export default function AnalyticsScreen() {
             screenPadding: 48
         });
 
-        const maxDataValue = Math.max(...chartData.map(d => d.value));
+        const maxDataValue = Math.max(...chartData.map(d => kgToDisplay(d.value)));
         const yAxisMaxValue = maxDataValue > 0 ? Math.ceil(maxDataValue * 1.35) : 100;
         const step = xAxisLabelStep(period, chartData.length);
         const hasAnyVolume = hasAnyDataInCurrentWindow;
@@ -165,7 +167,7 @@ export default function AnalyticsScreen() {
         const useScroll = isScrollable || shouldForceScroll;
 
         const formattedData = chartData.map((item, index) => ({
-            value: item.value,
+            value: kgToDisplay(item.value),
             label: (index % step === 0 || index === chartData.length - 1) ? item.label : '',
             frontColor: theme.colors.primary,
             onPress: () => {
@@ -178,7 +180,7 @@ export default function AnalyticsScreen() {
                         {formatPointDate(item.date)}
                     </Text>
                     <Text style={{ color: theme.colors.primary, fontSize: 11, fontWeight: '700' }}>
-                        {formatCompactNumber(item.value)} kg
+                        {formatCompactNumber(kgToDisplay(item.value))} {unitLabel}
                     </Text>
                 </View>
             ) : undefined,
@@ -332,7 +334,7 @@ export default function AnalyticsScreen() {
                 <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
                     <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Volume Load</Text>
                     <Text style={{ color: theme.colors.textSecondary, fontSize: 12, marginBottom: 12 }}>
-                        Total weight moved (kg)
+                        Total weight moved ({unitLabel})
                     </Text>
 
                     <View style={[styles.windowRow, { borderColor: theme.colors.border }]}> 
@@ -362,7 +364,7 @@ export default function AnalyticsScreen() {
 
                     {!!selectedPoint && (
                         <Text style={{ color: theme.colors.primary, fontSize: 12, marginBottom: 8, fontWeight: '600' }}>
-                            {formatPointDate(selectedPoint.date)} • {formatCompactNumber(selectedPoint.value)} kg
+                            {formatPointDate(selectedPoint.date)} • {formatCompactNumber(kgToDisplay(selectedPoint.value))} {unitLabel}
                         </Text>
                     )}
 

@@ -14,10 +14,17 @@
       "Bash(ls /home/gencho/Web_Development/gym-app/*.config.js)",
       "Bash(rm /home/gencho/Web_Development/gym-app/babel.config.js)",
       "Bash(npm uninstall:*)",
-      "Bash(grep -E \"\\\\.\\(png|jpg|jpeg|gif|svg\\)$\")"
+      "Bash(grep -E \"\\\\.\\(png|jpg|jpeg|gif|svg\\)$\")",
+      "Read(//home/gencho/Web_Development/**)",
+      "Bash(npm create:*)",
+      "Bash(npm run:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:4321/)",
+      "Bash(curl -s -o /dev/null -w \" %{http_code}\" http://localhost:4321/privacy)",
+      "Bash(kill %1)"
     ],
     "additionalDirectories": [
-      "/home/gencho/Web_Development/gym-backend"
+      "/home/gencho/Web_Development/gym-backend",
+      "/home/gencho/Web_Development/hardlog-web"
     ]
   }
 }

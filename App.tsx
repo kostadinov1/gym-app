@@ -10,6 +10,7 @@ import { useTheme } from './src/theme';
 import RootNavigator from './src/navigation/RootNavigator';
 import LoginScreen from './src/screens/auth/LoginScreen';
 import { ThemeProvider } from './src/context/ThemeContext';
+import { UnitsProvider } from './src/context/UnitsContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
@@ -80,6 +81,7 @@ function App() {
       <SafeAreaProvider>
         <AuthProvider>
           <ThemeProvider>
+          <UnitsProvider>
               {/* 3. Pass the configured client here */}
               <QueryClientProvider client={queryClient}>
                   {/* StorageProvider injects RemoteService or LocalService
@@ -94,6 +96,7 @@ function App() {
                   </StorageProvider>
                   <Toast />
               </QueryClientProvider>
+          </UnitsProvider>
           </ThemeProvider>
         </AuthProvider>
       </SafeAreaProvider>

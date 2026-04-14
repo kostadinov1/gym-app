@@ -6,6 +6,7 @@ import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useEntitlement } from '../../hooks/useEntitlement';
+import { useUnits } from '../../context/UnitsContext';
 import { getSmartChartLayout } from '../../utils/chartLayout';
 
 export const VolumeChart = () => {
@@ -13,6 +14,7 @@ export const VolumeChart = () => {
     const db = useStorage();
     const { isGuest } = useAuth();
     const { openPaywall } = useEntitlement();
+    const { kgToDisplay, unitLabel } = useUnits();
     const [selectedPoint, setSelectedPoint] = useState<{ date: string; value: number } | null>(null);
     const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
 
@@ -79,7 +81,7 @@ export const VolumeChart = () => {
         screenPadding: 48
     });
 
-    const maxDataValue = Math.max(...data.map(d => d.value));
+    const maxDataValue = Math.max(...data.map(d => kgToDisplay(d.value)));
     const yAxisMaxValue = maxDataValue > 0 ? Math.ceil(maxDataValue * 1.35) : 100;
     const step = data.length > 12 ? 2 : 1;
     const visualInitialSpacing = Math.max(initialSpacing, 14);
@@ -90,7 +92,7 @@ export const VolumeChart = () => {
     const useScroll = isScrollable || shouldForceScroll;
 
     const chartData = data.map((item, index) => ({
-        value: item.value,
+        value: kgToDisplay(item.value),
         label: (index % step === 0 || index === data.length - 1) ? item.label : '',
         frontColor: theme.colors.primary, 
         onPress: () => {
@@ -103,7 +105,7 @@ export const VolumeChart = () => {
                     {formatPointDate(item.date)}
                 </Text>
                 <Text style={{ color: theme.colors.primary, fontSize: 11, fontWeight: '700' }}>
-                    {formatCompactNumber(item.value)} kg
+                    {formatCompactNumber(kgToDisplay(item.value))} {unitLabel}
                 </Text>
             </View>
         ) : undefined,
@@ -118,7 +120,7 @@ export const VolumeChart = () => {
             <Text style={[styles.title, { color: theme.colors.text }]}>Volume Load (Last 3 Months)</Text>
             {!!selectedPoint && (
                 <Text style={{ color: theme.colors.primary, fontSize: 12, marginBottom: 6, fontWeight: '600' }}>
-                    {formatPointDate(selectedPoint.date)} • {formatCompactNumber(selectedPoint.value)} kg
+                    {formatPointDate(selectedPoint.date)} • {formatCompactNumber(kgToDisplay(selectedPoint.value))} {unitLabel}
                 </Text>
             )}
             

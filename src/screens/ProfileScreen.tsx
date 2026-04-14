@@ -13,6 +13,7 @@ import Toast from 'react-native-toast-message';
 import { deleteAccount, register, login } from '../api/auth';
 import { VolumeChart } from '../components/profile/VolumeChart';
 import { ChevronRight, FileText, Share2, Lock, Code2 } from 'lucide-react-native';
+import { useUnits } from '../context/UnitsContext';
 import { useNavigation } from '@react-navigation/native';
 import { useEntitlement } from '../hooks/useEntitlement';
 import { ExportService, type ExportFormat } from '../services/ExportService';
@@ -26,6 +27,7 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const db = useStorage();
   const { isDark, toggleTheme } = useThemeToggle();
+  const { isMetric, toggleUnit, unitLabel } = useUnits();
   const { signOut, isGuest, promoteGuest } = useAuth();
   const { canExport, openPaywall } = useEntitlement();
   const queryClient = useQueryClient();
@@ -324,12 +326,16 @@ export default function ProfileScreen() {
             onPress={toggleTheme} // <--- Wire it up!
           />
 
-          <SettingRow label="Units" value="Metric (kg)" />
+          <SettingRow
+            label="Units"
+            value={isMetric ? `Metric (kg)` : `Imperial (lbs)`}
+            onPress={toggleUnit}
+          />
           <SettingRow label="Version" value="1.0.0" />
           <SettingRow
             label="Privacy Policy"
             value=""
-            onPress={() => Linking.openURL('https://your-domain.com/privacy')}
+            onPress={() => Linking.openURL('https://hardlog.app/privacy')}
           />
           {!isGuest && (
             <SettingRow

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { Moon, ChevronUp, ChevronDown } from 'lucide-react-native';
+import { useUnits } from '../../context/UnitsContext';
 import { useTheme } from '../../theme';
 
 // Enable LayoutAnimation for Android
@@ -18,6 +19,7 @@ interface DayRoutineCardProps {
 
 export const DayRoutineCard = ({ dayName, routine, currentWeek, onPress, onAddPress }: DayRoutineCardProps) => {
   const theme = useTheme();
+  const { kgToDisplay, unitLabel } = useUnits();
   const [isExpanded, setIsExpanded] = useState(false);
   
   const isRest = routine?.routine_type === 'rest';
@@ -96,7 +98,7 @@ export const DayRoutineCard = ({ dayName, routine, currentWeek, onPress, onAddPr
                         {ex.name}
                       </Text>
                       <Text style={[styles.exerciseStats, { color: theme.colors.textSecondary }]}>
-                        {ex.target_sets}×{currentReps} @ {currentWeight}kg
+                        {ex.target_sets}×{currentReps} @ {kgToDisplay(currentWeight)}{unitLabel}
                       </Text>
                     </View>
                   );

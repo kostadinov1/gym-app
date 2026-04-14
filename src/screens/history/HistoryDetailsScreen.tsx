@@ -4,11 +4,13 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
+import { useUnits } from '../../context/UnitsContext';
 import { Container } from '../../components/common/Container';
 
 export default function HistoryDetailsScreen() {
   const theme = useTheme();
   const db = useStorage();
+  const { kgToDisplay, unitLabel } = useUnits();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { sessionId } = route.params;
@@ -66,7 +68,7 @@ export default function HistoryDetailsScreen() {
                   <Text style={{ fontWeight: 'bold', color: theme.colors.textSecondary }}>{set.set_number}</Text>
                 </View>
                 <Text style={{ color: theme.colors.text, fontSize: 16 }}>
-                  {set.weight}kg x {set.reps}
+                  {kgToDisplay(set.weight)}{unitLabel} x {set.reps}
                   {set.duration_seconds !== null && set.duration_seconds !== undefined ? ` • ${set.duration_seconds}s` : ''}
                 </Text>
               </View>

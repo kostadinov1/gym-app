@@ -6,6 +6,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
+import { useUnits } from '../../context/UnitsContext';
 import Toast from 'react-native-toast-message';
 import { ArrowLeft, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react-native';
 
@@ -14,6 +15,7 @@ import { ArrowLeft, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react-
 export default function RoutineEditorScreen() {
     const theme = useTheme();
     const db = useStorage();
+    const { kgToDisplay, displayToKg, unitLabel } = useUnits();
     const route = useRoute<any>();
     const navigation = useNavigation<any>();
     const { routineId, routineName, planId } = route.params;
@@ -106,12 +108,12 @@ export default function RoutineEditorScreen() {
             order_index: existingExercises.length + 1,
             target_sets: parseInt(sets) || 0,
             target_reps: parseInt(reps) || 0,
-            target_weight: parseFloat(weight) || 0,
+            target_weight: displayToKg(parseFloat(weight) || 0),
             target_duration_seconds: hasDurationTarget ? (parseInt(targetDuration) || 0) : null,
             rest_seconds: 90,
 
             // --- FIX: Force 0 if it is a Rest Day ---
-            increment_weight: isRest ? 0 : (parseFloat(incWeight) || 0),
+            increment_weight: isRest ? 0 : displayToKg(parseFloat(incWeight) || 0),
             increment_reps: isRest ? 0 : (parseInt(incReps) || 0),
             increment_duration_seconds: isRest ? 0 : (hasDurationTarget ? (parseInt(incDuration) || 0) : 0),
         }),
@@ -128,9 +130,9 @@ export default function RoutineEditorScreen() {
         const payload = {
             target_sets: parseInt(sets) || 0,
             target_reps: parseInt(reps) || 0,
-            target_weight: parseFloat(weight) || 0,
+            target_weight: displayToKg(parseFloat(weight) || 0),
             target_duration_seconds: hasDurationTarget ? (parseInt(targetDuration) || 0) : null,
-            increment_weight: isRest ? 0 : (parseFloat(incWeight) || 0),
+            increment_weight: isRest ? 0 : displayToKg(parseFloat(incWeight) || 0),
             increment_reps: isRest ? 0 : (parseInt(incReps) || 0),
             increment_duration_seconds: isRest ? 0 : (hasDurationTarget ? (parseInt(incDuration) || 0) : 0),
         };
@@ -162,8 +164,8 @@ export default function RoutineEditorScreen() {
         setSelectedExerciseId(item.exercise_id); // Lock the exercise
         setSets(String(item.target_sets));
         setReps(String(item.target_reps));
-        setWeight(String(item.target_weight));
-        setIncWeight(String(item.increment_weight));
+        setWeight(String(kgToDisplay(item.target_weight)));
+        setIncWeight(String(kgToDisplay(item.increment_weight)));
         setIncReps(String(item.increment_reps));
         const hasDuration = item.target_duration_seconds !== null && item.target_duration_seconds !== undefined;
         setHasDurationTarget(hasDuration);
@@ -289,7 +291,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                     onPress={() => {
                         setEditingTargetId(null);
                         setSelectedExerciseId(null);
-                        setSets('3'); setReps('10'); setWeight('20'); setIncWeight('2.5'); setIncReps('0');
+                        setSets('3'); setReps('10'); setWeight(String(kgToDisplay(20))); setIncWeight(String(kgToDisplay(2.5))); setIncReps('0');
                         setHasDurationTarget(false); setTargetDuration('30'); setIncDuration('5');
                         setModalVisible(true);
                     }}
@@ -392,13 +394,13 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         {/* Row 2: Weight & Weight Increment */}
                         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
                             <View style={{ flex: 1 }}>
-                                <Text style={{ color: theme.colors.textSecondary }}>Base Weight (kg)</Text>
+                                <Text style={{ color: theme.colors.textSecondary }}>Base Weight ({unitLabel})</Text>
                                 <TextInput style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]} value={weight} onChangeText={setWeight} keyboardType="numeric" />
                             </View>
 
                             {/* --- CONDITIONAL RENDER --- */}
                             <View style={{ flex: 1 }}>
-                                <Text style={{ color: theme.colors.textSecondary }}>+Kg / Week</Text>
+                                <Text style={{ color: theme.colors.textSecondary }}>+{unitLabel} / Week</Text>
                                 <TextInput
                                     style={[
                                         styles.input,

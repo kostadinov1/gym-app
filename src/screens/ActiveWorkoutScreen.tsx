@@ -5,6 +5,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../theme';
 import { SetRow } from '../components/workout/SetRow';
+import { useUnits } from '../context/UnitsContext';
 import { useStorage } from '../context/StorageContext';
 import { FAB } from '../components/common/FAB';
 import Toast from 'react-native-toast-message';
@@ -18,6 +19,7 @@ export default function ActiveWorkoutScreen() {
   const { routineId } = route.params;
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { kgToDisplay, displayToKg } = useUnits();
 
   const startTime = useRef(new Date());
   const { data, isLoading } = useQuery({
@@ -43,7 +45,7 @@ export default function ActiveWorkoutScreen() {
         sets: ex.sets.map((s: any) => ({
           id: `${ex.exercise_id}-${s.set_number}-${index}`,
           setNumber: s.set_number,
-          weight: s.target_weight,
+          weight: kgToDisplay(s.target_weight),
           reps: s.target_reps,
           durationSeconds: s.target_duration_seconds ?? 0,
           hasDuration: s.target_duration_seconds !== null && s.target_duration_seconds !== undefined,
@@ -81,7 +83,7 @@ export default function ActiveWorkoutScreen() {
         exercise_id: ex.exercise_id,
         set_number: s.setNumber,
         reps: s.reps,
-        weight: s.weight,
+        weight: displayToKg(s.weight),
         duration_seconds: s.hasDuration ? s.durationSeconds : null,
         is_completed: s.isCompleted,
       })),

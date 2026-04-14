@@ -84,8 +84,7 @@ export default function PaywallScreen() {
   };
 
   const handlePrivacyPolicy = () => {
-    // Replace with your actual privacy policy URL
-    Linking.openURL('https://your-domain.com/privacy');
+    Linking.openURL('https://hardlog.app/privacy');
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
