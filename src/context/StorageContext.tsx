@@ -2,7 +2,7 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useMemo,
+  useRef,
   useState,
 } from 'react';
 import { View, ActivityIndicator } from 'react-native';
@@ -10,24 +10,28 @@ import { useAuth } from './AuthContext';
 import { useTheme } from '../theme';
 import { runMigrations } from '../db/client';
 import { seedSystemExercises } from '../db/seed';
-import { RemoteService } from '../services/RemoteService';
 import { LocalService } from '../services/LocalService';
+import { SyncService } from '../services/SyncService';
 import type { IAppService } from '../services/types';
 
-const StorageContext = createContext<IAppService>({} as IAppService);
+// LocalService is instantiated once for the lifetime of the app.
+// All users (ghost and registered) read/write SQLite via this singleton.
+// SyncService runs in the background for registered users.
+const localService = new LocalService();
+
+const StorageContext = createContext<IAppService>(localService);
 
 export const StorageProvider = ({ children }: { children: React.ReactNode }) => {
-  const { isGuest, isLoading: authLoading } = useAuth();
+  const { isGuest, userToken, isLoading: authLoading } = useAuth();
   const theme = useTheme();
   const [dbReady, setDbReady] = useState(false);
+  const syncStarted = useRef(false);
 
+  // --- DB initialisation ---------------------------------------------------
   useEffect(() => {
-    // Wait until auth state is resolved before initialising the DB.
     if (authLoading) return;
 
     const initDb = async () => {
-      // Always run migrations — fast, idempotent, tracks applied state.
-      // Wrapped in try/catch so a migration failure never permanently hangs the app.
       try {
         runMigrations();
       } catch (e) {
@@ -35,30 +39,41 @@ export const StorageProvider = ({ children }: { children: React.ReactNode }) => 
         // Don't block — tables may already exist from a previous successful run.
       }
 
-      if (isGuest) {
-        // Guest users need the system exercise catalog seeded before any
-        // screen renders. seedSystemExercises() is a no-op if already done.
-        try {
-          await seedSystemExercises();
-        } catch (e) {
-          console.error('[DB] Seeding failed:', e);
-        }
+      // Seed the system exercise catalog for all users so the library works
+      // fully offline regardless of auth state.
+      try {
+        await seedSystemExercises();
+      } catch (e) {
+        console.error('[DB] Seeding failed:', e);
       }
 
-      // Always unblock the app — even if something above failed.
       setDbReady(true);
     };
 
     initDb();
-  }, [isGuest, authLoading]);
+  }, [authLoading]);
 
-  const service: IAppService = useMemo(
-    () => (isGuest ? new LocalService() : new RemoteService()),
-    [isGuest],
-  );
+  // --- SyncService lifecycle ------------------------------------------------
+  // Start sync when a registered user is authenticated; stop it on sign-out.
+  useEffect(() => {
+    if (!dbReady) return;
 
-  // Show a loading indicator while the DB initialises for guest users.
-  // For logged-in users this resolves instantly.
+    if (!isGuest && userToken) {
+      if (!syncStarted.current) {
+        SyncService.start(userToken, localService);
+        syncStarted.current = true;
+      } else {
+        // Token may have refreshed — update the service's token reference
+        SyncService.updateToken(userToken);
+      }
+    } else {
+      if (syncStarted.current) {
+        SyncService.stop();
+        syncStarted.current = false;
+      }
+    }
+  }, [isGuest, userToken, dbReady]);
+
   if (!dbReady) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
@@ -68,7 +83,7 @@ export const StorageProvider = ({ children }: { children: React.ReactNode }) => 
   }
 
   return (
-    <StorageContext.Provider value={service}>
+    <StorageContext.Provider value={localService}>
       {children}
     </StorageContext.Provider>
   );
