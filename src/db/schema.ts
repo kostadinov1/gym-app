@@ -2,8 +2,12 @@ import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
 
 // ---------------------------------------------------------------------------
 // exercises
-// user_id = null  → system template (bundled catalog, read-only)
+// user_id = null    → system template (bundled catalog, read-only)
 // user_id = 'local' → created by the ghost user (custom)
+// user_id = <uuid>  → created by a registered user (synced)
+//
+// Sync metadata is only relevant for custom exercises (is_system_template = false).
+// System templates are seeded locally and never pushed to the server.
 // ---------------------------------------------------------------------------
 export const exercises = sqliteTable('exercises', {
   id: text('id').primaryKey(),
@@ -24,7 +28,11 @@ export const exercises = sqliteTable('exercises', {
   unit: text('unit').notNull().default('kg'),
   is_custom: integer('is_custom', { mode: 'boolean' }).notNull().default(false),
   is_system_template: integer('is_system_template', { mode: 'boolean' }).notNull().default(false),
-  user_id: text('user_id'), // null = system, 'local' = ghost user custom
+  user_id: text('user_id'), // null = system, 'local' = ghost user custom, <uuid> = registered user
+  // Sync metadata (custom exercises only — system templates never sync)
+  updated_at: integer('updated_at'),      // Unix ms — set on every write; null for system templates
+  is_deleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
+  last_synced_at: integer('last_synced_at'), // null = unsynced / pending
 });
 
 // ---------------------------------------------------------------------------
@@ -39,6 +47,10 @@ export const workout_plans = sqliteTable('workout_plans', {
   end_date: text('end_date').notNull(),     // ISO 8601 string
   is_active: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   created_at: text('created_at').notNull(),
+  // Sync metadata
+  updated_at: integer('updated_at').notNull().default(0), // Unix ms
+  is_deleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
+  last_synced_at: integer('last_synced_at'), // null = unsynced / pending
 });
 
 // ---------------------------------------------------------------------------
@@ -52,6 +64,10 @@ export const workout_routines = sqliteTable('workout_routines', {
   name: text('name').notNull(),
   day_of_week: integer('day_of_week'), // 0 = Monday … 6 = Sunday, null = no fixed day
   routine_type: text('routine_type').notNull().default('workout'), // 'workout' | 'rest'
+  // Sync metadata
+  updated_at: integer('updated_at').notNull().default(0), // Unix ms
+  is_deleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
+  last_synced_at: integer('last_synced_at'), // null = unsynced / pending
 });
 
 // ---------------------------------------------------------------------------
@@ -74,19 +90,28 @@ export const routine_exercises = sqliteTable('routine_exercises', {
   increment_weight: real('increment_weight').notNull().default(0),
   increment_reps: integer('increment_reps').notNull().default(0),
   increment_duration_seconds: integer('increment_duration_seconds').notNull().default(0),
+  // Sync metadata
+  updated_at: integer('updated_at').notNull().default(0), // Unix ms
+  is_deleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
+  last_synced_at: integer('last_synced_at'), // null = unsynced / pending
 });
 
 // ---------------------------------------------------------------------------
 // workout_sessions  (a single logged workout)
+// No cascade on routine_id — history must survive routine/plan deletion.
 // ---------------------------------------------------------------------------
 export const workout_sessions = sqliteTable('workout_sessions', {
   id: text('id').primaryKey(),
   routine_id: text('routine_id')
     .notNull()
-    .references(() => workout_routines.id),
+    .references(() => workout_routines.id), // intentionally no cascade
   start_time: text('start_time').notNull(), // ISO 8601 string
   end_time: text('end_time'),               // null while in-progress
   status: text('status').notNull().default('completed'), // 'completed' | 'in_progress'
+  // Sync metadata
+  updated_at: integer('updated_at').notNull().default(0), // Unix ms
+  is_deleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
+  last_synced_at: integer('last_synced_at'), // null = unsynced / pending
 });
 
 // ---------------------------------------------------------------------------
@@ -105,4 +130,25 @@ export const session_sets = sqliteTable('session_sets', {
   weight: real('weight').notNull(),
   duration_seconds: integer('duration_seconds'),
   is_completed: integer('is_completed', { mode: 'boolean' }).notNull().default(false),
+  // Sync metadata
+  updated_at: integer('updated_at').notNull().default(0), // Unix ms
+  is_deleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
+  last_synced_at: integer('last_synced_at'), // null = unsynced / pending
+});
+
+// ---------------------------------------------------------------------------
+// user_settings
+// Persists user preferences in SQLite so they sync across devices.
+// Previously stored in AsyncStorage — migrating here makes them syncable.
+// user_id = null → ghost/local user  |  user_id = <uuid> → registered user
+// ---------------------------------------------------------------------------
+export const user_settings = sqliteTable('user_settings', {
+  id: text('id').primaryKey(),
+  user_id: text('user_id'), // null = ghost user, <uuid> = registered user
+  unit_system: text('unit_system').notNull().default('kg'), // 'kg' | 'lbs'
+  available_plates: text('available_plates').notNull().default('[]'), // JSON string
+  theme: text('theme').notNull().default('system'), // 'light' | 'dark' | 'system'
+  // Sync metadata
+  updated_at: integer('updated_at').notNull().default(0), // Unix ms
+  last_synced_at: integer('last_synced_at'), // null = unsynced / pending
 });

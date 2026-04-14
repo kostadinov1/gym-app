@@ -8,6 +8,13 @@
       "when": 1775979098239,
       "tag": "0000_bumpy_ted_forrester",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1776147225033,
+      "tag": "0001_oval_eddie_brock",
+      "breakpoints": true
     }
   ]
 }
