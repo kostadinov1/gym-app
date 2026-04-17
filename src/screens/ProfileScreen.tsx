@@ -16,6 +16,7 @@ import { ChevronRight, FileText, Share2, Lock, Code2 } from 'lucide-react-native
 import { useUnits } from '../context/UnitsContext';
 import { useNavigation } from '@react-navigation/native';
 import { useEntitlement } from '../hooks/useEntitlement';
+import { useSyncStatus } from '../hooks/useSyncStatus';
 import { ExportService, type ExportFormat } from '../services/ExportService';
 import {
   getMigrationRecord,
@@ -30,6 +31,7 @@ export default function ProfileScreen() {
   const { isMetric, toggleUnit, unitLabel } = useUnits();
   const { signOut, isGuest, promoteGuest } = useAuth();
   const { canExport, openPaywall } = useEntitlement();
+  const { isSyncing, pendingCount, lastSyncedAt, lastError, trigger: triggerSync } = useSyncStatus();
   const queryClient = useQueryClient();
   const [exporting, setExporting] = useState(false);
 
@@ -163,6 +165,19 @@ export default function ProfileScreen() {
       setMigrationStep('idle');
       Toast.show({ type: 'error', text1: 'Registration failed', text2: (err as Error).message });
     }
+  };
+
+  const syncStatusLabel = (): string => {
+    if (isSyncing) return 'Syncing…';
+    if (lastError) return 'Offline';
+    if (lastSyncedAt) {
+      const mins = Math.floor((Date.now() - lastSyncedAt) / 60_000);
+      if (mins < 1) return 'Just now';
+      if (mins === 1) return '1 min ago';
+      return `${mins} min ago`;
+    }
+    if (pendingCount > 0) return `${pendingCount} pending`;
+    return 'Not synced yet';
   };
 
   const StatCard = ({ label, value }: { label: string, value: string | number }) => (
@@ -318,6 +333,25 @@ export default function ProfileScreen() {
         {/* SETTINGS SECTION */}
         <Text style={[styles.sectionTitle, { color: theme.colors.text, marginTop: 24 }]}>Settings</Text>
         <View style={styles.settingsGroup}>
+
+          {/* CLOUD SYNC ROW — registered users only */}
+          {!isGuest && (
+            <TouchableOpacity
+              onPress={triggerSync}
+              disabled={isSyncing}
+              style={[styles.settingRow, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}
+            >
+              <Text style={[styles.settingLabel, { color: theme.colors.text }]}>Cloud Sync</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {isSyncing && <ActivityIndicator size="small" color={theme.colors.primary} />}
+                <Text style={[styles.settingValue, {
+                  color: lastError ? theme.colors.error : theme.colors.textSecondary,
+                }]}>
+                  {syncStatusLabel()}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
 
           {/* THEME TOGGLE ROW */}
           <SettingRow

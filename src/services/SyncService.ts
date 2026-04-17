@@ -5,8 +5,9 @@
 //   • SQLite (LocalService) is always the source of truth.
 //   • SyncService pushes dirty records to the server and pulls server changes.
 //   • Runs only when the user is authenticated (not a ghost user).
-//   • Triggered by: app coming to foreground, periodic interval (5 min).
-//   • All errors are caught and logged — a sync failure never surfaces to the user.
+//   • Triggered by: app foreground (AppState), periodic interval (5 min),
+//     or manually via SyncService.trigger().
+//   • All errors are caught and logged — sync failure never surfaces to the user.
 //
 // Sync cycle:
 //   1. PUSH  → getPendingSync() → POST /sync/push → markSynced()
@@ -20,8 +21,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { client } from '../api/client';
 import type { LocalService, PendingSyncData } from './LocalService';
 
-const LAST_PULL_AT_KEY = 'sync_last_pull_at';
-const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const LAST_PULL_AT_KEY  = 'sync_last_pull_at';
+const SYNC_INTERVAL_MS  = 5 * 60 * 1000; // 5 minutes
 
 // ---------------------------------------------------------------------------
 // Server response types
@@ -33,32 +34,63 @@ interface PushResponse {
 }
 
 interface PullResponse {
-  changes: PendingSyncData;
-  server_time_ms: number; // Unix ms — stored as next pull cursor
+  changes:        PendingSyncData;
+  server_time_ms: number;
 }
 
 // ---------------------------------------------------------------------------
-// SyncService (module-level singleton)
+// Observable status — lets React components subscribe to sync state
 // ---------------------------------------------------------------------------
 
-let _token:         string | null = null;
-let _service:       LocalService | null = null;
-let _intervalId:    ReturnType<typeof setInterval> | null = null;
-let _appStateSub:   ReturnType<typeof AppState.addEventListener> | null = null;
-let _isSyncing      = false;
+export interface SyncStatus {
+  isSyncing:    boolean;
+  pendingCount: number;       // records not yet pushed
+  lastSyncedAt: number | null; // Unix ms of the last successful full cycle
+  lastError:    string | null;
+}
+
+type StatusListener = (status: SyncStatus) => void;
+
+const _listeners = new Set<StatusListener>();
+
+let _status: SyncStatus = {
+  isSyncing:    false,
+  pendingCount: 0,
+  lastSyncedAt: null,
+  lastError:    null,
+};
+
+function emit(patch: Partial<SyncStatus>): void {
+  _status = { ..._status, ...patch };
+  _listeners.forEach(fn => fn(_status));
+}
+
+// ---------------------------------------------------------------------------
+// Module-level singleton state
+// ---------------------------------------------------------------------------
+
+let _token:       string | null = null;
+let _service:     LocalService | null = null;
+let _intervalId:  ReturnType<typeof setInterval> | null = null;
+let _appStateSub: ReturnType<typeof AppState.addEventListener> | null = null;
+
+// ---------------------------------------------------------------------------
+// Sync logic
+// ---------------------------------------------------------------------------
 
 async function syncCycle(): Promise<void> {
-  if (!_token || !_service || _isSyncing) return;
+  if (!_token || !_service || _status.isSyncing) return;
 
-  _isSyncing = true;
+  emit({ isSyncing: true, lastError: null });
   try {
     await push();
     await pull();
+    emit({ isSyncing: false, lastSyncedAt: Date.now(), pendingCount: 0 });
   } catch (e) {
-    // Network errors are expected when offline — silently swallow them.
-    console.log('[Sync] cycle failed (offline?):', e);
-  } finally {
-    _isSyncing = false;
+    const msg = e instanceof Error ? e.message : String(e);
+    // Network errors are expected when offline — log but don't surface to user.
+    console.log('[Sync] cycle failed (offline?):', msg);
+    emit({ isSyncing: false, lastError: msg });
   }
 }
 
@@ -75,6 +107,7 @@ async function push(): Promise<void> {
     pending.sets.length +
     pending.settings.length;
 
+  emit({ pendingCount: totalPending });
   if (totalPending === 0) return;
 
   console.log(`[Sync] pushing ${totalPending} records`);
@@ -96,7 +129,6 @@ async function push(): Promise<void> {
     console.warn('[Sync] push errors:', response.errors);
   }
 
-  // Stamp last_synced_at on all records that were accepted
   await _service.markSynced({
     exerciseIds:        pending.exercises.map(r => r.id),
     planIds:            pending.plans.map(r => r.id),
@@ -132,7 +164,6 @@ async function pull(): Promise<void> {
     await _service.applyServerChanges(response.changes);
   }
 
-  // Advance the pull cursor to the server's current time
   await AsyncStorage.setItem(LAST_PULL_AT_KEY, String(response.server_time_ms));
 }
 
@@ -151,14 +182,10 @@ export const SyncService = {
     _token   = token;
     _service = service;
 
-    // Trigger immediately on start
-    syncCycle();
+    syncCycle(); // immediate on login
 
-    // Listen for app foreground events
     _appStateSub = AppState.addEventListener('change', onAppStateChange);
-
-    // Periodic fallback in case the app stays in foreground for a long time
-    _intervalId = setInterval(syncCycle, SYNC_INTERVAL_MS);
+    _intervalId  = setInterval(syncCycle, SYNC_INTERVAL_MS);
 
     console.log('[Sync] started');
   },
@@ -168,22 +195,28 @@ export const SyncService = {
   },
 
   stop(): void {
-    if (_intervalId !== null) {
-      clearInterval(_intervalId);
-      _intervalId = null;
-    }
-    if (_appStateSub !== null) {
-      _appStateSub.remove();
-      _appStateSub = null;
-    }
+    if (_intervalId  !== null) { clearInterval(_intervalId);   _intervalId  = null; }
+    if (_appStateSub !== null) { _appStateSub.remove();        _appStateSub = null; }
     _token   = null;
     _service = null;
-    _isSyncing = false;
+    emit({ isSyncing: false, pendingCount: 0, lastError: null });
     console.log('[Sync] stopped');
   },
 
-  /** Trigger a manual sync cycle (e.g., after finishing a workout). */
+  /** Manually kick off a sync cycle — e.g., from a UI button or after finishing a workout. */
   trigger(): void {
     syncCycle();
+  },
+
+  /** Subscribe to sync status changes. Returns an unsubscribe function. */
+  subscribe(listener: StatusListener): () => void {
+    _listeners.add(listener);
+    listener(_status); // emit current state immediately so the subscriber isn't blind
+    return () => _listeners.delete(listener);
+  },
+
+  /** Read the current status snapshot without subscribing. */
+  getStatus(): SyncStatus {
+    return _status;
   },
 };
