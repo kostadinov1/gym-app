@@ -42,7 +42,7 @@ export default function CreatePlanScreen() {
     mutation.mutate({
       name,
       description: '',
-      start_date: new Date(startDate).toISOString(),
+      start_date: new Date(startDate).toISOString().split('T')[0],
       duration_weeks: duration
     });
   };

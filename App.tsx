@@ -9,6 +9,7 @@ import { AdsProvider } from './src/components/ConsentManager';
 import { useTheme } from './src/theme';
 import RootNavigator from './src/navigation/RootNavigator';
 import LoginScreen from './src/screens/auth/LoginScreen';
+import { useSyncQueryInvalidator } from './src/hooks/useSyncQueryInvalidator';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { UnitsProvider } from './src/context/UnitsContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -62,6 +63,7 @@ const queryClient = new QueryClient({
 const NavigationWrapper = () => {
   const { userToken, isGuest, isLoading } = useAuth();
   const theme = useTheme();
+  useSyncQueryInvalidator();
 
   if (isLoading) {
     return (

@@ -23,7 +23,7 @@ export default function LoginScreen() {
 
   const loginMutation = useMutation({
     mutationFn: () => login(email, password),
-    onSuccess: (data) => signIn(data.access_token),
+    onSuccess: (data) => signIn(data.access_token, email),
     // REMOVED onError - App.tsx handles it now!
   });
 

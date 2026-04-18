@@ -29,7 +29,7 @@ export default function ProfileScreen() {
   const db = useStorage();
   const { isDark, toggleTheme } = useThemeToggle();
   const { isMetric, toggleUnit, unitLabel } = useUnits();
-  const { signOut, isGuest, promoteGuest } = useAuth();
+  const { signOut, isGuest, promoteGuest, userEmail } = useAuth();
   const { canExport, openPaywall } = useEntitlement();
   const { isSyncing, pendingCount, lastSyncedAt, lastError, trigger: triggerSync } = useSyncStatus();
   const queryClient = useQueryClient();
@@ -47,14 +47,43 @@ export default function ProfileScreen() {
     queryFn: () => db.getStats(),
   });
 
-  // Handler to confirm logout
+  // Handler for ghost users — warns that local data will be permanently erased
+  const handleGuestExit = () => {
+    Alert.alert(
+      "Exit Guest Mode",
+      "Your workout data is only stored on this device. If you exit without creating an account, it will be permanently deleted.\n\nCreate an account first to save your progress.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Create Account", onPress: () => setShowRegisterModal(true) },
+        {
+          text: "Delete & Exit",
+          style: "destructive",
+          onPress: signOut,
+        },
+      ]
+    );
+  };
+
+  // Handler for registered users — warns if there are unsynced changes
   const handleLogout = () => {
+    if (pendingCount > 0) {
+      Alert.alert(
+        "Unsynced Changes",
+        `You have ${pendingCount} change${pendingCount === 1 ? '' : 's'} that haven't been uploaded yet. Logging out now will lose them permanently.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Sync First", onPress: () => { triggerSync(); } },
+          { text: "Log Out Anyway", style: "destructive", onPress: signOut },
+        ]
+      );
+      return;
+    }
     Alert.alert(
       "Log Out",
       "Are you sure you want to log out?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Log Out", style: "destructive", onPress: signOut }
+        { text: "Log Out", style: "destructive", onPress: signOut },
       ]
     );
   };
@@ -153,7 +182,7 @@ export default function ProfileScreen() {
       // Step 4 — Flush cache + promote
       setMigrationStep('done');
       queryClient.clear();
-      await promoteGuest(access_token);
+      await promoteGuest(access_token, regEmail.trim());
 
       setShowRegisterModal(false);
       Toast.show({
@@ -203,6 +232,18 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Text style={[styles.header, { color: theme.colors.text }]}>Profile</Text>
+      {isGuest ? (
+        <View style={{ marginHorizontal: 16, marginTop: 2, marginBottom: 4 }}>
+          <Text style={{ color: theme.colors.textSecondary, fontSize: 14, fontWeight: '600' }}>Guest Mode</Text>
+          <Text style={{ color: theme.colors.textSecondary, fontSize: 12, marginTop: 1 }}>
+            Not backed up · Data on this device only
+          </Text>
+        </View>
+      ) : userEmail ? (
+        <Text style={{ color: theme.colors.textSecondary, fontSize: 14, marginHorizontal: 16, marginTop: 2, marginBottom: 4 }}>
+          {userEmail}
+        </Text>
+      ) : null}
 
       {/* ── Syncing modal ──────────────────────────────────────────────── */}
       <Modal visible={migrationStep !== 'idle' && migrationStep !== 'done'} transparent animationType="fade">
@@ -429,12 +470,14 @@ export default function ProfileScreen() {
           </Text>
         )}
 
-        {/* LOGOUT BUTTON */}
+        {/* EXIT / LOGOUT BUTTON */}
         <TouchableOpacity
           style={[styles.logoutButton, { borderColor: theme.colors.error }]}
-          onPress={handleLogout}
+          onPress={isGuest ? handleGuestExit : handleLogout}
         >
-          <Text style={{ color: theme.colors.error, fontWeight: 'bold', fontSize: 16 }}>Log Out</Text>
+          <Text style={{ color: theme.colors.error, fontWeight: 'bold', fontSize: 16 }}>
+            {isGuest ? 'Exit Guest Mode' : 'Log Out'}
+          </Text>
         </TouchableOpacity>
 
 
