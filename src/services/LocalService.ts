@@ -15,7 +15,7 @@
 
 import { eq, and, like, gte, lte, lt, gt, desc, inArray, or, isNull } from 'drizzle-orm';
 
-import type { IAppService } from './types';
+import type { IAppService, HomeScreenData } from './types';
 import type { Exercise } from '../types/index';
 import type { ExerciseFilters, CreateExerciseDto, UpdateExerciseDto } from '../api/exercises';
 import type {
@@ -505,6 +505,83 @@ export class LocalService implements IAppService {
         };
       }),
     );
+  }
+
+  async getHomeScreenData(): Promise<HomeScreenData> {
+    const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+    const todaySchemaDay = (new Date().getDay() + 6) % 7; // 0=Mon…6=Sun
+
+    // Fetch all non-deleted active plans ordered by start_date
+    const plans = await db
+      .select({
+        id:             workout_plans.id,
+        name:           workout_plans.name,
+        start_date:     workout_plans.start_date,
+        end_date:       workout_plans.end_date,
+        duration_weeks: workout_plans.duration_weeks,
+      })
+      .from(workout_plans)
+      .where(and(
+        eq(workout_plans.is_active, true),
+        eq(workout_plans.is_deleted, false),
+      ))
+      .orderBy(workout_plans.start_date);
+
+    // Resolve the best plan to show
+    let chosen = plans.find(p => p.start_date <= today && p.end_date >= today); // current
+    if (!chosen) chosen = plans.find(p => p.start_date > today);               // nearest upcoming
+    if (!chosen && plans.length > 0) chosen = plans[plans.length - 1];         // most recent past
+
+    if (!chosen) return { plan: null, routines: [], todaySchemaDay };
+
+    // Fetch routines only for the chosen plan
+    const routineRows = await db
+      .select({
+        id:           workout_routines.id,
+        name:         workout_routines.name,
+        day_of_week:  workout_routines.day_of_week,
+        routine_type: workout_routines.routine_type,
+      })
+      .from(workout_routines)
+      .where(and(
+        eq(workout_routines.plan_id, chosen.id),
+        eq(workout_routines.is_deleted, false),
+      ));
+
+    const routines = await Promise.all(
+      routineRows.map(async r => {
+        const [lastSession] = await db
+          .select({ end_time: workout_sessions.end_time })
+          .from(workout_sessions)
+          .where(and(
+            eq(workout_sessions.routine_id, r.id),
+            eq(workout_sessions.status, 'completed'),
+            eq(workout_sessions.is_deleted, false),
+          ))
+          .orderBy(desc(workout_sessions.end_time))
+          .limit(1);
+
+        return {
+          id:                r.id,
+          name:              r.name,
+          day_of_week:       r.day_of_week ?? undefined,
+          last_completed_at: lastSession?.end_time ?? null,
+          routine_type:      r.routine_type as 'workout' | 'rest',
+        };
+      }),
+    );
+
+    return {
+      plan: {
+        id:            chosen.id,
+        name:          chosen.name,
+        startDate:     chosen.start_date,
+        endDate:       chosen.end_date,
+        durationWeeks: chosen.duration_weeks,
+      },
+      routines,
+      todaySchemaDay,
+    };
   }
 
   async startRoutine(routineId: string): Promise<RoutineStartResponse> {

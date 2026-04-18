@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -36,6 +36,7 @@ export default function RoutineEditorScreen() {
     const [editingTargetId, setEditingTargetId] = useState<string | null>(null);
     const [exerciseSearchText, setExerciseSearchText] = useState('');
     const [debouncedExerciseSearch, setDebouncedExerciseSearch] = useState('');
+    const { height: screenHeight } = useWindowDimensions();
 
 
     const reorderMutation = useMutation({
@@ -335,20 +336,19 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                                         </TouchableOpacity>
                                     )}
                                 </View>
-                                <View style={{ height: 150, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, marginBottom: 16 }}>
+                                <View style={{ height: screenHeight * 0.22, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, marginBottom: 16 }}>
                                     {loadingEx ? <ActivityIndicator /> : (
-                                        <FlatList
-                                            data={allExercises}
-                                            keyExtractor={item => item.id}
-                                            renderItem={({ item }) => (
+                                        <ScrollView keyboardShouldPersistTaps="handled">
+                                            {allExercises?.map(item => (
                                                 <TouchableOpacity
+                                                    key={item.id}
                                                     style={{ padding: 12, backgroundColor: selectedExerciseId === item.id ? theme.colors.primary : 'transparent' }}
                                                     onPress={() => setSelectedExerciseId(item.id)}
                                                 >
                                                     <Text style={{ color: selectedExerciseId === item.id ? 'white' : theme.colors.text }}>{item.name}</Text>
                                                 </TouchableOpacity>
-                                            )}
-                                        />
+                                            ))}
+                                        </ScrollView>
                                     )}
                                 </View>
                             </>

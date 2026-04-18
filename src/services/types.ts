@@ -13,6 +13,18 @@ import type {
 import type {
   Routine, RoutineStartResponse, FinishWorkoutDto,
 } from '../api/workouts';
+
+export interface HomeScreenData {
+  plan: {
+    id: string;
+    name: string;
+    startDate: string;   // YYYY-MM-DD
+    endDate: string;     // YYYY-MM-DD
+    durationWeeks: number;
+  } | null;
+  routines: Routine[];   // only from the resolved plan
+  todaySchemaDay: number; // 0=Mon … 6=Sun
+}
 import type {
   HistorySession, UserStats, SessionDetail, UpdateSessionDto, ChartPoint,
 } from '../api/history';
@@ -49,6 +61,7 @@ export interface IAppService {
 
   // ── Workouts ──────────────────────────────────────────────────────────────
   getRoutines(): Promise<Routine[]>;
+  getHomeScreenData(): Promise<HomeScreenData>;
   startRoutine(routineId: string): Promise<RoutineStartResponse>;
   finishWorkout(data: FinishWorkoutDto): Promise<void>;
 

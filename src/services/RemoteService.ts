@@ -3,7 +3,7 @@
 // All methods delegate to the existing src/api/* functions unchanged.
 // ---------------------------------------------------------------------------
 
-import type { IAppService } from './types';
+import type { IAppService, HomeScreenData } from './types';
 import * as exercisesApi from '../api/exercises';
 import * as plansApi from '../api/plans';
 import * as workoutsApi from '../api/workouts';
@@ -78,6 +78,9 @@ export class RemoteService implements IAppService {
   // ── Workouts ──────────────────────────────────────────────────────────────
   getRoutines() {
     return workoutsApi.getRoutines();
+  }
+  async getHomeScreenData(): Promise<HomeScreenData> {
+    throw new Error('getHomeScreenData not implemented in RemoteService');
   }
   startRoutine(routineId: string) {
     return workoutsApi.startRoutine(routineId);
