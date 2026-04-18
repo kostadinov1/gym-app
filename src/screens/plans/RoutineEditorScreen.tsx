@@ -465,13 +465,17 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         )}
 
 
+                    </KeyboardAwareScrollView>
+
+                    {/* Pinned footer — always visible above keyboard */}
+                    <View style={{ padding: 16, paddingBottom: 8, borderTopWidth: 1, borderTopColor: theme.colors.border }}>
                         <TouchableOpacity
-                            style={[styles.bigButton, { backgroundColor: theme.colors.primary, marginTop: 20 }]}
+                            style={[styles.bigButton, { backgroundColor: theme.colors.primary }]}
                             onPress={handleSave}
                         >
                             <Text style={{ color: 'white', fontWeight: 'bold' }}>Save to Routine</Text>
                         </TouchableOpacity>
-                    </KeyboardAwareScrollView>
+                    </View>
                 </SafeAreaView>
             </Modal>
             {/* --- RENAME ROUTINE MODAL --- */}
