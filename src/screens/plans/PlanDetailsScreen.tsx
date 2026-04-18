@@ -204,7 +204,7 @@ export default function PlanDetailsScreen() {
                                     ]}
                                     onPress={() => setRoutineType('workout')}
                                 >
-                                    <Text style={{ color: routineType === 'workout' ? 'white' : theme.colors.textSecondary }}>💪 Workout</Text>
+                                    <Text style={{ color: routineType === 'workout' ? 'white' : theme.colors.textSecondary }}>Workout</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
@@ -217,7 +217,7 @@ export default function PlanDetailsScreen() {
                                         setRoutineName('Rest Day');
                                     }}
                                 >
-                                    <Text style={{ color: routineType === 'rest' ? 'white' : theme.colors.textSecondary }}>💤 Rest</Text>
+                                    <Text style={{ color: routineType === 'rest' ? 'white' : theme.colors.textSecondary }}>Rest Day</Text>
                                 </TouchableOpacity>
                             </View>
 

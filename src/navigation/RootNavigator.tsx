@@ -18,6 +18,7 @@ import HistoryDetailsScreen from '../screens/history/HistoryDetailsScreen';
 import SessionEditorScreen from '../screens/history/SessionEditorScreen';
 import AnalyticsScreen from '../screens/analytics/AnalyticsScreen';
 import PaywallScreen from '../screens/PaywallScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import { navigationRef } from './navigationRef';
 
 // ── Tab stacks ────────────────────────────────────────────────────────────
@@ -61,6 +62,7 @@ function ProfileStackNavigator() {
     return (
         <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
             <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
+            <ProfileStack.Screen name="Settings" component={SettingsScreen} />
             <ProfileStack.Screen name="Analytics" component={AnalyticsScreen} />
         </ProfileStack.Navigator>
     );

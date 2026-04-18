@@ -10,6 +10,9 @@ import { useEntitlement } from '../../hooks/useEntitlement';
 import { BarChart } from 'react-native-gifted-charts';
 import { getSmartChartLayout, Period } from '../../utils/chartLayout';
 import { useUnits } from '../../context/UnitsContext';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { TrendingUp } from 'lucide-react-native';
 
 const PERIODS: Period[] = ['1M', '3M', '6M', '1Y', 'ALL'];
 const DATE_FMT: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short' };
@@ -239,41 +242,20 @@ export default function AnalyticsScreen() {
     if (isGuest) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 8 }}>
-                        <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
-                    </TouchableOpacity>
-                    <Text style={[styles.title, { color: theme.colors.text }]}>Analytics</Text>
-                    <View style={{ width: 40 }} />
-                </View>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
-                    <Text style={{ fontSize: 40, marginBottom: 16 }}>📊</Text>
-                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.colors.text, marginBottom: 8, textAlign: 'center' }}>
-                        Analytics Locked
-                    </Text>
-                    <Text style={{ color: theme.colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 28 }}>
-                        Create an account to unlock volume charts, full history, and long-term progress tracking.
-                    </Text>
-                    <TouchableOpacity
-                        style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 12 }}
-                        onPress={openPaywall}
-                    >
-                        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Upgrade to Pro</Text>
-                    </TouchableOpacity>
-                </View>
+                <ScreenHeader title="Analytics" onBack={() => navigation.goBack()} />
+                <EmptyState
+                    icon={TrendingUp}
+                    title="Analytics Locked"
+                    subtitle="Create an account to unlock volume charts, full history, and long-term progress tracking."
+                    action={{ label: 'Upgrade to Pro', onPress: openPaywall }}
+                />
             </SafeAreaView>
         );
     }
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 8 }}>
-                    <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
-                </TouchableOpacity>
-                <Text style={[styles.title, { color: theme.colors.text }]}>Analytics</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <ScreenHeader title="Analytics" onBack={() => navigation.goBack()} />
 
             <ScrollView contentContainerStyle={{ padding: 16 }}>
                 <Text style={[styles.sectionLabel, { color: theme.colors.textSecondary }]}>Filter by Plan</Text>
@@ -377,8 +359,6 @@ export default function AnalyticsScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 8 },
-    title: { fontSize: 20, fontWeight: 'bold' },
     sectionLabel: { fontSize: 12, fontWeight: '600', marginBottom: 8, marginLeft: 4 },
     chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginRight: 8 },
     segmentContainer: { flexDirection: 'row', padding: 4, borderRadius: 12, marginBottom: 16 },

@@ -20,6 +20,9 @@ import Toast from 'react-native-toast-message';
 import { FAB } from '../components/common/FAB';
 import { useTheme } from '../theme';
 import { useStorage } from '../context/StorageContext';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
+import { SearchInput } from '../components/ui/SearchInput';
+import { Badge } from '../components/ui/Badge';
 
 export default function ExerciseListScreen() {
   const theme = useTheme();
@@ -149,24 +152,16 @@ export default function ExerciseListScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}> 
-      <Text style={[styles.header, { color: theme.colors.text }]}>Exercise Library</Text>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+      <ScreenHeader title="Exercise Library" />
 
-      <View style={[styles.searchContainer, { backgroundColor: theme.colors.inputBackground }]}> 
-        <Text style={{ fontSize: 18, marginRight: 8 }}>🔍</Text>
-        <TextInput
-          style={{ flex: 1, color: theme.colors.text, fontSize: 16 }}
-          placeholder="Search by name, tags, aliases, type, muscle..."
-          placeholderTextColor={theme.colors.textSecondary}
+      <View style={styles.searchWrapper}>
+        <SearchInput
           value={searchText}
           onChangeText={setSearchText}
+          onClear={() => setSearchText('')}
+          placeholder="Search by name, muscle, type…"
         />
-        {isFetching && <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginRight: 8 }} />}
-        {searchText.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchText('')}>
-            <Text style={{ color: theme.colors.textSecondary }}>✕</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       <View style={styles.segmentRow}>
@@ -197,21 +192,13 @@ export default function ExerciseListScreen() {
       <FlatList
         data={filteredData}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
         renderItem={({ item }) => (
           <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
             <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
                 <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
-                {item.is_custom ? (
-                  <View style={{ backgroundColor: theme.colors.primary, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 2 }}>
-                    <Text style={{ fontSize: 10, color: 'white', fontWeight: 'bold' }}>CUSTOM</Text>
-                  </View>
-                ) : (
-                  <View style={{ backgroundColor: theme.colors.success, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 2 }}>
-                    <Text style={{ fontSize: 10, color: 'white', fontWeight: 'bold' }}>SYSTEM</Text>
-                  </View>
-                )}
+                <Badge label={item.is_custom ? 'CUSTOM' : 'SYSTEM'} variant={item.is_custom ? 'primary' : 'success'} />
               </View>
               <Text style={[styles.metaLine, { color: theme.colors.textSecondary }]}>
                 {item.primary_muscle_group} • {item.exercise_type} • {item.equipment_type}
@@ -284,16 +271,9 @@ export default function ExerciseListScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, paddingHorizontal: 16 },
-  header: { fontSize: 28, fontWeight: 'bold', marginVertical: 16 },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 16,
-  },
-  segmentRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  safeArea: { flex: 1 },
+  searchWrapper: { paddingHorizontal: 16, marginBottom: 8 },
+  segmentRow: { flexDirection: 'row', gap: 8, marginBottom: 12, paddingHorizontal: 16 },
   segmentBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1 },
   card: {
     flexDirection: 'row',

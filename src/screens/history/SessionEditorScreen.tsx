@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { useTheme } from '../../theme';
-import { SetRow } from '../../components/workout/SetRow';
 import { useStorage } from '../../context/StorageContext';
-import { Container } from '../../components/common/Container';
+import { SetRow } from '../../components/workout/SetRow';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { PinnedFooter } from '../../components/ui/PinnedFooter';
+import { PrimaryButton } from '../../components/ui/PrimaryButton';
 
 export default function SessionEditorScreen() {
   const theme = useTheme();
@@ -78,19 +82,11 @@ export default function SessionEditorScreen() {
     updateMutation.mutate({ sets: flatSets });
   };
 
-  const updateSet = (
-    uniqueId: string,
-    setId: string,
-    field: 'weight' | 'reps' | 'durationSeconds',
-    value: number,
-  ) => {
+  const updateSet = (uniqueId: string, setId: string, field: 'weight' | 'reps' | 'durationSeconds', value: number) => {
     setExercises((prev) =>
       prev.map((ex) => {
         if (ex.uniqueId !== uniqueId) return ex;
-        return {
-          ...ex,
-          sets: ex.sets.map((s: any) => (s.id === setId ? { ...s, [field]: value } : s)),
-        };
+        return { ...ex, sets: ex.sets.map((s: any) => (s.id === setId ? { ...s, [field]: value } : s)) };
       }),
     );
   };
@@ -99,10 +95,7 @@ export default function SessionEditorScreen() {
     setExercises((prev) =>
       prev.map((ex) => {
         if (ex.uniqueId !== uniqueId) return ex;
-        return {
-          ...ex,
-          sets: ex.sets.map((s: any) => (s.id === setId ? { ...s, isCompleted: !s.isCompleted } : s)),
-        };
+        return { ...ex, sets: ex.sets.map((s: any) => (s.id === setId ? { ...s, isCompleted: !s.isCompleted } : s)) };
       }),
     );
   };
@@ -128,22 +121,17 @@ export default function SessionEditorScreen() {
   if (isLoading) return <ActivityIndicator style={{ flex: 1 }} color={theme.colors.primary} />;
 
   return (
-    <Container>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 16 }}>
-          <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.colors.text }]}>Edit: {data?.routine_name}</Text>
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <ScreenHeader title="Edit Session" onBack={() => navigation.goBack()} />
 
       <FlatList
         data={exercises}
         keyExtractor={(item) => item.uniqueId}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={styles.list}
         renderItem={({ item: exercise }) => (
-          <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+          <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
             <View style={styles.exerciseHeader}>
-              <Text style={[styles.exTitle, { color: theme.colors.text }]}>{exercise.name}</Text>
+              <Text style={[theme.typography.title, { color: theme.colors.text }]}>{exercise.name}</Text>
               <TouchableOpacity
                 onPress={() => toggleDurationMode(exercise.uniqueId)}
                 style={[
@@ -164,7 +152,7 @@ export default function SessionEditorScreen() {
                 key={set.id}
                 {...set}
                 hasDuration={exercise.hasDuration}
-                onUpdate={(f, v) => updateSet(exercise.uniqueId, set.id, f, v)}
+                onUpdate={(f: any, v: any) => updateSet(exercise.uniqueId, set.id, f, v)}
                 onToggleComplete={() => toggleComplete(exercise.uniqueId, set.id)}
               />
             ))}
@@ -172,20 +160,31 @@ export default function SessionEditorScreen() {
         )}
       />
 
-      <TouchableOpacity style={[styles.saveBtn, { backgroundColor: theme.colors.primary }]} onPress={handleSave}>
-        <Text style={styles.btnText}>{updateMutation.isPending ? 'Saving...' : 'Save Changes'}</Text>
-      </TouchableOpacity>
-    </Container>
+      <PinnedFooter>
+        <PrimaryButton
+          label="Save Changes"
+          onPress={handleSave}
+          loading={updateMutation.isPending}
+        />
+      </PinnedFooter>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { padding: 16, flexDirection: 'row', alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: 'bold' },
-  card: { padding: 16, borderRadius: 12, marginBottom: 12 },
-  exerciseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  exTitle: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  durationToggle: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  saveBtn: { margin: 16, padding: 16, borderRadius: 12, alignItems: 'center' },
-  btnText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  container: { flex: 1 },
+  list: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 },
+  card: { padding: 16, borderRadius: 12, borderWidth: 1, marginBottom: 12 },
+  exerciseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  durationToggle: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
 });

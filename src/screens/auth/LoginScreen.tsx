@@ -1,165 +1,162 @@
 import React, { useState } from 'react';
-import { 
-  View, Text, TextInput, TouchableOpacity, StyleSheet, 
-  Alert, ActivityIndicator 
+import {
+  View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
-// Removed: SafeAreaView, KeyboardAvoidingView, ScrollView imports
+import { TouchableOpacity } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
 import { login, register } from '../../api/auth';
 import { useAuth } from '../../context/AuthContext';
-import { Container } from '../../components/common/Container'; // <--- Import Wrapper
+import { PrimaryButton } from '../../components/ui/PrimaryButton';
 import Toast from 'react-native-toast-message';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
   const theme = useTheme();
   const { signIn, guestSignIn } = useAuth();
-  
+
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // ... (Mutations and handleSubmit logic remain EXACTLY the same) ...
-
   const loginMutation = useMutation({
     mutationFn: () => login(email, password),
     onSuccess: (data) => signIn(data.access_token, email),
-    // REMOVED onError - App.tsx handles it now!
   });
 
   const registerMutation = useMutation({
     mutationFn: () => register(email, password),
     onSuccess: () => {
-        Toast.show({
-            type: 'success',
-            text1: 'Welcome! 🎉',
-            text2: 'Account created. Please log in.',
-            position: 'bottom'
-        });
-        setIsRegistering(false);
+      Toast.show({
+        type: 'success',
+        text1: 'Account created',
+        text2: 'Please log in.',
+        position: 'bottom',
+      });
+      setIsRegistering(false);
     },
-    // REMOVED onError - App.tsx handles it now!
   });
-  
-  // Update handleSubmit to show Toast validation error
+
   const handleSubmit = () => {
-      if (!email || !password) {
-          Toast.show({
-              type: 'error',
-              text1: 'Missing Fields',
-              text2: 'Please enter both email and password',
-              position: 'bottom'
-          });
-          return;
-      }
-      if (isRegistering) registerMutation.mutate();
-      else loginMutation.mutate();
+    if (!email || !password) {
+      Toast.show({
+        type: 'error',
+        text1: 'Missing Fields',
+        text2: 'Please enter both email and password.',
+        position: 'bottom',
+      });
+      return;
+    }
+    if (isRegistering) registerMutation.mutate();
+    else loginMutation.mutate();
   };
+
   const isLoading = loginMutation.isPending || registerMutation.isPending;
 
+  const inputStyle = [
+    styles.input,
+    {
+      color: theme.colors.text,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.card,
+    },
+  ];
+
   return (
-    <Container 
-      isScrollable={true} 
-      style={styles.containerStyle} // <--- Pass alignment styles here
-    >
-      <View style={styles.content}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-            {isRegistering ? "Create Account" : "Welcome Back"}
-        </Text>
-        <Text style={{ color: theme.colors.textSecondary, marginBottom: 32 }}>
-            {isRegistering ? "Sign up to track your progress" : "Sign in to continue"}
-        </Text>
-
-        <TextInput
-            style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}
-            placeholder="Email"
-            placeholderTextColor={theme.colors.textSecondary}
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-        />
-
-        <TextInput
-            style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}
-            placeholder="Password"
-            placeholderTextColor={theme.colors.textSecondary}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-        />
-
-        <TouchableOpacity 
-            style={[styles.button, { backgroundColor: theme.colors.primary }]}
-            onPress={handleSubmit}
-            disabled={isLoading}
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.background }]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-            {isLoading ? (
-                <ActivityIndicator color="white" />
-            ) : (
-                <Text style={styles.buttonText}>{isRegistering ? "Sign Up" : "Log In"}</Text>
-            )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-            style={{ marginTop: 20 }}
-            onPress={() => setIsRegistering(!isRegistering)}
-        >
-            <Text style={{ color: theme.colors.primary, textAlign: 'center' }}>
-                {isRegistering ? "Already have an account? Log In" : "Don't have an account? Sign Up"}
+          <View style={styles.content}>
+            <Text style={[theme.typography.display, styles.title, { color: theme.colors.text }]}>
+              {isRegistering ? 'Create Account' : 'Welcome Back'}
             </Text>
-        </TouchableOpacity>
+            <Text style={[theme.typography.body, styles.subtitle, { color: theme.colors.textSecondary }]}>
+              {isRegistering ? 'Sign up to track your progress' : 'Sign in to continue'}
+            </Text>
 
-        {/* Divider */}
-        <View style={styles.dividerRow}>
-          <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
-          <Text style={[styles.dividerText, { color: theme.colors.textSecondary }]}>or</Text>
-          <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
-        </View>
+            <TextInput
+              style={inputStyle}
+              placeholder="Email"
+              placeholderTextColor={theme.colors.textSecondary}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
 
-        {/* Guest access */}
-        <TouchableOpacity
-          style={[styles.guestButton, { borderColor: theme.colors.border }]}
-          onPress={guestSignIn}
-        >
-          <Text style={[styles.guestButtonText, { color: theme.colors.textSecondary }]}>
-            Continue as Guest
-          </Text>
-        </TouchableOpacity>
-        <Text style={[styles.guestNote, { color: theme.colors.textSecondary }]}>
-          Your data will be saved on this device. Register later to sync to the cloud.
-        </Text>
-      </View>
-    </Container>
+            <TextInput
+              style={inputStyle}
+              placeholder="Password"
+              placeholderTextColor={theme.colors.textSecondary}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+
+            <PrimaryButton
+              label={isRegistering ? 'Sign Up' : 'Log In'}
+              onPress={handleSubmit}
+              loading={isLoading}
+              style={{ marginTop: 8 }}
+            />
+
+            <TouchableOpacity
+              style={{ marginTop: 20 }}
+              onPress={() => setIsRegistering(!isRegistering)}
+            >
+              <Text style={[theme.typography.body, { color: theme.colors.primary, textAlign: 'center' }]}>
+                {isRegistering
+                  ? 'Already have an account? Log In'
+                  : "Don't have an account? Sign Up"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
+              <Text style={[theme.typography.caption, styles.dividerText, { color: theme.colors.textSecondary }]}>
+                or
+              </Text>
+              <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
+            </View>
+
+            {/* Guest access */}
+            <PrimaryButton
+              label="Continue as Guest"
+              onPress={guestSignIn}
+              variant="ghost"
+            />
+            <Text style={[theme.typography.caption, styles.guestNote, { color: theme.colors.textSecondary }]}>
+              Your data will be saved on this device. Register later to sync to the cloud.
+            </Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  // Renamed from scrollContent to be clearer
-  containerStyle: {
-    flexGrow: 1,
-    justifyContent: 'center', // This centers the form vertically
-  },
-  content: {
-    padding: 24,
-  },
-  title: { fontSize: 32, fontWeight: 'bold', marginBottom: 8 },
+  safe: { flex: 1 },
+  scroll: { flexGrow: 1, justifyContent: 'center' },
+  content: { padding: 24 },
+  title: { marginBottom: 8 },
+  subtitle: { marginBottom: 32 },
   input: {
     height: 50,
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
-    marginBottom: 16,
-    fontSize: 16,
+    marginBottom: 14,
+    fontSize: 15,
   },
-  button: {
-    height: 50,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -167,19 +164,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   dividerLine: { flex: 1, height: 1 },
-  dividerText: { marginHorizontal: 12, fontSize: 13 },
-  guestButton: {
-    height: 50,
-    borderRadius: 12,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  guestButtonText: { fontWeight: '600', fontSize: 16 },
+  dividerText: { marginHorizontal: 12 },
   guestNote: {
-    fontSize: 12,
     textAlign: 'center',
-    marginTop: 10,
+    marginTop: 12,
     lineHeight: 17,
   },
 });

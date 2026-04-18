@@ -3,59 +3,47 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
+import { TrendingUp, Calendar as CalendarIcon } from 'lucide-react-native';
+
 import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
 import { AdBanner } from '../../components/AdBanner';
-import { useNavigation } from '@react-navigation/native'; // Add import
-import { TrendingUp } from 'lucide-react-native';
-
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { IconButton } from '../../components/ui/IconButton';
+import { SectionTitle } from '../../components/ui/SectionTitle';
 
 export default function HistoryScreen() {
   const theme = useTheme();
   const db = useStorage();
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const navigation = useNavigation<any>();
-  // 1. Calculate Date Range (Simplification for V1)
-  // --- FIX START ---
-  // Get the current year dynamically (e.g., 2026)
-  const currentYear = new Date().getFullYear();
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // Fetch a wider range (Previous Year -> Next Year) to handle edge cases
+  const currentYear = new Date().getFullYear();
   const startDate = `${currentYear - 1}-01-01T00:00:00Z`;
   const endDate = `${currentYear + 1}-12-31T23:59:59Z`;
-  // --- FIX END ---
 
-  // 2. Fetch Data
   const { data, isLoading } = useQuery({
     queryKey: ['history'],
     queryFn: () => db.getHistory(startDate, endDate),
   });
 
-  // 3. Transform Data for Calendar
   const markedDates = useMemo(() => {
     if (!data) return {};
     const marks: any = {};
-
     data.forEach(session => {
       const dateKey = session.date.split('T')[0];
-      marks[dateKey] = {
-        marked: true,
-        dotColor: theme.colors.primary // Use theme color for dots
-      };
+      marks[dateKey] = { marked: true, dotColor: theme.colors.primary };
     });
-
-    // Add selected indicator
     marks[selectedDate] = {
       ...marks[selectedDate],
       selected: true,
       selectedColor: theme.colors.primary,
-      disableTouchEvent: true
+      disableTouchEvent: true,
     };
-
     return marks;
-  }, [data, selectedDate, theme]); // Re-calculate when theme changes
+  }, [data, selectedDate, theme]);
 
-  // 4. Filter list for selected day
   const dailySessions = useMemo(() => {
     if (!data) return [];
     return data.filter(s => s.date.startsWith(selectedDate));
@@ -63,25 +51,23 @@ export default function HistoryScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', margin: 16 }}>
-          <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.colors.text }}>History</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Analytics')}>
-              <TrendingUp size={24} color={theme.colors.primary} />
-          </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title="History"
+        rightElement={
+          <IconButton
+            icon={TrendingUp}
+            onPress={() => navigation.navigate('Analytics')}
+            color={theme.colors.primary}
+          />
+        }
+      />
 
       <Calendar
-        // FIX 1: Force re-render when theme changes
         key={theme.mode}
-
         current={selectedDate}
         onDayPress={(day: any) => setSelectedDate(day.dateString)}
         markedDates={markedDates}
-
-        // FIX 2: Stop the size jumping (Always show 6 rows)
         hideExtraDays={false}
-
-        // Theme Configuration
         theme={{
           calendarBackground: theme.colors.card,
           textSectionTitleColor: theme.colors.textSecondary,
@@ -89,54 +75,49 @@ export default function HistoryScreen() {
           selectedDayTextColor: '#ffffff',
           todayTextColor: theme.colors.primary,
           dayTextColor: theme.colors.text,
-          textDisabledColor: theme.colors.border, // For the "extra days"
+          textDisabledColor: theme.colors.border,
           dotColor: theme.colors.primary,
           selectedDotColor: '#ffffff',
           arrowColor: theme.colors.primary,
           monthTextColor: theme.colors.text,
           indicatorColor: theme.colors.primary,
         }}
-
-        // Optional: Style the container for shadows/borders
         style={{
           borderRadius: 12,
           marginHorizontal: 16,
-          elevation: 2,
-          shadowColor: '#000',
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          shadowOffset: { width: 0, height: 2 },
-          overflow: 'hidden' // Ensures background color clips corners
+          overflow: 'hidden',
         }}
       />
 
       <View style={styles.listContainer}>
-        <Text style={[styles.subHeader, { color: theme.colors.textSecondary }]}>
-          Workouts on {selectedDate}
-        </Text>
+        <SectionTitle title={`Workouts on ${selectedDate}`} style={{ marginBottom: 12 }} />
 
         {isLoading ? (
           <ActivityIndicator color={theme.colors.primary} />
+        ) : dailySessions.length === 0 ? (
+          <View style={styles.emptyDay}>
+            <CalendarIcon size={28} color={theme.colors.border} strokeWidth={1.5} />
+            <Text style={[theme.typography.body, { color: theme.colors.textSecondary, marginTop: 8 }]}>
+              No workouts logged
+            </Text>
+          </View>
         ) : (
           <FlatList
             data={dailySessions}
             keyExtractor={item => item.id}
-            ListEmptyComponent={
-              <Text style={{ color: theme.colors.textSecondary, marginTop: 20 }}>No workouts logged.</Text>
-            }
             renderItem={({ item }) => (
               <TouchableOpacity
-                // Add Navigation
                 onPress={() => navigation.navigate('HistoryDetails', { sessionId: item.id })}
-                style={[styles.card, { backgroundColor: theme.colors.card }]}
+                style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+                activeOpacity={0.7}
               >
-                <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
-                  <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[theme.typography.title, { color: theme.colors.text, marginBottom: 2 }]}>
                     {item.routine_name}
                   </Text>
-                  <Text style={{ color: theme.colors.textSecondary }}>
+                  <Text style={[theme.typography.caption, { color: theme.colors.textSecondary }]}>
                     {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    {' • '}
+                    {' · '}
                     {item.status}
                   </Text>
                 </View>
@@ -152,9 +133,14 @@ export default function HistoryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { fontSize: 28, fontWeight: 'bold', margin: 16 },
-  listContainer: { flex: 1, padding: 16 },
-  subHeader: { fontSize: 16, marginBottom: 12, fontWeight: '600' },
-  card: { padding: 16, borderRadius: 12, marginBottom: 8, elevation: 1 },
-  cardTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 4 }
+  listContainer: { flex: 1, paddingHorizontal: 16, paddingTop: 20 },
+  card: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  emptyDay: { alignItems: 'center', paddingTop: 32 },
 });

@@ -8,7 +8,9 @@ import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
 import { useUnits } from '../../context/UnitsContext';
 import Toast from 'react-native-toast-message';
-import { ArrowLeft, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react-native';
+import { Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react-native';
+import { ScreenHeader } from '../../components/ui/ScreenHeader';
+import { SearchInput } from '../../components/ui/SearchInput';
 
 
 
@@ -97,7 +99,7 @@ export default function RoutineEditorScreen() {
     const normalizedExerciseSearch = debouncedExerciseSearch.trim();
     const exerciseBackendQuery = normalizedExerciseSearch.length >= 2 ? normalizedExerciseSearch : undefined;
 
-    const { data: allExercises, isLoading: loadingEx, isFetching: isFetchingExercises } = useQuery({
+    const { data: allExercises, isLoading: loadingEx } = useQuery({
         queryKey: ['exercises', exerciseBackendQuery, 'routine-editor'],
         queryFn: () => db.getExercisesFiltered({ q: exerciseBackendQuery }),
         placeholderData: keepPreviousData,
@@ -247,32 +249,29 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <View style={styles.headerRow}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <ArrowLeft size={24} color={theme.colors.primary} />
-                </TouchableOpacity>
-
-                <View style={{ flex: 1 }}>
-                    <Text style={[styles.header, { color: theme.colors.text }]} numberOfLines={1}>
-                        {currentRoutine?.name || routineName}
-                    </Text>
-                    <Text style={{ color: theme.colors.textSecondary }}>Manage Exercises</Text>
-                </View>
-
-                <View style={{ flexDirection: 'row', gap: 15 }}>
-                    <TouchableOpacity onPress={() => setRenameModalVisible(true)}>
-                        <Pencil size={24} color={theme.colors.textSecondary} />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => {
-                        Alert.alert("Delete Routine", "Are you sure? This will remove all exercises in this day.", [
-                            { text: "Cancel" },
-                            { text: "Delete", style: "destructive", onPress: () => deleteRoutineMutation.mutate() }
-                        ]);
-                    }}>
-                        <Trash2 size={24} color={theme.colors.error} />
-                    </TouchableOpacity>
-                </View>
-            </View>
+            <ScreenHeader
+                title={currentRoutine?.name || routineName}
+                subtitle="Manage Exercises"
+                onBack={() => navigation.goBack()}
+                rightElement={
+                    <View style={{ flexDirection: 'row', gap: 16 }}>
+                        <TouchableOpacity onPress={() => setRenameModalVisible(true)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                            <Pencil size={22} color={theme.colors.textSecondary} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                            onPress={() => {
+                                Alert.alert('Delete Routine', 'Are you sure? This will remove all exercises in this day.', [
+                                    { text: 'Cancel' },
+                                    { text: 'Delete', style: 'destructive', onPress: () => deleteRoutineMutation.mutate() },
+                                ]);
+                            }}
+                        >
+                            <Trash2 size={22} color={theme.colors.error} />
+                        </TouchableOpacity>
+                    </View>
+                }
+            />
 
 <FlatList
     data={existingExercises}
@@ -320,22 +319,12 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         {!editingTargetId && (
                             <>
                                 <Text style={[styles.label, { color: theme.colors.text }]}>1. Select Exercise</Text>
-                                <View style={[styles.searchContainer, { backgroundColor: theme.colors.inputBackground, borderColor: theme.colors.border }]}>
-                                    <Text style={{ fontSize: 16, marginRight: 8 }}>🔍</Text>
-                                    <TextInput
-                                        style={{ flex: 1, color: theme.colors.text, fontSize: 15 }}
-                                        placeholder="Search exercises..."
-                                        placeholderTextColor={theme.colors.textSecondary}
-                                        value={exerciseSearchText}
-                                        onChangeText={setExerciseSearchText}
-                                    />
-                                    {isFetchingExercises && <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginRight: 6 }} />}
-                                    {exerciseSearchText.length > 0 && (
-                                        <TouchableOpacity onPress={() => setExerciseSearchText('')}>
-                                            <Text style={{ color: theme.colors.textSecondary }}>✕</Text>
-                                        </TouchableOpacity>
-                                    )}
-                                </View>
+                                <SearchInput
+                                    value={exerciseSearchText}
+                                    onChangeText={setExerciseSearchText}
+                                    onClear={() => setExerciseSearchText('')}
+                                    placeholder="Search exercises…"
+                                />
                                 <View style={{ height: screenHeight * 0.22, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, marginBottom: 16 }}>
                                     {loadingEx ? <ActivityIndicator /> : (
                                         <ScrollView keyboardShouldPersistTaps="handled">

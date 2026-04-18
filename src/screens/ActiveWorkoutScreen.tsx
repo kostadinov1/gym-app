@@ -3,12 +3,15 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ClipboardList } from 'lucide-react-native';
 import { useTheme } from '../theme';
 import { SetRow } from '../components/workout/SetRow';
 import { useUnits } from '../context/UnitsContext';
 import { useStorage } from '../context/StorageContext';
 import { FAB } from '../components/common/FAB';
 import Toast from 'react-native-toast-message';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
+import { EmptyState } from '../components/ui/EmptyState';
 
 export default function ActiveWorkoutScreen() {
   const [isAddModalVisible, setAddModalVisible] = useState(false);
@@ -211,37 +214,21 @@ export default function ActiveWorkoutScreen() {
 
   if (data && exercises.length === 0) {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}> 
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 16 }}>
-            <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{data?.name}</Text>
-        </View>
-        <View style={[styles.center, { padding: 32 }]}> 
-          <Text style={{ fontSize: 40, marginBottom: 16 }}>📝</Text>
-          <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 8 }}>
-            This routine is empty
-          </Text>
-          <TouchableOpacity
-            style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12 }}
-            onPress={() => navigation.navigate('Plans')}
-          >
-            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Go to Plans Manager</Text>
-          </TouchableOpacity>
-        </View>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+        <ScreenHeader title={data?.name ?? 'Workout'} onBack={() => navigation.goBack()} />
+        <EmptyState
+          icon={ClipboardList}
+          title="Routine is empty"
+          subtitle="Add exercises in the Plans editor to get started."
+          action={{ label: 'Go to Plans', onPress: () => navigation.navigate('Plans') }}
+        />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}> 
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 16 }}>
-          <Text style={{ fontSize: 24, color: theme.colors.primary }}>←</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{data?.name}</Text>
-      </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+      <ScreenHeader title={data?.name ?? 'Workout'} onBack={() => navigation.goBack()} />
 
       <FlatList
         data={exercises}
