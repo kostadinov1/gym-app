@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '../../theme';
 import { IconButton } from './IconButton';
@@ -13,9 +14,10 @@ interface ScreenHeaderProps {
 
 export function ScreenHeader({ title, subtitle, onBack, rightElement }: ScreenHeaderProps) {
   const theme = useTheme();
+  const { top } = useSafeAreaInsets();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: top + 12 }]}>
       {/* Left slot: back button or spacer */}
       <View style={styles.side}>
         {onBack && (

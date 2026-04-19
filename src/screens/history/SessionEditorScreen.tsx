@@ -121,7 +121,7 @@ export default function SessionEditorScreen() {
   if (isLoading) return <ActivityIndicator style={{ flex: 1 }} color={theme.colors.primary} />;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader title="Edit Session" onBack={() => navigation.goBack()} />
 
       <FlatList

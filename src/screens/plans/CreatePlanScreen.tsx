@@ -56,7 +56,7 @@ export default function CreatePlanScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader title="New Plan" onBack={() => navigation.goBack()} />
 
       <KeyboardAvoidingView

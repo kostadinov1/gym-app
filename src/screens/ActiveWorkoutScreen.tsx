@@ -214,7 +214,7 @@ export default function ActiveWorkoutScreen() {
 
   if (data && exercises.length === 0) {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
         <ScreenHeader title={data?.name ?? 'Workout'} onBack={() => navigation.goBack()} />
         <EmptyState
           icon={ClipboardList}
@@ -227,7 +227,7 @@ export default function ActiveWorkoutScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader title={data?.name ?? 'Workout'} onBack={() => navigation.goBack()} />
 
       <FlatList
@@ -297,7 +297,7 @@ export default function ActiveWorkoutScreen() {
       </View>
 
       <Modal visible={isAddModalVisible} animationType="slide">
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: theme.colors.background }}>
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Add Exercise</Text>
             <TouchableOpacity onPress={() => setAddModalVisible(false)}>

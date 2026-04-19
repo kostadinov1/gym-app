@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
   TouchableOpacity, Alert, ActivityIndicator, Modal,
-  TextInput, KeyboardAvoidingView, Platform,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -114,7 +114,7 @@ export default function ProfileScreen() {
   const subtitle = isGuest ? 'Guest Mode' : (userEmail ?? undefined);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom']}>
 
       {/* ── Migration progress modal ───────────────────────────────────── */}
       <Modal visible={migrationStep !== 'idle' && migrationStep !== 'done'} transparent animationType="fade">
@@ -133,43 +133,41 @@ export default function ProfileScreen() {
 
       {/* ── Register modal ─────────────────────────────────────────────── */}
       <Modal visible={showRegisterModal} transparent animationType="slide">
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
-              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Create Account</Text>
-              <Text style={[{ color: theme.colors.textSecondary, marginBottom: 20, textAlign: 'center' }, theme.typography.body]}>
-                Your workout data will be synced to the cloud.
-              </Text>
-              <TextInput
-                style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}
-                placeholder="Email"
-                placeholderTextColor={theme.colors.textSecondary}
-                value={regEmail}
-                onChangeText={setRegEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-              />
-              <TextInput
-                style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}
-                placeholder="Password"
-                placeholderTextColor={theme.colors.textSecondary}
-                value={regPassword}
-                onChangeText={setRegPassword}
-                secureTextEntry
-              />
-              <TouchableOpacity
-                style={[styles.ctaButton, { backgroundColor: theme.colors.primary }]}
-                onPress={handleCreateAccount}
-                disabled={migrationStep !== 'idle'}
-              >
-                <Text style={styles.ctaButtonText}>Create Account & Sync</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={{ marginTop: 12, padding: 8 }} onPress={() => { setShowRegisterModal(false); setMigrationStep('idle'); }}>
-                <Text style={[{ color: theme.colors.textSecondary, textAlign: 'center' }, theme.typography.body]}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Create Account</Text>
+            <Text style={[{ color: theme.colors.textSecondary, marginBottom: 20, textAlign: 'center' }, theme.typography.body]}>
+              Your workout data will be synced to the cloud.
+            </Text>
+            <TextInput
+              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}
+              placeholder="Email"
+              placeholderTextColor={theme.colors.textSecondary}
+              value={regEmail}
+              onChangeText={setRegEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+            <TextInput
+              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}
+              placeholder="Password"
+              placeholderTextColor={theme.colors.textSecondary}
+              value={regPassword}
+              onChangeText={setRegPassword}
+              secureTextEntry
+            />
+            <TouchableOpacity
+              style={[styles.ctaButton, { backgroundColor: theme.colors.primary }]}
+              onPress={handleCreateAccount}
+              disabled={migrationStep !== 'idle'}
+            >
+              <Text style={styles.ctaButtonText}>Create Account & Sync</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ marginTop: 12, padding: 8 }} onPress={() => { setShowRegisterModal(false); setMigrationStep('idle'); }}>
+              <Text style={[{ color: theme.colors.textSecondary, textAlign: 'center' }, theme.typography.body]}>Cancel</Text>
+            </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}

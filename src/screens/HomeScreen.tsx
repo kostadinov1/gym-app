@@ -134,7 +134,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader
         title={plan?.name ?? "Today's Workout"}
         subtitle={subtitle ?? (plan && !hasRoutineToday && routines.length > 0 ? 'Rest day' : undefined)}

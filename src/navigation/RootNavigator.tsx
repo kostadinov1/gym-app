@@ -1,6 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme';
 import { Dumbbell, Calendar, LayoutList, Layers, User } from 'lucide-react-native';
@@ -114,8 +114,21 @@ function TabNavigator() {
 const RootStack = createNativeStackNavigator();
 
 export default function RootNavigator() {
+    const theme = useTheme();
+    const navTheme = {
+        ...DefaultTheme,
+        colors: {
+            ...DefaultTheme.colors,
+            background: theme.colors.background,
+            card: theme.colors.card,
+            text: theme.colors.text,
+            border: theme.colors.border,
+            primary: theme.colors.primary,
+        },
+    };
+
     return (
-        <NavigationContainer ref={navigationRef}>
+        <NavigationContainer ref={navigationRef} theme={navTheme}>
             <RootStack.Navigator screenOptions={{ headerShown: false }}>
                 <RootStack.Screen name="MainTabs" component={TabNavigator} />
                 <RootStack.Screen

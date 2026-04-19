@@ -50,7 +50,7 @@ export default function HistoryScreen() {
   }, [data, selectedDate]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader
         title="History"
         rightElement={

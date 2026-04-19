@@ -24,7 +24,7 @@ export default function HistoryDetailsScreen() {
 
   if (isLoading || !data) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator style={{ flex: 1 }} color={theme.colors.primary} />
       </SafeAreaView>
     );
@@ -39,7 +39,7 @@ export default function HistoryDetailsScreen() {
   const exerciseNames = Object.keys(groupedSets);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader
         title={data.routine_name}
         subtitle={`${new Date(data.start_time).toLocaleDateString()} · ${data.duration_minutes} min`}

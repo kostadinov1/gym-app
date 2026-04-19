@@ -152,7 +152,7 @@ export default function ExerciseListScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader title="Exercise Library" />
 
       <View style={styles.searchWrapper}>

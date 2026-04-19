@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/react-native';
 import React from 'react';
 import { StatusBar, View, ActivityIndicator } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { StorageProvider } from './src/context/StorageContext';
 import { EntitlementProvider } from './src/context/EntitlementContext';
@@ -15,6 +15,8 @@ import { UnitsProvider } from './src/context/UnitsContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
+
+console.log('initialWindowMetrics:', JSON.stringify(initialWindowMetrics));
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -80,7 +82,7 @@ const NavigationWrapper = () => {
 function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <AuthProvider>
           <ThemeProvider>
           <UnitsProvider>

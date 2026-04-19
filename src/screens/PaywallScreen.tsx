@@ -89,7 +89,7 @@ export default function PaywallScreen() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Close button */}
       <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
         <X size={24} color={theme.colors.textSecondary} />

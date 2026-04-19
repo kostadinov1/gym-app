@@ -248,7 +248,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
 );
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <ScreenHeader
                 title={currentRoutine?.name || routineName}
                 subtitle="Manage Exercises"
@@ -301,7 +301,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
             </View>
 
             <Modal visible={isModalVisible} animationType="slide">
-                <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+                <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: theme.colors.background }}>
                     <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: '#eee' }}>
                         <Text style={{ fontSize: 18, fontWeight: 'bold', flex: 1, color: theme.colors.text }}>Configure Exercise</Text>
                         <TouchableOpacity onPress={() => setModalVisible(false)}>
