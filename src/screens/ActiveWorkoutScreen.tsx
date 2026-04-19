@@ -297,8 +297,8 @@ export default function ActiveWorkoutScreen() {
         </TouchableOpacity>
       </View>
 
-      <Modal visible={isAddModalVisible} animationType="slide">
-        <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <Modal visible={isAddModalVisible} animationType="slide" onRequestClose={() => setAddModalVisible(false)}>
+        <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: theme.colors.background }}>
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Add Exercise</Text>
             <TouchableOpacity onPress={() => setAddModalVisible(false)}>

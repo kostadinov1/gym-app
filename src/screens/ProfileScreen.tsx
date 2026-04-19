@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
-  TouchableOpacity, Alert, ActivityIndicator, Modal,
+  TouchableOpacity, Alert, ActivityIndicator, Modal, Pressable,
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,6 +26,12 @@ import {
   getMigrationRecord,
   runGhostMigration,
 } from '../services/GhostMigrationService';
+import { PasswordStrengthBar } from '../components/ui/PasswordStrengthBar';
+import {
+  validateAuthFields,
+  getPasswordStrength,
+  type AuthFieldErrors,
+} from '../utils/validation';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -40,7 +46,10 @@ export default function ProfileScreen() {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regErrors, setRegErrors] = useState<AuthFieldErrors & { confirmPassword?: string }>({});
   const [migrationStep, setMigrationStep] = useState<'idle' | 'registering' | 'migrating' | 'done'>('idle');
+  const regPasswordStrength = getPasswordStrength(regPassword);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['stats'],
@@ -79,12 +88,24 @@ export default function ProfileScreen() {
     );
   };
 
+  const closeRegisterModal = () => {
+    setShowRegisterModal(false);
+    setMigrationStep('idle');
+    setRegConfirmPassword('');
+    setRegErrors({});
+  };
+
   // ── Ghost migration ──────────────────────────────────────────────────────
   const handleCreateAccount = async () => {
-    if (!regEmail.trim() || !regPassword.trim()) {
-      Toast.show({ type: 'error', text1: 'Missing fields', text2: 'Enter email and password.', position: 'top' });
+    const fieldErrors: typeof regErrors = validateAuthFields(regEmail, regPassword, true);
+    if (regConfirmPassword !== regPassword) {
+      fieldErrors.confirmPassword = 'Passwords do not match.';
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      setRegErrors(fieldErrors);
       return;
     }
+    setRegErrors({});
     const existing = await getMigrationRecord();
     if (existing) {
       Toast.show({ type: 'info', text1: 'Already migrated', text2: 'Your data is already synced.', position: 'top' });
@@ -132,42 +153,70 @@ export default function ProfileScreen() {
       </Modal>
 
       {/* ── Register modal ─────────────────────────────────────────────── */}
-      <Modal visible={showRegisterModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
-            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Create Account</Text>
-            <Text style={[{ color: theme.colors.textSecondary, marginBottom: 20, textAlign: 'center' }, theme.typography.body]}>
-              Your workout data will be synced to the cloud.
-            </Text>
-            <TextInput
-              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}
-              placeholder="Email"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={regEmail}
-              onChangeText={setRegEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <TextInput
-              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border, backgroundColor: theme.colors.inputBackground }]}
-              placeholder="Password"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={regPassword}
-              onChangeText={setRegPassword}
-              secureTextEntry
-            />
-            <TouchableOpacity
-              style={[styles.ctaButton, { backgroundColor: theme.colors.primary }]}
-              onPress={handleCreateAccount}
-              disabled={migrationStep !== 'idle'}
-            >
-              <Text style={styles.ctaButtonText}>Create Account & Sync</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={{ marginTop: 12, padding: 8 }} onPress={() => { setShowRegisterModal(false); setMigrationStep('idle'); }}>
-              <Text style={[{ color: theme.colors.textSecondary, textAlign: 'center' }, theme.typography.body]}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+      <Modal visible={showRegisterModal} transparent animationType="slide" onRequestClose={closeRegisterModal}>
+        <Pressable style={styles.modalOverlay} onPress={closeRegisterModal}>
+          <Pressable style={styles.modalCardWrapper} onPress={(e) => e.stopPropagation()}>
+            <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text, textAlign: 'center' }]}>Create Account</Text>
+              <Text style={[theme.typography.body, { color: theme.colors.textSecondary, marginBottom: 20, textAlign: 'center' }]}>
+                Your workout data will be synced to the cloud.
+              </Text>
+
+              <TextInput
+                style={[styles.input, { color: theme.colors.text, backgroundColor: theme.colors.inputBackground,
+                  borderColor: regErrors.email ? theme.colors.error : theme.colors.border }]}
+                placeholder="Email"
+                placeholderTextColor={theme.colors.textSecondary}
+                value={regEmail}
+                onChangeText={(v) => { setRegEmail(v); if (regErrors.email) setRegErrors(e => ({ ...e, email: undefined })); }}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              {regErrors.email && (
+                <Text style={[styles.fieldError, { color: theme.colors.error }]}>{regErrors.email}</Text>
+              )}
+
+              <TextInput
+                style={[styles.input, { color: theme.colors.text, backgroundColor: theme.colors.inputBackground,
+                  borderColor: regErrors.password ? theme.colors.error : theme.colors.border }]}
+                placeholder="Password"
+                placeholderTextColor={theme.colors.textSecondary}
+                value={regPassword}
+                onChangeText={(v) => { setRegPassword(v); if (regErrors.password) setRegErrors(e => ({ ...e, password: undefined })); }}
+                secureTextEntry
+              />
+              {regErrors.password && (
+                <Text style={[styles.fieldError, { color: theme.colors.error }]}>{regErrors.password}</Text>
+              )}
+
+              <PasswordStrengthBar strength={regPasswordStrength} />
+
+              <TextInput
+                style={[styles.input, { color: theme.colors.text, backgroundColor: theme.colors.inputBackground,
+                  borderColor: regErrors.confirmPassword ? theme.colors.error : theme.colors.border }]}
+                placeholder="Confirm Password"
+                placeholderTextColor={theme.colors.textSecondary}
+                value={regConfirmPassword}
+                onChangeText={(v) => { setRegConfirmPassword(v); if (regErrors.confirmPassword) setRegErrors(e => ({ ...e, confirmPassword: undefined })); }}
+                secureTextEntry
+              />
+              {regErrors.confirmPassword && (
+                <Text style={[styles.fieldError, { color: theme.colors.error }]}>{regErrors.confirmPassword}</Text>
+              )}
+
+              <TouchableOpacity
+                style={[styles.ctaButton, { backgroundColor: theme.colors.primary, marginTop: 8 }]}
+                onPress={handleCreateAccount}
+                disabled={migrationStep !== 'idle'}
+              >
+                <Text style={styles.ctaButtonText}>Create Account & Sync</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={{ marginTop: 12, padding: 8, alignSelf: 'center' }} onPress={closeRegisterModal}>
+                <Text style={[theme.typography.body, { color: theme.colors.textSecondary }]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
@@ -300,11 +349,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
+  modalCardWrapper: {
+    width: '100%',
+  },
   modalCard: {
     width: '100%',
     borderRadius: 20,
     padding: 28,
-    alignItems: 'center',
   },
   modalTitle: { fontSize: 19, fontWeight: '700', marginBottom: 4 },
   input: {
@@ -313,8 +364,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 14,
-    marginBottom: 12,
+    marginBottom: 4,
     fontSize: 15,
+  },
+  fieldError: {
+    fontSize: 12,
+    marginBottom: 10,
+    alignSelf: 'flex-start',
+    marginLeft: 2,
   },
   ctaButton: {
     width: '100%',

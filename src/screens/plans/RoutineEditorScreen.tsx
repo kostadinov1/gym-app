@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, Pressable, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -464,37 +464,39 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                 </SafeAreaView>
             </Modal>
             {/* --- RENAME ROUTINE MODAL --- */}
-            <Modal visible={isRenameModalVisible} transparent animationType="fade">
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-                        <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Rename Routine</Text>
-                        <TextInput
-                            style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
-                            placeholder="e.g. Heavy Pull"
-                            placeholderTextColor={theme.colors.textSecondary}
-                            value={newName}
-                            onChangeText={setNewName}
-                            autoFocus
-                        />
-                        <View style={styles.modalButtons}>
-                            <TouchableOpacity onPress={() => setRenameModalVisible(false)}>
-                                <Text style={{ color: theme.colors.textSecondary }}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => updateRoutineMutation.mutate()}
-                                disabled={!newName.trim() || updateRoutineMutation.isPending}
-                            >
-                                <Text style={{
-                                    color: theme.colors.primary,
-                                    fontWeight: 'bold',
-                                    opacity: !newName.trim() ? 0.5 : 1
-                                }}>
-                                    {updateRoutineMutation.isPending ? "Saving..." : "Rename"}
-                                </Text>
-                            </TouchableOpacity>
+            <Modal visible={isRenameModalVisible} transparent animationType="fade" onRequestClose={() => setRenameModalVisible(false)}>
+                <Pressable style={styles.modalOverlay} onPress={() => setRenameModalVisible(false)}>
+                    <Pressable onPress={(e) => e.stopPropagation()}>
+                        <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+                            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Rename Routine</Text>
+                            <TextInput
+                                style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+                                placeholder="e.g. Heavy Pull"
+                                placeholderTextColor={theme.colors.textSecondary}
+                                value={newName}
+                                onChangeText={setNewName}
+                                autoFocus
+                            />
+                            <View style={styles.modalButtons}>
+                                <TouchableOpacity onPress={() => setRenameModalVisible(false)}>
+                                    <Text style={{ color: theme.colors.textSecondary }}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={() => updateRoutineMutation.mutate()}
+                                    disabled={!newName.trim() || updateRoutineMutation.isPending}
+                                >
+                                    <Text style={{
+                                        color: theme.colors.primary,
+                                        fontWeight: 'bold',
+                                        opacity: !newName.trim() ? 0.5 : 1
+                                    }}>
+                                        {updateRoutineMutation.isPending ? "Saving..." : "Rename"}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                    </View>
-                </View>
+                    </Pressable>
+                </Pressable>
             </Modal>
         </SafeAreaView>
     );

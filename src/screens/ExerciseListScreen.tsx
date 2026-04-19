@@ -3,9 +3,8 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -239,32 +238,32 @@ export default function ExerciseListScreen() {
       />
 
       <Modal visible={isModalVisible} animationType="slide" transparent onRequestClose={closeModal}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}> 
-            <Text style={[styles.modalHeader, { color: theme.colors.text }]}>{editingId ? 'Edit Exercise' : 'Exercise'}</Text>
+        <Pressable style={styles.modalOverlay} onPress={closeModal}>
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+              <Text style={[styles.modalHeader, { color: theme.colors.text }]}>{editingId ? 'Edit Exercise' : 'Exercise'}</Text>
 
-            <TextInput
-              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
-              placeholder="Name (e.g. Squat)"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={name}
-              onChangeText={setName}
-            />
+              <TextInput
+                style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+                placeholder="Name (e.g. Squat)"
+                placeholderTextColor={theme.colors.textSecondary}
+                value={name}
+                onChangeText={setName}
+              />
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity onPress={closeModal}>
-                <Text style={{ color: theme.colors.textSecondary, fontSize: 16 }}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleSave}>
-                <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 }}>
-                  {editingId ? 'Update' : 'Save'}
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity onPress={closeModal}>
+                  <Text style={{ color: theme.colors.textSecondary, fontSize: 16 }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleSave}>
+                  <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 }}>
+                    {editingId ? 'Update' : 'Save'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </View>
-        </KeyboardAvoidingView>
+          </Pressable>
+        </Pressable>
       </Modal>
     </SafeAreaView>
   );

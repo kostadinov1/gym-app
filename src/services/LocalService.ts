@@ -527,10 +527,16 @@ export class LocalService implements IAppService {
       ))
       .orderBy(workout_plans.start_date);
 
-    // Resolve the best plan to show
-    let chosen = plans.find(p => p.start_date <= today && p.end_date >= today); // current
-    if (!chosen) chosen = plans.find(p => p.start_date > today);               // nearest upcoming
-    if (!chosen && plans.length > 0) chosen = plans[plans.length - 1];         // most recent past
+    // Resolve the best plan to show:
+    // 1. Currently active (today is within range)
+    // 2. Most recently ended past plan (you were just following this one)
+    // 3. Nearest upcoming future plan (nothing else available)
+    let chosen = plans.find(p => p.start_date <= today && p.end_date >= today);
+    if (!chosen) {
+      const past = plans.filter(p => p.end_date < today).sort((a, b) => a.end_date < b.end_date ? 1 : -1);
+      if (past.length > 0) chosen = past[0];
+    }
+    if (!chosen) chosen = plans.find(p => p.start_date > today);
 
     if (!chosen) return { plan: null, routines: [], todaySchemaDay };
 

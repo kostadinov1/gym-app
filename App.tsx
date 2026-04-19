@@ -16,7 +16,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
-console.log('initialWindowMetrics:', JSON.stringify(initialWindowMetrics));
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,

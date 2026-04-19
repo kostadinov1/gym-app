@@ -2,6 +2,7 @@ import { client } from './client';
 
 export interface Routine {
   id: string;
+  plan_id: string;
   name: string;
   day_of_week?: number;
   last_completed_at?: string | null;

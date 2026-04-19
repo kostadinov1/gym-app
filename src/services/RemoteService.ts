@@ -80,7 +80,40 @@ export class RemoteService implements IAppService {
     return workoutsApi.getRoutines();
   }
   async getHomeScreenData(): Promise<HomeScreenData> {
-    throw new Error('getHomeScreenData not implemented in RemoteService');
+    const today = new Date().toISOString().split('T')[0];
+    const todaySchemaDay = (new Date().getDay() + 6) % 7; // 0=Mon…6=Sun
+
+    const [plans, routines] = await Promise.all([
+      plansApi.getPlans(),
+      workoutsApi.getRoutines(),
+    ]);
+
+    // Same priority as LocalService:
+    // 1. Plan currently in range
+    // 2. Most recently ended past plan
+    // 3. Nearest upcoming future plan
+    let chosen = plans.find(p => p.start_date <= today && p.end_date >= today);
+    if (!chosen) {
+      const past = plans.filter(p => p.end_date < today).sort((a, b) => a.end_date < b.end_date ? 1 : -1);
+      if (past.length > 0) chosen = past[0];
+    }
+    if (!chosen) chosen = plans.filter(p => p.start_date > today).sort((a, b) => a.start_date < b.start_date ? -1 : 1)[0];
+
+    if (!chosen) return { plan: null, routines: [], todaySchemaDay };
+
+    const planRoutines = routines.filter(r => r.plan_id === chosen!.id);
+
+    return {
+      plan: {
+        id: chosen.id,
+        name: chosen.name,
+        startDate: chosen.start_date,
+        endDate: chosen.end_date,
+        durationWeeks: chosen.duration_weeks,
+      },
+      routines: planRoutines,
+      todaySchemaDay,
+    };
   }
   startRoutine(routineId: string) {
     return workoutsApi.startRoutine(routineId);

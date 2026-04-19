@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Modal, Text, TextInput, TouchableOpacity, ActivityIndicator, Pressable } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
@@ -145,89 +145,93 @@ export default function PlanDetailsScreen() {
                 </View>
 
                 {/* --- 1. EDIT PLAN MODAL (Restored) --- */}
-                <Modal visible={isEditModalVisible} animationType="slide" transparent>
-                    <View style={styles.modalOverlay}>
-                        <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-                            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Edit Plan</Text>
+                <Modal visible={isEditModalVisible} animationType="slide" transparent onRequestClose={() => setEditModalVisible(false)}>
+                    <Pressable style={styles.modalOverlay} onPress={() => setEditModalVisible(false)}>
+                        <Pressable onPress={(e) => e.stopPropagation()}>
+                            <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+                                <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Edit Plan</Text>
 
-                            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Plan Name</Text>
-                            <TextInput
-                                style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
-                                value={editName}
-                                onChangeText={setEditName}
-                            />
+                                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Plan Name</Text>
+                                <TextInput
+                                    style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+                                    value={editName}
+                                    onChangeText={setEditName}
+                                />
 
-                            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Start Date</Text>
-                            <Calendar
-                                current={editDate}
-                                onDayPress={(day: any) => setEditDate(day.dateString)}
-                                markedDates={{ [editDate]: { selected: true, selectedColor: theme.colors.primary } }}
-                                theme={{ calendarBackground: theme.colors.card, dayTextColor: theme.colors.text, arrowColor: theme.colors.primary }}
-                                style={{ borderRadius: 8, marginBottom: 16, height: 320 }}
-                            />
+                                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Start Date</Text>
+                                <Calendar
+                                    current={editDate}
+                                    onDayPress={(day: any) => setEditDate(day.dateString)}
+                                    markedDates={{ [editDate]: { selected: true, selectedColor: theme.colors.primary } }}
+                                    theme={{ calendarBackground: theme.colors.card, dayTextColor: theme.colors.text, arrowColor: theme.colors.primary }}
+                                    style={{ borderRadius: 8, marginBottom: 16, height: 320 }}
+                                />
 
-                            <View style={styles.modalButtons}>
-                                <TouchableOpacity onPress={() => setEditModalVisible(false)}>
-                                    <Text style={{ color: theme.colors.textSecondary, fontSize: 16 }}>Cancel</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => updatePlanMutation.mutate()}>
-                                    <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 }}>Save</Text>
-                                </TouchableOpacity>
+                                <View style={styles.modalButtons}>
+                                    <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                                        <Text style={{ color: theme.colors.textSecondary, fontSize: 16 }}>Cancel</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => updatePlanMutation.mutate()}>
+                                        <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 }}>Save</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
-                        </View>
-                    </View>
+                        </Pressable>
+                    </Pressable>
                 </Modal>
 
                 {/* --- 2. CREATE ROUTINE MODAL --- */}
-                <Modal visible={isRoutineModalVisible} transparent animationType="fade">
-                    <View style={styles.modalOverlay}>
-                        <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-                            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Add Routine</Text>
-                            <TextInput
-                                style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
-                                placeholder="e.g. Pull Day A"
-                                placeholderTextColor={theme.colors.textSecondary}
-                                value={routineName}
-                                onChangeText={setRoutineName}
-                                autoFocus
-                            />
+                <Modal visible={isRoutineModalVisible} transparent animationType="fade" onRequestClose={() => setRoutineModalVisible(false)}>
+                    <Pressable style={styles.modalOverlay} onPress={() => setRoutineModalVisible(false)}>
+                        <Pressable onPress={(e) => e.stopPropagation()}>
+                            <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+                                <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Add Routine</Text>
+                                <TextInput
+                                    style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+                                    placeholder="e.g. Pull Day A"
+                                    placeholderTextColor={theme.colors.textSecondary}
+                                    value={routineName}
+                                    onChangeText={setRoutineName}
+                                    autoFocus
+                                />
 
-                            {/* Type Selector */}
-                            <View style={{ flexDirection: 'row', marginBottom: 20, gap: 12 }}>
-                                <TouchableOpacity
-                                    style={[
-                                        styles.typeButton,
-                                        routineType === 'workout' && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
-                                    ]}
-                                    onPress={() => setRoutineType('workout')}
-                                >
-                                    <Text style={{ color: routineType === 'workout' ? 'white' : theme.colors.textSecondary }}>Workout</Text>
-                                </TouchableOpacity>
+                                {/* Type Selector */}
+                                <View style={{ flexDirection: 'row', marginBottom: 20, gap: 12 }}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.typeButton,
+                                            routineType === 'workout' && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
+                                        ]}
+                                        onPress={() => setRoutineType('workout')}
+                                    >
+                                        <Text style={{ color: routineType === 'workout' ? 'white' : theme.colors.textSecondary }}>Workout</Text>
+                                    </TouchableOpacity>
 
-                                <TouchableOpacity
-                                    style={[
-                                        styles.typeButton,
-                                        routineType === 'rest' && { backgroundColor: theme.colors.success, borderColor: theme.colors.success }
-                                    ]}
-                                    onPress={() => {
-                                        setRoutineType('rest');
-                                        setRoutineName('Rest Day');
-                                    }}
-                                >
-                                    <Text style={{ color: routineType === 'rest' ? 'white' : theme.colors.textSecondary }}>Rest Day</Text>
-                                </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.typeButton,
+                                            routineType === 'rest' && { backgroundColor: theme.colors.success, borderColor: theme.colors.success }
+                                        ]}
+                                        onPress={() => {
+                                            setRoutineType('rest');
+                                            setRoutineName('Rest Day');
+                                        }}
+                                    >
+                                        <Text style={{ color: routineType === 'rest' ? 'white' : theme.colors.textSecondary }}>Rest Day</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                <View style={styles.modalButtons}>
+                                    <TouchableOpacity onPress={() => setRoutineModalVisible(false)}>
+                                        <Text style={{ color: theme.colors.textSecondary }}>Cancel</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => createRoutineMutation.mutate()}>
+                                        <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>Create</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
-
-                            <View style={styles.modalButtons}>
-                                <TouchableOpacity onPress={() => setRoutineModalVisible(false)}>
-                                    <Text style={{ color: theme.colors.textSecondary }}>Cancel</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => createRoutineMutation.mutate()}>
-                                    <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>Create</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
+                        </Pressable>
+                    </Pressable>
                 </Modal>
 
             </Container>
