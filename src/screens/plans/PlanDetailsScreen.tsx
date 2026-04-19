@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, Modal, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
@@ -53,9 +53,9 @@ export default function PlanDetailsScreen() {
             // Invalidate routines so Active Workout recalculates math immediately
             queryClient.invalidateQueries({ queryKey: ['routines'] });
             setEditModalVisible(false);
-            Toast.show({ type: 'success', text1: 'Plan Updated' });
+            Toast.show({ type: 'success', text1: 'Plan Updated', position: 'top' });
         },
-        onError: (err) => Toast.show({ type: 'error', text1: 'Update Failed', text2: (err as Error).message })
+        onError: (err) => Toast.show({ type: 'error', text1: 'Update Failed', text2: (err as Error).message, position: 'top' })
     });
 
 
@@ -70,12 +70,12 @@ export default function PlanDetailsScreen() {
             queryClient.invalidateQueries({ queryKey: ['planDetails', planId] });
             setRoutineModalVisible(false);
 
-            Toast.show({ type: 'success', text1: 'Routine Added' });
+            Toast.show({ type: 'success', text1: 'Routine Added', position: 'top' });
             // Reset State
             setRoutineName('');
             setRoutineType('workout');
         },
-        onError: (err) => Toast.show({ type: 'error', text1: 'Error', text2: (err as Error).message })
+        onError: (err) => Toast.show({ type: 'error', text1: 'Error', text2: (err as Error).message, position: 'top' })
     });
 
     // 3. HANDLERS
@@ -146,7 +146,6 @@ export default function PlanDetailsScreen() {
 
                 {/* --- 1. EDIT PLAN MODAL (Restored) --- */}
                 <Modal visible={isEditModalVisible} animationType="slide" transparent>
-                    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
                     <View style={styles.modalOverlay}>
                         <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
                             <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Edit Plan</Text>
@@ -177,12 +176,10 @@ export default function PlanDetailsScreen() {
                             </View>
                         </View>
                     </View>
-                    </KeyboardAvoidingView>
                 </Modal>
 
                 {/* --- 2. CREATE ROUTINE MODAL --- */}
                 <Modal visible={isRoutineModalVisible} transparent animationType="fade">
-                    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
                     <View style={styles.modalOverlay}>
                         <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
                             <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Add Routine</Text>
@@ -231,7 +228,6 @@ export default function PlanDetailsScreen() {
                             </View>
                         </View>
                     </View>
-                    </KeyboardAvoidingView>
                 </Modal>
 
             </Container>

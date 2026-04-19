@@ -82,12 +82,12 @@ export default function ProfileScreen() {
   // ── Ghost migration ──────────────────────────────────────────────────────
   const handleCreateAccount = async () => {
     if (!regEmail.trim() || !regPassword.trim()) {
-      Toast.show({ type: 'error', text1: 'Missing fields', text2: 'Enter email and password.' });
+      Toast.show({ type: 'error', text1: 'Missing fields', text2: 'Enter email and password.', position: 'top' });
       return;
     }
     const existing = await getMigrationRecord();
     if (existing) {
-      Toast.show({ type: 'info', text1: 'Already migrated', text2: 'Your data is already synced.' });
+      Toast.show({ type: 'info', text1: 'Already migrated', text2: 'Your data is already synced.', position: 'top' });
       setShowRegisterModal(false);
       return;
     }
@@ -104,10 +104,10 @@ export default function ProfileScreen() {
       queryClient.clear();
       await promoteGuest(access_token, regEmail.trim());
       setShowRegisterModal(false);
-      Toast.show({ type: 'success', text1: 'Welcome!', text2: `Synced ${result.counts.sessions} workouts and ${result.counts.plans} plans.` });
+      Toast.show({ type: 'success', text1: 'Welcome!', text2: `Synced ${result.counts.sessions} workouts and ${result.counts.plans} plans.`, position: 'top' });
     } catch (err) {
       setMigrationStep('idle');
-      Toast.show({ type: 'error', text1: 'Registration failed', text2: (err as Error).message });
+      Toast.show({ type: 'error', text1: 'Registration failed', text2: (err as Error).message, position: 'top' });
     }
   };
 

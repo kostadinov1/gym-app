@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -55,7 +54,7 @@ export default function RoutineEditorScreen() {
             setModalVisible(false);
             setEditingTargetId(null);
             queryClient.invalidateQueries({ queryKey: ['planDetails'] });
-            Toast.show({ type: 'success', text1: 'Exercise updated' });
+            Toast.show({ type: 'success', text1: 'Exercise updated', position: 'top' });
         }
     });
 
@@ -64,7 +63,7 @@ export default function RoutineEditorScreen() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['planDetails'] });
             setRenameModalVisible(false);
-            Toast.show({ type: 'success', text1: 'Routine renamed' });
+            Toast.show({ type: 'success', text1: 'Routine renamed', position: 'top' });
         }
     });
 
@@ -73,7 +72,7 @@ export default function RoutineEditorScreen() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['planDetails'] });
             navigation.goBack();
-            Toast.show({ type: 'success', text1: 'Routine deleted' });
+            Toast.show({ type: 'success', text1: 'Routine deleted', position: 'top' });
         }
     });
 
@@ -151,7 +150,7 @@ export default function RoutineEditorScreen() {
         mutationFn: (id: string) => db.deleteRoutineExercise(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['planDetails'] });
-            Toast.show({ type: 'success', text1: 'Exercise removed' });
+            Toast.show({ type: 'success', text1: 'Exercise removed', position: 'top' });
         }
     });
 
@@ -309,10 +308,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         </TouchableOpacity>
                     </View>
 
-                    <KeyboardAwareScrollView
-                        enableOnAndroid={true}
-                        enableAutomaticScroll={true}
-                        extraScrollHeight={20}
+                    <ScrollView
                         keyboardShouldPersistTaps="handled"
                         contentContainerStyle={{ padding: 16 }}
                     >
@@ -454,7 +450,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         )}
 
 
-                    </KeyboardAwareScrollView>
+                    </ScrollView>
 
                     {/* Pinned footer — always visible above keyboard */}
                     <View style={{ padding: 16, paddingBottom: 8, borderTopWidth: 1, borderTopColor: theme.colors.border }}>
@@ -469,7 +465,6 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
             </Modal>
             {/* --- RENAME ROUTINE MODAL --- */}
             <Modal visible={isRenameModalVisible} transparent animationType="fade">
-                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
                         <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Rename Routine</Text>
@@ -500,7 +495,6 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         </View>
                     </View>
                 </View>
-                </KeyboardAvoidingView>
             </Modal>
         </SafeAreaView>
     );

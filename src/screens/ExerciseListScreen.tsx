@@ -73,10 +73,10 @@ export default function ExerciseListScreen() {
     onSuccess: () => {
       closeModal();
       refetchExercises();
-      Toast.show({ type: 'success', text1: 'Updated', text2: 'Exercise updated successfully' });
+      Toast.show({ type: 'success', text1: 'Updated', text2: 'Exercise updated successfully', position: 'top' });
     },
     onError: (err) => {
-      Toast.show({ type: 'error', text1: 'Update Failed', text2: (err as Error).message });
+      Toast.show({ type: 'error', text1: 'Update Failed', text2: (err as Error).message, position: 'top' });
     },
   });
 
@@ -85,10 +85,10 @@ export default function ExerciseListScreen() {
     onSuccess: () => {
       closeModal();
       refetchExercises();
-      Toast.show({ type: 'success', text1: 'Created', text2: 'New exercise added to your library' });
+      Toast.show({ type: 'success', text1: 'Created', text2: 'New exercise added to your library', position: 'top' });
     },
     onError: (err) => {
-      Toast.show({ type: 'error', text1: 'Creation Failed', text2: (err as Error).message });
+      Toast.show({ type: 'error', text1: 'Creation Failed', text2: (err as Error).message, position: 'top' });
     },
   });
 
@@ -99,13 +99,13 @@ export default function ExerciseListScreen() {
     },
     onSuccess: () => {
       refetchExercises();
-      Toast.show({ type: 'success', text1: 'Copied', text2: 'Template copied to your custom library' });
+      Toast.show({ type: 'success', text1: 'Copied', text2: 'Template copied to your custom library', position: 'top' });
     },
     onSettled: () => {
       setCopyingId(null);
     },
     onError: (err) => {
-      Toast.show({ type: 'error', text1: 'Copy Failed', text2: (err as Error).message });
+      Toast.show({ type: 'error', text1: 'Copy Failed', text2: (err as Error).message, position: 'top' });
     },
   });
 
@@ -113,10 +113,10 @@ export default function ExerciseListScreen() {
     mutationFn: (id: string) => db.deleteExercise(id),
     onSuccess: () => {
       refetchExercises();
-      Toast.show({ type: 'success', text1: 'Deleted', text2: 'Exercise removed successfully' });
+      Toast.show({ type: 'success', text1: 'Deleted', text2: 'Exercise removed successfully', position: 'top' });
     },
     onError: (err) => {
-      Toast.show({ type: 'error', text1: 'Cannot Delete Exercise', text2: (err as Error).message });
+      Toast.show({ type: 'error', text1: 'Cannot Delete Exercise', text2: (err as Error).message, position: 'top' });
     },
   });
 

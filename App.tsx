@@ -43,7 +43,7 @@ const handleError = (error: Error) => {
         type: 'error',
         text1: 'Error',
         text2: error.message,
-        position: 'bottom'
+        position: 'top'
     });
 };
 

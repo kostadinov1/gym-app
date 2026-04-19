@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
+  View, Text, TextInput, StyleSheet, ScrollView,
 } from 'react-native';
 import { TouchableOpacity } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
@@ -31,7 +31,7 @@ export default function LoginScreen() {
         type: 'success',
         text1: 'Account created',
         text2: 'Please log in.',
-        position: 'bottom',
+        position: 'top',
       });
       setIsRegistering(false);
     },
@@ -43,7 +43,7 @@ export default function LoginScreen() {
         type: 'error',
         text1: 'Missing Fields',
         text2: 'Please enter both email and password.',
-        position: 'bottom',
+        position: 'top',
       });
       return;
     }
@@ -64,16 +64,12 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView edges={['bottom']} style={[styles.safe, { backgroundColor: theme.colors.background }]}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.content}>
+        <View style={styles.content}>
             <Text style={[theme.typography.display, styles.title, { color: theme.colors.text }]}>
               {isRegistering ? 'Create Account' : 'Welcome Back'}
             </Text>
@@ -136,9 +132,8 @@ export default function LoginScreen() {
             <Text style={[theme.typography.caption, styles.guestNote, { color: theme.colors.textSecondary }]}>
               Your data will be saved on this device. Register later to sync to the cloud.
             </Text>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

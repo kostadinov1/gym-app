@@ -24,7 +24,8 @@
       "Bash(grep -n \"type Routine\\\\|interface Routine\" /home/gencho/Web_Development/gym-app/src/api/*.ts)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\),**d.get\\('devDependencies',{}\\)}; [print\\(k,v\\) for k,v in deps.items\\(\\) if any\\(x in k for x in ['reanimated','bottom','gesture']\\)]\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('expo',{}\\).get\\('plugins',[]\\), indent=2\\)\\)\")",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\),**d.get\\('devDependencies',{}\\)}; [print\\(k,v\\) for k,v in deps.items\\(\\) if any\\(x in k for x in ['reanimated','bottom-sheet']\\)]\")"
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\),**d.get\\('devDependencies',{}\\)}; [print\\(k,v\\) for k,v in deps.items\\(\\) if any\\(x in k for x in ['reanimated','bottom-sheet']\\)]\")",
+      "Bash(grep -A5 \"Toast\\\\.show\\({$\" src/screens/auth/LoginScreen.tsx App.tsx src/screens/ActiveWorkoutScreen.tsx)"
     ],
     "additionalDirectories": [
       "/home/gencho/Web_Development/gym-backend",

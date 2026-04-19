@@ -68,12 +68,13 @@ export default function ActiveWorkoutScreen() {
         type: 'success',
         text1: 'Workout Completed! 💪',
         text2: 'Great job, see you next time.',
+        position: 'top',
       });
       navigation.goBack();
     },
     onError: (error) => {
       setIsSubmitting(false);
-      Toast.show({ type: 'error', text1: 'Save Failed', text2: (error as Error).message });
+      Toast.show({ type: 'error', text1: 'Save Failed', text2: (error as Error).message, position: 'top' });
     },
   });
 

@@ -125,7 +125,7 @@ export default function SettingsScreen() {
       const svc = new ExportService(db);
       await svc.export(format);
     } catch (err) {
-      Toast.show({ type: 'error', text1: 'Export failed', text2: (err as Error).message });
+      Toast.show({ type: 'error', text1: 'Export failed', text2: (err as Error).message, position: 'top' });
     } finally {
       setExporting(false);
     }
@@ -135,10 +135,10 @@ export default function SettingsScreen() {
     mutationFn: deleteAccount,
     onSuccess: () => {
       signOut();
-      Toast.show({ type: 'success', text1: 'Account deleted', text2: 'Your data has been removed.' });
+      Toast.show({ type: 'success', text1: 'Account deleted', text2: 'Your data has been removed.', position: 'top' });
     },
     onError: (err) => {
-      Toast.show({ type: 'error', text1: 'Error', text2: (err as Error).message });
+      Toast.show({ type: 'error', text1: 'Error', text2: (err as Error).message, position: 'top' });
     },
   });
 
