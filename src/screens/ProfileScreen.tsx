@@ -5,7 +5,7 @@ import {
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { Settings2, ChevronRight, TrendingUp } from 'lucide-react-native';
 
@@ -21,7 +21,6 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { IconButton } from '../components/ui/IconButton';
 import { Card } from '../components/ui/Card';
 import { SectionTitle } from '../components/ui/SectionTitle';
-import { Badge } from '../components/ui/Badge';
 import {
   getMigrationRecord,
   runGhostMigration,
@@ -39,7 +38,7 @@ export default function ProfileScreen() {
   const db = useStorage();
   const { signOut, isGuest, promoteGuest, userEmail } = useAuth();
   const { pendingCount, trigger: triggerSync } = useSyncStatus();
-  const { openPaywall } = useEntitlement();
+  useEntitlement();
   const queryClient = useQueryClient();
 
   // ── Ghost → Registered migration state ──────────────────────────────────
@@ -135,7 +134,7 @@ export default function ProfileScreen() {
   const subtitle = isGuest ? 'Guest Mode' : (userEmail ?? undefined);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={[]}>
 
       {/* ── Migration progress modal ───────────────────────────────────── */}
       <Modal visible={migrationStep !== 'idle' && migrationStep !== 'done'} transparent animationType="fade">

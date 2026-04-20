@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Dumbbell, Calendar, LayoutList, Layers, User } from 'lucide-react-native';
 
 import ActiveWorkoutScreen from '../screens/ActiveWorkoutScreen';
@@ -74,6 +75,7 @@ const Tab = createBottomTabNavigator();
 
 function TabNavigator() {
     const theme = useTheme();
+    const { bottom } = useSafeAreaInsets();
 
     return (
         <Tab.Navigator
@@ -82,8 +84,7 @@ function TabNavigator() {
                 tabBarStyle: {
                     backgroundColor: theme.colors.card,
                     borderTopColor: theme.colors.border,
-                    paddingBottom: 5,
-                    height: 60,
+                    paddingBottom: bottom + 5,
                 },
                 tabBarActiveTintColor: theme.colors.primary,
                 tabBarInactiveTintColor: theme.colors.textSecondary,

@@ -58,7 +58,7 @@ export default function PlansScreen() {
   }
 
   return (
-    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={[]} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader title="My Plans" />
 
       <FlatList

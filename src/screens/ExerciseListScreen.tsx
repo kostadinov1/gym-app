@@ -47,7 +47,7 @@ export default function ExerciseListScreen() {
   const normalizedSearch = debouncedSearch.trim();
   const backendQuery = normalizedSearch.length >= 2 ? normalizedSearch : undefined;
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['exercises', backendQuery, libraryFilter],
     queryFn: () =>
       db.getExercisesFiltered({
@@ -151,7 +151,7 @@ export default function ExerciseListScreen() {
   }
 
   return (
-    <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={[]} style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader title="Exercise Library" />
 
       <View style={styles.searchWrapper}>
