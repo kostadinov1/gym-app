@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authEvents } from '../utils/authEvents';
 import { clearLocalUserData } from '../db/clearUserData';
+import { getMe } from '../api/auth';
 
 const GUEST_MODE_KEY = 'isGuestMode';
 const USER_EMAIL_KEY = 'userEmail';
@@ -12,10 +13,13 @@ interface AuthContextType {
   userEmail: string | null;  // null for guest users
   isGuest: boolean;
   isLoading: boolean;
+  isEmailVerified: boolean;
+  hasPassword: boolean;
   signIn: (token: string, email: string) => Promise<void>;
   signOut: () => Promise<void>;
   guestSignIn: () => Promise<void>;
   promoteGuest: (token: string, email: string) => Promise<void>;
+  refreshUserInfo: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -25,6 +29,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEmailVerified, setIsEmailVerified] = useState(true);
+  const [hasPassword, setHasPassword] = useState(true);
 
   useEffect(() => {
     const bootstrapAsync = async () => {
@@ -34,12 +40,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUserToken(token);
           const email = await AsyncStorage.getItem(USER_EMAIL_KEY);
           setUserEmail(email);
+          // Fetch profile flags with the restored token
+          try {
+            const me = await getMe();
+            setIsEmailVerified(me.is_email_verified);
+            setHasPassword(me.has_password);
+          } catch {
+            // Non-critical; defaults are safe
+          }
         } else {
           const guestMode = await AsyncStorage.getItem(GUEST_MODE_KEY);
           if (guestMode === 'true') setIsGuest(true);
         }
-      } catch (e) {
-        console.log('Restoring auth state failed');
+      } catch {
+        // Restoring auth state failed
       }
       setIsLoading(false);
     };
@@ -54,32 +68,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return unsubscribe;
   }, []);
 
+  const refreshUserInfo = async () => {
+    try {
+      const me = await getMe();
+      setIsEmailVerified(me.is_email_verified);
+      setHasPassword(me.has_password);
+      if (me.email) setUserEmail(me.email);
+    } catch {
+      // Non-critical
+    }
+  };
+
   const signIn = async (token: string, email: string) => {
     await SecureStore.setItemAsync('userToken', token);
     await AsyncStorage.setItem(USER_EMAIL_KEY, email);
     setUserToken(token);
     setUserEmail(email);
+    // Populate profile flags right after token is stored
+    try {
+      const me = await getMe();
+      setIsEmailVerified(me.is_email_verified);
+      setHasPassword(me.has_password);
+    } catch {
+      // Non-critical; banner defaults to hidden
+    }
   };
 
   const signOut = async () => {
-    // Wipe all user-created local data before clearing auth state.
-    // This covers all sign-out paths: manual logout, session expiry (401),
-    // and account deletion — so no user ever sees another user's local data.
     await clearLocalUserData();
     await SecureStore.deleteItemAsync('userToken');
     await AsyncStorage.multiRemove([GUEST_MODE_KEY, USER_EMAIL_KEY]);
     setUserToken(null);
     setUserEmail(null);
     setIsGuest(false);
+    setIsEmailVerified(true);
+    setHasPassword(true);
   };
 
-  // Enter the app as a guest — all data stored locally, no network needed.
   const guestSignIn = async () => {
     await AsyncStorage.setItem(GUEST_MODE_KEY, 'true');
     setIsGuest(true);
   };
 
-  // Called after a guest successfully registers and local data is migrated.
   const promoteGuest = async (token: string, email: string) => {
     await SecureStore.setItemAsync('userToken', token);
     await AsyncStorage.setItem(USER_EMAIL_KEY, email);
@@ -87,10 +117,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsGuest(false);
     setUserToken(token);
     setUserEmail(email);
+    try {
+      const me = await getMe();
+      setIsEmailVerified(me.is_email_verified);
+      setHasPassword(me.has_password);
+    } catch {
+      // Non-critical
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ userToken, userEmail, isGuest, isLoading, signIn, signOut, guestSignIn, promoteGuest }}>
+    <AuthContext.Provider value={{
+      userToken, userEmail, isGuest, isLoading,
+      isEmailVerified, hasPassword,
+      signIn, signOut, guestSignIn, promoteGuest, refreshUserInfo,
+    }}>
       {children}
     </AuthContext.Provider>
   );

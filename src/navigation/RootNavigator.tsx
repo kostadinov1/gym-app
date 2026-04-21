@@ -20,6 +20,7 @@ import SessionEditorScreen from '../screens/history/SessionEditorScreen';
 import AnalyticsScreen from '../screens/analytics/AnalyticsScreen';
 import PaywallScreen from '../screens/PaywallScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import ChangePasswordScreen from '../screens/auth/ChangePasswordScreen';
 import { navigationRef } from './navigationRef';
 
 // ── Tab stacks ────────────────────────────────────────────────────────────
@@ -65,6 +66,7 @@ function ProfileStackNavigator() {
             <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
             <ProfileStack.Screen name="Settings" component={SettingsScreen} />
             <ProfileStack.Screen name="Analytics" component={AnalyticsScreen} />
+            <ProfileStack.Screen name="ChangePassword" component={ChangePasswordScreen} />
         </ProfileStack.Navigator>
     );
 }

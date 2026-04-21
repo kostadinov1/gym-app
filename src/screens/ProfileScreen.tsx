@@ -10,6 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Settings2, ChevronRight, TrendingUp } from 'lucide-react-native';
 
 import { useAuth } from '../context/AuthContext';
+import { Lock } from 'lucide-react-native';
 import { useStorage } from '../context/StorageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSyncStatus } from '../hooks/useSyncStatus';
@@ -36,7 +37,7 @@ export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const theme = useTheme();
   const db = useStorage();
-  const { signOut, isGuest, promoteGuest, userEmail } = useAuth();
+  const { signOut, isGuest, promoteGuest, userEmail, hasPassword } = useAuth();
   const { pendingCount, trigger: triggerSync } = useSyncStatus();
   useEntitlement();
   const queryClient = useQueryClient();
@@ -297,6 +298,27 @@ export default function ProfileScreen() {
           </Text>
         </Card>
 
+        {/* ── Account actions ────────────────────────────────────────────── */}
+        {!isGuest && hasPassword && (
+          <Card
+            onPress={() => navigation.navigate('ChangePassword')}
+            style={styles.accountCard}
+          >
+            <View style={styles.accountRow}>
+              <View style={[styles.accountIcon, { backgroundColor: theme.colors.surface }]}>
+                <Lock size={18} color={theme.colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[theme.typography.title, { color: theme.colors.text }]}>Change Password</Text>
+                <Text style={[theme.typography.caption, { color: theme.colors.textSecondary, marginTop: 2 }]}>
+                  Update your login password
+                </Text>
+              </View>
+              <ChevronRight size={18} color={theme.colors.textSecondary} />
+            </View>
+          </Card>
+        )}
+
         {/* ── Logout ─────────────────────────────────────────────────────── */}
         <TouchableOpacity
           style={[styles.logoutButton, { borderColor: theme.colors.error }]}
@@ -323,6 +345,9 @@ const styles = StyleSheet.create({
   analyticsCard: { marginBottom: 16 },
   analyticsInner: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   analyticsIcon: { padding: 8, borderRadius: 8 },
+  accountCard: { marginBottom: 12 },
+  accountRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  accountIcon: { padding: 8, borderRadius: 8 },
   guestBanner: {
     flexDirection: 'row',
     alignItems: 'center',

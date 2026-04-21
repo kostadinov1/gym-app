@@ -5,17 +5,26 @@ export interface AuthResponse {
   token_type: string;
 }
 
+export interface UserMe {
+  id: string;
+  email: string;
+  full_name: string | null;
+  is_email_verified: boolean;
+  has_password: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Email / password auth
+// ---------------------------------------------------------------------------
+
 export const login = (email: string, password: string) => {
-  // FastAPI expects form-data for OAuth2, not JSON
   const formData = new URLSearchParams();
-  formData.append('username', email); // FastAPI maps 'username' to email
+  formData.append('username', email);
   formData.append('password', password);
 
   return client<AuthResponse>('/token', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: formData.toString(),
   });
 };
@@ -27,16 +36,66 @@ export const register = (email: string, password: string) => {
   });
 };
 
+// ---------------------------------------------------------------------------
+// Current user profile
+// ---------------------------------------------------------------------------
 
-export const deleteAccount = () => {
-  return client('/me', { // or /auth/me depending on your router prefix, assuming router has no prefix in main.py?
-    // Wait, in main.py you did: app.include_router(auth.router) without prefix.
-    // So it is likely just /me if the router has no prefix, OR /auth/me if you add it.
-    // Let's assume it is just "/me" based on the python code above, 
-    // BUT usually auth routers are prefixed. 
-    // CHECK: If your auth router has no prefix, this is '/me'. 
-    // If you want to be safe, update python to @router.delete("/delete-account") or similar.
-    // Let's stick to '/me' assuming the router is mounted at root or we handled it.
-    method: 'DELETE',
+export const getMe = () => client<UserMe>('/me', { method: 'GET' });
+
+// ---------------------------------------------------------------------------
+// Google OAuth
+// ---------------------------------------------------------------------------
+
+export const googleSignIn = (idToken: string) =>
+  client<AuthResponse>('/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ id_token: idToken }),
   });
-};
+
+export const googleLink = (idToken: string, password: string) =>
+  client<AuthResponse>('/auth/google/link', {
+    method: 'POST',
+    body: JSON.stringify({ id_token: idToken, password }),
+  });
+
+// ---------------------------------------------------------------------------
+// Email verification
+// ---------------------------------------------------------------------------
+
+export const sendVerificationEmail = () =>
+  client('/auth/send-verification', { method: 'POST' });
+
+// ---------------------------------------------------------------------------
+// Password reset (unauthenticated)
+// ---------------------------------------------------------------------------
+
+export const forgotPassword = (email: string) =>
+  client('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+
+export const resetPassword = (token: string, newPassword: string) =>
+  client('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, new_password: newPassword }),
+  });
+
+// ---------------------------------------------------------------------------
+// Change password (authenticated)
+// ---------------------------------------------------------------------------
+
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  client('/me/change-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+
+// ---------------------------------------------------------------------------
+// Delete account
+// ---------------------------------------------------------------------------
+
+export const deleteAccount = () => client('/me', { method: 'DELETE' });

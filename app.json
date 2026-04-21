@@ -2,6 +2,7 @@
   "expo": {
     "name": "Hardlog",
     "slug": "gym-tracker",
+    "scheme": "hardlog",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,7 +16,8 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gencho.hardlog"
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
@@ -46,7 +48,8 @@
           "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ],
-      "expo-file-system"
+      "expo-file-system",
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {
