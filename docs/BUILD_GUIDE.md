@@ -96,7 +96,7 @@ EAS builds in the cloud (~10–15 min). When done, you get a download link on ex
 
 Option A — Share the expo.dev link (easiest):
 ```
-EAS prints a URL like: https://expo.dev/accounts/YOUR_ACCOUNT/projects/hardlog/builds/...
+EAS prints a URL like: https://expo.dev/accounts/YOUR_ACCOUNT/projects/gymlogic/builds/...
 Friends open it in a browser → tap "Download" → install
 ```
 

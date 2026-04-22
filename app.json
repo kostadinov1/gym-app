@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Hardlog",
-    "slug": "gym-tracker",
-    "scheme": "hardlog",
+    "name": "GymLogic",
+    "slug": "gymlogic",
+    "scheme": "gymlogic",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,7 +17,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.gencho.hardlog"
+      "bundleIdentifier": "com.gencho.gymlogic"
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
@@ -25,7 +25,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.gencho.hardlog",
+      "package": "com.gencho.gymlogic",
       "versionCode": 1,
       "targetSdkVersion": 35,
       "permissions": [

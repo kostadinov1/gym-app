@@ -228,7 +228,7 @@ export default function SettingsScreen() {
           <SettingRow
             icon={Shield}
             label="Privacy Policy"
-            onPress={() => Linking.openURL('https://hardlog.app/privacy')}
+            onPress={() => Linking.openURL('https://gymlogic.app/privacy')}
           />
           {!isGuest && (
             <>
@@ -238,7 +238,7 @@ export default function SettingsScreen() {
                 label="Manage Subscription"
                 onPress={() =>
                   Linking.openURL(
-                    'https://play.google.com/store/account/subscriptions?package=com.gencho.hardlog',
+                    'https://play.google.com/store/account/subscriptions?package=com.gencho.gymlogic',
                   )
                 }
               />

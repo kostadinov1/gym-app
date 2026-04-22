@@ -6,7 +6,7 @@ import * as schema from './schema';
 
 // Open (or create) the SQLite database file.
 // The file lives in the app's private storage — no other app can read it.
-const sqlite = openDatabaseSync('hardlog.db');
+const sqlite = openDatabaseSync('gymlogic.db');
 
 // Drizzle wraps the raw SQLite handle with type-safe query builders.
 export const db = drizzle(sqlite, { schema });

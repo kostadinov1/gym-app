@@ -14,7 +14,7 @@ Everything needed before uploading to Google Play Console.
 ## 1. Sentry (Error Tracking)
 
 - [ ] Create account at [sentry.io](https://sentry.io)
-- [ ] New Project → React Native → name it "Hardlog"
+- [ ] New Project → React Native → name it "GymLogic"
 - [ ] Copy the DSN (looks like `https://xxxx@oYYY.ingest.sentry.io/ZZZZ`)
 - [ ] Paste into `.env.production`: `EXPO_PUBLIC_SENTRY_DSN=<your DSN>`
 - [ ] Verify: production build throws a test error → it appears in the Sentry Issues dashboard
@@ -24,9 +24,9 @@ Everything needed before uploading to Google Play Console.
 ## 2. RevenueCat (Subscriptions)
 
 - [ ] Create account at [app.revenuecat.com](https://app.revenuecat.com)
-- [ ] Create **two separate apps** in RevenueCat (both with package `com.gencho.hardlog`):
-  - "Hardlog Dev" — for development builds
-  - "Hardlog Prod" — for production builds
+- [ ] Create **two separate apps** in RevenueCat (both with package `com.gencho.gymlogic`):
+  - "GymLogic Dev" — for development builds
+  - "GymLogic Prod" — for production builds
 - [ ] Copy Dev API key → paste into `.env`: `EXPO_PUBLIC_REVENUECAT_API_KEY=<dev key>`
 - [ ] Copy Prod API key → paste into `.env.production`: `EXPO_PUBLIC_REVENUECAT_API_KEY=<prod key>`
 - [ ] After creating the Play Console subscription product (step 8):
@@ -41,7 +41,7 @@ Everything needed before uploading to Google Play Console.
 > Identity verification can take ~24 hours. Do this first.
 
 - [ ] Create account at [admob.google.com](https://admob.google.com)
-- [ ] Add app: Apps → Add app → Android → App not published yet → name "Hardlog" → package `com.gencho.hardlog`
+- [ ] Add app: Apps → Add app → Android → App not published yet → name "GymLogic" → package `com.gencho.gymlogic`
 - [ ] Copy the **App ID** (format `ca-app-pub-XXXXXXXXXXXXXXXX~NNNNNNNNNN`)
   - Paste into `.env.production`: `EXPO_PUBLIC_ADMOB_APP_ID=<real app ID>`
   - Replace the test ID in `app.json`:
@@ -98,7 +98,7 @@ EXPO_PUBLIC_ADMOB_BANNER_ID=ca-app-pub-REAL/BANNERID                ← from ste
 ## 7. Google Play Console Setup
 
 - [ ] Register developer account at [play.google.com/console](https://play.google.com/console) ($25 one-time fee)
-- [ ] Create app → Android → Package name `com.gencho.hardlog`
+- [ ] Create app → Android → Package name `com.gencho.gymlogic`
 - [ ] **Create subscription product**: Monetize → Subscriptions → Create product
   - Product ID: `monthly_pro`
   - Set monthly price (e.g. €4.99 / $4.99)

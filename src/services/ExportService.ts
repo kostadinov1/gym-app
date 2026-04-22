@@ -70,7 +70,7 @@ export class ExportService {
     const ext = format === 'csv' ? 'csv' : 'json';
     const mimeType = format === 'csv' ? 'text/csv' : 'application/json';
     const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const filename = `hardlog_export_${timestamp}.${ext}`;
+    const filename = `gymlogic_export_${timestamp}.${ext}`;
 
     const file = new File(Paths.cache, filename);
     file.write(content);

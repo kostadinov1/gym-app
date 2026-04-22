@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ScrollView,
-  TouchableOpacity, Modal, Pressable, Image,
+  TouchableOpacity, Modal, Pressable,
 } from 'react-native';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
@@ -47,9 +47,9 @@ export default function LoginScreen({ onForgotPassword }: Props) {
 
   // ── Google auth request ───────────────────────────────────────────────────
   const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-  const [, googleResponse, googlePromptAsync] = Google.useAuthRequest({
-    clientId: googleClientId,
-  });
+  const [, googleResponse, googlePromptAsync] = Google.useAuthRequest(
+    googleClientId ? { androidClientId: googleClientId, webClientId: googleClientId } : undefined
+  );
 
   useEffect(() => {
     if (googleResponse?.type === 'success') {
@@ -181,7 +181,7 @@ export default function LoginScreen({ onForgotPassword }: Props) {
                 Link Your Accounts
               </Text>
               <Text style={[theme.typography.body, { color: theme.colors.textSecondary, marginBottom: 20 }]}>
-                A Hardlog account already exists for{' '}
+                A GymLogic account already exists for{' '}
                 <Text style={{ fontWeight: '600', color: theme.colors.text }}>{pendingEmail}</Text>.
                 {'\n'}Enter your password to link your Google account.
               </Text>

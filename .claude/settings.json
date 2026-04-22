@@ -26,11 +26,14 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('expo',{}\\).get\\('plugins',[]\\), indent=2\\)\\)\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\),**d.get\\('devDependencies',{}\\)}; [print\\(k,v\\) for k,v in deps.items\\(\\) if any\\(x in k for x in ['reanimated','bottom-sheet']\\)]\")",
       "Bash(grep -A5 \"Toast\\\\.show\\({$\" src/screens/auth/LoginScreen.tsx App.tsx src/screens/ActiveWorkoutScreen.tsx)",
-      "Bash(grep -E \"^-.*\\\\.\\(tsx|ts\\)$\")"
+      "Bash(grep -E \"^-.*\\\\.\\(tsx|ts\\)$\")",
+      "Bash(xargs sed *)",
+      "Bash(git -C /home/gencho/Web_Development/gymlogic-web remote -v)"
     ],
     "additionalDirectories": [
       "/home/gencho/Web_Development/gym-backend",
-      "/home/gencho/Web_Development/hardlog-web"
+      "/home/gencho/Web_Development/gymlogic-web",
+      "/home/gencho/Web_Development/gym-app"
     ]
   }
 }

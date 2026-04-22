@@ -84,7 +84,7 @@ export default function PaywallScreen() {
   };
 
   const handlePrivacyPolicy = () => {
-    Linking.openURL('https://hardlog.app/privacy');
+    Linking.openURL('https://gymlogic.app/privacy');
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ export default function PaywallScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Dumbbell size={52} color={theme.colors.primary} />
-          <Text style={[styles.title, { color: theme.colors.text }]}>Hardlog Pro</Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>GymLogic Pro</Text>
           <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
             Everything you need, no limits.
           </Text>

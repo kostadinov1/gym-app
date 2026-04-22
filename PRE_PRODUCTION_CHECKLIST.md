@@ -6,13 +6,13 @@ Tasks to complete before submitting to the App Store / Play Store.
 
 ## 1. App Name & Identity
 
-- [ ] **Decide on the final app name** (currently "Hardlog" in `app.json`)
+- [ ] **Decide on the final app name** (currently "GymLogic" in `app.json`)
 - [ ] Update `app.json`:
   - `name` — display name on the device home screen
   - `slug` — URL-safe identifier used by Expo (affects the Google OAuth redirect URI below)
-  - `scheme` — deep-link scheme (currently `hardlog`, change if name changes)
-  - `android.package` — currently `com.gencho.hardlog`
-  - `ios.bundleIdentifier` — currently `com.gencho.hardlog`
+  - `scheme` — deep-link scheme (currently `gymlogic`, change if name changes)
+  - `android.package` — currently `com.gencho.gymlogic`
+  - `ios.bundleIdentifier` — currently `com.gencho.gymlogic`
 - [ ] Update `app/main.py` startup message if desired
 - [ ] Update `gym-backend/.env` `APP_SCHEME` to match new scheme
 
@@ -37,7 +37,7 @@ Tasks to complete before submitting to the App Store / Play Store.
   ```
   <scheme>://
   ```
-  e.g. `hardlog://`
+  e.g. `gymlogic://`
 
 ### Environment variables
 - [ ] `gym-backend/.env` → `GOOGLE_CLIENT_ID=<web-client-id>`

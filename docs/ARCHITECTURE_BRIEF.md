@@ -1,4 +1,4 @@
-# Hardlog – Architecture Brief
+# GymLogic – Architecture Brief
 
 ## Purpose
 A mobile workout planning and tracking app supporting routine planning, guided workouts, history logging, analytics, and offline-first guest usage.
@@ -61,7 +61,7 @@ Key files:
 
 ## Local SQLite Database
 
-**File:** `hardlog.db` (in app's private storage, not accessible to other apps)
+**File:** `gymlogic.db` (in app's private storage, not accessible to other apps)
 
 **Tables:** `exercises`, `workout_plans`, `workout_routines`, `routine_exercises`, `workout_sessions`, `session_sets`
 
@@ -123,7 +123,7 @@ Guest users: RevenueCat is not initialized. Entitlement = guest-tier limits appl
 src/
   db/
     schema.ts              ← drizzle table definitions
-    client.ts              ← opens hardlog.db, exports db handle + runMigrations()
+    client.ts              ← opens gymlogic.db, exports db handle + runMigrations()
     seed.ts                ← seeds system exercises (no-op if already done)
     migrations/
       migrations.js        ← MANUALLY MAINTAINED — SQL inlined as strings (see above)
@@ -158,7 +158,7 @@ assets/
 ```
 Screen
   └── useStorage().getPlans() / finishWorkout() / etc.
-        ├── guest  → LocalService → drizzle → SQLite (hardlog.db)
+        ├── guest  → LocalService → drizzle → SQLite (gymlogic.db)
         └── logged → RemoteService → src/api/* → REST API → PostgreSQL (Render)
 ```
 

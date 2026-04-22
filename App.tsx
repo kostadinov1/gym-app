@@ -57,8 +57,8 @@ function parseDeepLink(url: string | null): { path: string; token: string } | nu
   if (!url) return null;
   try {
     // Expected formats:
-    //   hardlog://reset-password?token=XXX
-    //   hardlog://verify-email?token=XXX  (handled via browser, but guard anyway)
+    //   gymlogic://reset-password?token=XXX
+    //   gymlogic://verify-email?token=XXX  (handled via browser, but guard anyway)
     const parsed = new URL(url);
     const path = parsed.hostname;  // e.g. "reset-password"
     const token = parsed.searchParams.get('token') ?? '';
