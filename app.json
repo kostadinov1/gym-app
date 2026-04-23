@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "GymLogic",
-    "slug": "gymlogic",
+    "slug": "gym-tracker",
     "scheme": "gymlogic",
     "version": "1.0.0",
     "orientation": "portrait",

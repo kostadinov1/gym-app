@@ -46,9 +46,12 @@ export default function LoginScreen({ onForgotPassword }: Props) {
   const clearErrors = () => setErrors({});
 
   // ── Google auth request ───────────────────────────────────────────────────
-  const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
   const [, googleResponse, googlePromptAsync] = Google.useAuthRequest(
-    googleClientId ? { androidClientId: googleClientId, webClientId: googleClientId } : undefined
+    googleAndroidClientId && googleWebClientId
+      ? { androidClientId: googleAndroidClientId, webClientId: googleWebClientId }
+      : undefined
   );
 
   useEffect(() => {
@@ -95,7 +98,7 @@ export default function LoginScreen({ onForgotPassword }: Props) {
   };
 
   const handleGooglePress = () => {
-    if (!googleClientId) {
+    if (!googleWebClientId || !googleAndroidClientId) {
       Toast.show({
         type: 'error',
         text1: 'Google sign-in not configured',
