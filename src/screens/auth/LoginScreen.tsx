@@ -4,6 +4,7 @@ import {
   TouchableOpacity, Modal, Pressable,
 } from 'react-native';
 import * as Google from 'expo-auth-session/providers/google';
+import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { useMutation } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
@@ -48,9 +49,11 @@ export default function LoginScreen({ onForgotPassword }: Props) {
   // ── Google auth request ───────────────────────────────────────────────────
   const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
   const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
+  const redirectUri = process.env.EXPO_PUBLIC_GOOGLE_REDIRECT_URI ?? AuthSession.makeRedirectUri();
+  console.log('[Google] redirectUri:', redirectUri);
   const [, googleResponse, googlePromptAsync] = Google.useAuthRequest(
     googleAndroidClientId && googleWebClientId
-      ? { androidClientId: googleAndroidClientId, webClientId: googleWebClientId }
+      ? { androidClientId: googleAndroidClientId, webClientId: googleWebClientId, redirectUri }
       : undefined
   );
 

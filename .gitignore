@@ -68,6 +68,13 @@ context_bundler.py
 project_context.txt
 
 
+# AI assistant instructions and local tooling (local only)
+CLAUDE.md
+.claude/
+
+# Internal planning and store listing docs
+docs/
+
 # Vim swap files
 *.swp
 *.swo

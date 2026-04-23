@@ -28,7 +28,11 @@
       "Bash(grep -A5 \"Toast\\\\.show\\({$\" src/screens/auth/LoginScreen.tsx App.tsx src/screens/ActiveWorkoutScreen.tsx)",
       "Bash(grep -E \"^-.*\\\\.\\(tsx|ts\\)$\")",
       "Bash(xargs sed *)",
-      "Bash(git -C /home/gencho/Web_Development/gymlogic-web remote -v)"
+      "Bash(git -C /home/gencho/Web_Development/gymlogic-web remote -v)",
+      "Bash(file /home/gencho/Web_Development/gym-app/assets/*.png)",
+      "Bash(identify /home/gencho/Web_Development/gym-app/assets/*.png)",
+      "Bash(python3 -c ' *)",
+      "WebFetch(domain:gymlogic.io)"
     ],
     "additionalDirectories": [
       "/home/gencho/Web_Development/gym-backend",
