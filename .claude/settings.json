@@ -37,7 +37,8 @@
     "additionalDirectories": [
       "/home/gencho/Web_Development/gym-backend",
       "/home/gencho/Web_Development/gymlogic-web",
-      "/home/gencho/Web_Development/gym-app"
+      "/home/gencho/Web_Development/gym-app",
+      "/home/gencho/Web_Development/gym-app/.claude"
     ]
   }
 }
