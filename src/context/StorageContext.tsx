@@ -33,10 +33,9 @@ export const StorageProvider = ({ children }: { children: React.ReactNode }) => 
 
     const initDb = async () => {
       try {
-        runMigrations();
+        await runMigrations();
       } catch (e) {
         console.error('[DB] Migration failed:', e);
-        // Don't block — tables may already exist from a previous successful run.
       }
 
       // Seed the system exercise catalog for all users so the library works

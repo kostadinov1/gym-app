@@ -14,6 +14,6 @@ export const db = drizzle(sqlite, { schema });
 // Run all pending migrations synchronously on startup.
 // Drizzle tracks applied migrations in a __drizzle_migrations table —
 // safe to call every launch; already-applied migrations are skipped.
-export function runMigrations() {
-  migrate(db, migrations);
+export async function runMigrations() {
+  await migrate(db, migrations);
 }

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "GymLogic",
-    "slug": "gym-tracker",
+    "slug": "gymlogic",
     "scheme": "gymlogic",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -53,7 +53,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "2abbc351-a1c4-41ec-8263-a6b424a2ab29"
+        "projectId": "44e72a6e-048b-4b04-8306-374f766c24c8"
       }
     },
     "owner": "gencho"
