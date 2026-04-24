@@ -10,7 +10,7 @@
 // Pro:         entitlements.active['pro'] exists
 // ---------------------------------------------------------------------------
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import Purchases from 'react-native-purchases';
 import type { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
 
@@ -48,41 +48,54 @@ const EntitlementContext = createContext<EntitlementContextType>({
 // ---------------------------------------------------------------------------
 
 export const EntitlementProvider = ({ children }: { children: React.ReactNode }) => {
-  const { userToken, isGuest } = useAuth();
+  const { userToken, userEmail, isGuest } = useAuth();
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [monthlyPackage, setMonthlyPackage] = useState<PurchasesPackage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  // RC's native SDK is a singleton — configure only once per app run.
+  // Subsequent user switches go through logIn().
+  const configuredUserRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Ghost users have no subscription — skip RevenueCat entirely.
     if (isGuest) return;
+    if (!userToken || !userEmail) return;
 
     const apiKey = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY;
-    if (!apiKey) return; // key not set in .env yet
+    if (!apiKey) return;
+    if (configuredUserRef.current === userEmail) return;
 
     let active = true;
 
     const setup = async () => {
       setIsLoading(true);
       try {
-        Purchases.configure({ apiKey, appUserID: userToken ?? undefined });
+        if (configuredUserRef.current === null) {
+          Purchases.configure({ apiKey, appUserID: userEmail });
+        } else {
+          await Purchases.logIn(userEmail);
+        }
+        configuredUserRef.current = userEmail;
+        Purchases.setEmail(userEmail);
 
         const info = await Purchases.getCustomerInfo();
         if (active) setCustomerInfo(info);
 
-        const offerings = await Purchases.getOfferings();
-        const pkg =
-          offerings.current?.monthly ??
-          offerings.current?.availablePackages[0] ??
-          null;
-        if (active) setMonthlyPackage(pkg);
-
-        // Stay in sync when the subscription changes (e.g. after purchase)
         Purchases.addCustomerInfoUpdateListener(updated => {
           if (active) setCustomerInfo(updated);
         });
+
+        try {
+          const offerings = await Purchases.getOfferings();
+          const pkg =
+            offerings.current?.monthly ??
+            offerings.current?.availablePackages[0] ??
+            null;
+          if (active) setMonthlyPackage(pkg);
+        } catch {
+          // Offerings not yet configured in RevenueCat dashboard.
+          // Expected until a Play Console product is created and synced.
+        }
       } catch (e) {
-        // Graceful degradation — treat as free tier
         console.warn('[EntitlementContext] RevenueCat setup failed:', e);
       }
       if (active) setIsLoading(false);
@@ -93,7 +106,7 @@ export const EntitlementProvider = ({ children }: { children: React.ReactNode })
     return () => {
       active = false;
     };
-  }, [userToken, isGuest]);
+  }, [userToken, userEmail, isGuest]);
 
   // Derive subscription state from the latest CustomerInfo
   const proEntitlement = customerInfo?.entitlements.active[PRO_ENTITLEMENT_ID];

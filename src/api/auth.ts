@@ -3,6 +3,7 @@ import { client } from './client';
 export interface AuthResponse {
   access_token: string;
   token_type: string;
+  email?: string;
 }
 
 export interface UserMe {
@@ -46,16 +47,16 @@ export const getMe = () => client<UserMe>('/me', { method: 'GET' });
 // Google OAuth
 // ---------------------------------------------------------------------------
 
-export const googleSignIn = (idToken: string) =>
+export const googleSignIn = (accessToken: string) =>
   client<AuthResponse>('/auth/google', {
     method: 'POST',
-    body: JSON.stringify({ id_token: idToken }),
+    body: JSON.stringify({ access_token: accessToken }),
   });
 
-export const googleLink = (idToken: string, password: string) =>
+export const googleLink = (accessToken: string, password: string) =>
   client<AuthResponse>('/auth/google/link', {
     method: 'POST',
-    body: JSON.stringify({ id_token: idToken, password }),
+    body: JSON.stringify({ access_token: accessToken, password }),
   });
 
 // ---------------------------------------------------------------------------

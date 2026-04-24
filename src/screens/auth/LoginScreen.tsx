@@ -4,7 +4,6 @@ import {
   TouchableOpacity, Modal, Pressable,
 } from 'react-native';
 import * as Google from 'expo-auth-session/providers/google';
-import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { useMutation } from '@tanstack/react-query';
 import { useTheme } from '../../theme';
@@ -38,7 +37,7 @@ export default function LoginScreen({ onForgotPassword }: Props) {
 
   // Account linking state — shown when Google email matches an existing account
   const [linkModalVisible, setLinkModalVisible] = useState(false);
-  const [pendingIdToken, setPendingIdToken] = useState<string | null>(null);
+  const [pendingAccessToken, setPendingAccessToken] = useState<string | null>(null);
   const [pendingEmail, setPendingEmail] = useState('');
   const [linkPassword, setLinkPassword] = useState('');
   const [linkError, setLinkError] = useState('');
@@ -47,70 +46,77 @@ export default function LoginScreen({ onForgotPassword }: Props) {
   const clearErrors = () => setErrors({});
 
   // ── Google auth request ───────────────────────────────────────────────────
+  // Native Android flow: Google's OAuth redirects back to the app via the
+  // reversed-client-ID scheme, which expo-auth-session registers automatically.
+  // Requires: the Android client in Google Cloud Console must have this app's
+  // package name (com.gencho.gymlogic) and the dev keystore SHA-1 registered.
   const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
   const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
-  const redirectUri = process.env.EXPO_PUBLIC_GOOGLE_REDIRECT_URI ?? AuthSession.makeRedirectUri();
-  console.log('[Google] redirectUri:', redirectUri);
-  const [, googleResponse, googlePromptAsync] = Google.useAuthRequest(
-    googleAndroidClientId && googleWebClientId
-      ? { androidClientId: googleAndroidClientId, webClientId: googleWebClientId, redirectUri }
-      : undefined
-  );
+
+  const googleConfig = googleAndroidClientId && googleWebClientId
+    ? {
+        androidClientId: googleAndroidClientId,
+        webClientId: googleWebClientId,
+        scopes: ['openid', 'profile', 'email'],
+      }
+    : {};
+
+  const [, googleResponse, googlePromptAsync] = Google.useAuthRequest(googleConfig);
 
   useEffect(() => {
-    if (googleResponse?.type === 'success') {
-      const idToken = googleResponse.params?.id_token;
-      if (idToken) handleGoogleToken(idToken);
+    if (!googleResponse) return;
+    console.log('[Google v3] type:', googleResponse.type);
+    if (googleResponse.type === 'success') {
+      const accessToken = googleResponse.authentication?.accessToken;
+      console.log('[Google v3] has accessToken:', !!accessToken);
+      if (accessToken) handleGoogleToken(accessToken);
+    } else if (googleResponse.type === 'error') {
+      console.warn('[Google v3] error:', googleResponse.error);
     }
   }, [googleResponse]);
 
   const googleMutation = useMutation({
-    mutationFn: (idToken: string) => googleSignIn(idToken),
+    mutationFn: (accessToken: string) => googleSignIn(accessToken),
     onSuccess: async (data) => {
-      const email = (googleResponse?.type === 'success'
-        ? googleResponse.params?.email
-        : '') ?? '';
-      await signIn(data.access_token, email);
+      await signIn(data.access_token, data.email ?? '');
     },
     onError: (err: any) => {
       // 409 → needs_linking
       if (err?.status === 409 || err?.detail?.needs_linking) {
         const detail = err?.detail ?? {};
         setPendingEmail(detail.email ?? '');
-        setPendingIdToken((googleResponse as any)?.params?.id_token ?? null);
+        setPendingAccessToken(googleResponse?.type === 'success'
+          ? googleResponse.authentication?.accessToken ?? null
+          : null);
         setLinkModalVisible(true);
       }
     },
   });
 
   const linkMutation = useMutation({
-    mutationFn: ({ idToken, pw }: { idToken: string; pw: string }) =>
-      googleLink(idToken, pw),
+    mutationFn: ({ accessToken, pw }: { accessToken: string; pw: string }) =>
+      googleLink(accessToken, pw),
     onSuccess: async (data) => {
       setLinkModalVisible(false);
       setLinkPassword('');
-      await signIn(data.access_token, pendingEmail);
+      await signIn(data.access_token, data.email ?? pendingEmail);
     },
     onError: () => {
       setLinkError('Incorrect password. Please try again.');
     },
   });
 
-  const handleGoogleToken = (idToken: string) => {
-    googleMutation.mutate(idToken);
+  const handleGoogleToken = (accessToken: string) => {
+    googleMutation.mutate(accessToken);
   };
 
   const handleGooglePress = () => {
-    if (!googleWebClientId || !googleAndroidClientId) {
-      Toast.show({
-        type: 'error',
-        text1: 'Google sign-in not configured',
-        text2: 'EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID is not set.',
-        position: 'top',
-      });
-      return;
-    }
-    googlePromptAsync();
+    Toast.show({
+      type: 'info',
+      text1: 'Google sign-in coming soon',
+      text2: 'Please use email & password for now.',
+      position: 'top',
+    });
   };
 
   // ── Email / password ──────────────────────────────────────────────────────
@@ -213,8 +219,8 @@ export default function LoginScreen({ onForgotPassword }: Props) {
                 label="Link & Sign In"
                 loading={linkMutation.isPending}
                 onPress={() => {
-                  if (!pendingIdToken || !linkPassword) return;
-                  linkMutation.mutate({ idToken: pendingIdToken, pw: linkPassword });
+                  if (!pendingAccessToken || !linkPassword) return;
+                  linkMutation.mutate({ accessToken: pendingAccessToken, pw: linkPassword });
                 }}
                 style={{ marginTop: 12 }}
               />
