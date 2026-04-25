@@ -7,6 +7,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -25,6 +26,48 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { SearchInput } from '../components/ui/SearchInput';
 import { Badge } from '../components/ui/Badge';
 
+const MUSCLE_GROUPS = ['arms', 'back', 'calves', 'chest', 'core', 'full_body', 'glutes', 'hamstrings', 'legs', 'quadriceps', 'shoulders'];
+const EXERCISE_TYPES = ['compound', 'isolation', 'cardio', 'functional', 'isometric', 'plyometric'];
+const EQUIPMENT_TYPES = ['barbell', 'dumbbell', 'bodyweight', 'cable', 'machine', 'assisted_machine', 'kettlebell', 'ez_bar'];
+
+const toLabel = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+function ChipSelector({
+  options,
+  value,
+  onChange,
+}: {
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const theme = useTheme();
+  return (
+    <View style={styles.chipRow}>
+      {options.map(opt => {
+        const active = value === opt;
+        return (
+          <TouchableOpacity
+            key={opt}
+            onPress={() => onChange(opt)}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: active ? theme.colors.primary : theme.colors.background,
+                borderColor: active ? theme.colors.primary : theme.colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.chipLabel, { color: active ? '#fff' : theme.colors.textSecondary }]}>
+              {toLabel(opt)}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function ExerciseListScreen() {
   const theme = useTheme();
   const db = useStorage();
@@ -36,13 +79,16 @@ export default function ExerciseListScreen() {
   const [libraryFilter, setLibraryFilter] = useState<'all' | 'custom' | 'system'>('all');
   const [copyingId, setCopyingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+
   const [name, setName] = useState('');
+  const [muscleGroup, setMuscleGroup] = useState('chest');
+  const [exerciseType, setExerciseType] = useState('compound');
+  const [equipmentType, setEquipmentType] = useState('barbell');
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchText);
     }, 350);
-
     return () => clearTimeout(timer);
   }, [searchText]);
 
@@ -65,6 +111,9 @@ export default function ExerciseListScreen() {
     setModalVisible(false);
     setEditingId(null);
     setName('');
+    setMuscleGroup('chest');
+    setExerciseType('compound');
+    setEquipmentType('barbell');
   };
 
   const refetchExercises = () => queryClient.invalidateQueries({ queryKey: ['exercises'] });
@@ -124,6 +173,9 @@ export default function ExerciseListScreen() {
   const handleEditPress = (item: any) => {
     setEditingId(item.id);
     setName(item.name);
+    setMuscleGroup(item.primary_muscle_group || 'chest');
+    setExerciseType(item.exercise_type || 'compound');
+    setEquipmentType(item.equipment_type || 'barbell');
     setModalVisible(true);
   };
 
@@ -138,10 +190,22 @@ export default function ExerciseListScreen() {
     if (!name.trim()) return;
 
     if (editingId) {
-      updateMutation.mutate({ id: editingId, data: { name: name.trim() } });
+      updateMutation.mutate({
+        id: editingId,
+        data: {
+          name: name.trim(),
+          primary_muscle_group: muscleGroup,
+          exercise_type: exerciseType,
+          equipment_type: equipmentType,
+        },
+      });
     } else {
       createMutation.mutate({
         name: name.trim(),
+        primary_muscle_group: muscleGroup,
+        exercise_type: exerciseType,
+        movement_pattern: '',
+        equipment_type: equipmentType,
         default_increment: 0,
         unit: 'kg',
       });
@@ -195,14 +259,17 @@ export default function ExerciseListScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
         renderItem={({ item }) => (
-          <View style={[styles.card, { backgroundColor: theme.colors.card }]}> 
+          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
                 <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{item.name}</Text>
-                <Badge label={item.is_custom ? 'CUSTOM' : 'SYSTEM'} variant={item.is_custom ? 'primary' : 'success'} />
+                {item.is_custom && <Badge label="CUSTOM" variant="primary" />}
               </View>
               <Text style={[styles.metaLine, { color: theme.colors.textSecondary }]}>
-                {item.primary_muscle_group} • {item.exercise_type} • {item.equipment_type}
+                {[item.primary_muscle_group, item.exercise_type, item.equipment_type]
+                  .filter(Boolean)
+                  .map(toLabel)
+                  .join(' · ')}
               </Text>
             </View>
 
@@ -235,38 +302,55 @@ export default function ExerciseListScreen() {
         onPress={() => {
           setEditingId(null);
           setName('');
+          setMuscleGroup('chest');
+          setExerciseType('compound');
+          setEquipmentType('barbell');
           setModalVisible(true);
         }}
       />
 
       <Modal visible={isModalVisible} animationType="slide" transparent onRequestClose={closeModal}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <Pressable style={styles.modalOverlay} onPress={closeModal}>
-          <Pressable onPress={(e) => e.stopPropagation()}>
-            <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-              <Text style={[styles.modalHeader, { color: theme.colors.text }]}>{editingId ? 'Edit Exercise' : 'Exercise'}</Text>
+          <Pressable style={styles.modalOverlay} onPress={closeModal}>
+            <Pressable onPress={(e) => e.stopPropagation()}>
+              <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+                <Text style={[styles.modalHeader, { color: theme.colors.text }]}>
+                  {editingId ? 'Edit Exercise' : 'New Exercise'}
+                </Text>
 
-              <TextInput
-                style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
-                placeholder="Name (e.g. Squat)"
-                placeholderTextColor={theme.colors.textSecondary}
-                value={name}
-                onChangeText={setName}
-              />
+                <TextInput
+                  style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+                  placeholder="Name (e.g. Squat)"
+                  placeholderTextColor={theme.colors.textSecondary}
+                  value={name}
+                  onChangeText={setName}
+                  autoFocus={!editingId}
+                />
 
-              <View style={styles.modalButtons}>
-                <TouchableOpacity onPress={closeModal}>
-                  <Text style={{ color: theme.colors.textSecondary, fontSize: 16 }}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleSave}>
-                  <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 }}>
-                    {editingId ? 'Update' : 'Save'}
-                  </Text>
-                </TouchableOpacity>
+                <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                  <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>Muscle Group</Text>
+                  <ChipSelector options={MUSCLE_GROUPS} value={muscleGroup} onChange={setMuscleGroup} />
+
+                  <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>Type</Text>
+                  <ChipSelector options={EXERCISE_TYPES} value={exerciseType} onChange={setExerciseType} />
+
+                  <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>Equipment</Text>
+                  <ChipSelector options={EQUIPMENT_TYPES} value={equipmentType} onChange={setEquipmentType} />
+                </ScrollView>
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity onPress={closeModal}>
+                    <Text style={{ color: theme.colors.textSecondary, fontSize: 16 }}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleSave}>
+                    <Text style={{ color: theme.colors.primary, fontWeight: 'bold', fontSize: 16 }}>
+                      {editingId ? 'Update' : 'Save'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            </Pressable>
           </Pressable>
-        </Pressable>
         </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
@@ -287,15 +371,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   cardTitle: { fontSize: 16, fontWeight: '600' },
-  metaLine: { fontSize: 12, marginTop: 4, textTransform: 'capitalize' },
+  metaLine: { fontSize: 12, marginTop: 4 },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     padding: 20,
   },
-  modalContent: { borderRadius: 12, padding: 24 },
-  modalHeader: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
+  modalContent: { borderRadius: 12, padding: 24, maxHeight: '85%' },
+  modalHeader: { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },
   input: {
     borderWidth: 1,
     borderRadius: 8,
@@ -303,10 +387,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 16,
   },
+  fieldLabel: { fontSize: 12, fontWeight: '600', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+  chip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
+  chipLabel: { fontSize: 13, fontWeight: '500' },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: 24,
     marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
 });
