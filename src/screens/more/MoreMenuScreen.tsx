@@ -25,10 +25,10 @@ interface MenuRow {
 }
 
 const ROWS: MenuRow[] = [
-  { key: 'profile', label: 'Profile', icon: User, target: 'ProfileMain' },
-  { key: 'analytics', label: 'Analytics', icon: TrendingUp, target: 'Analytics' },
   { key: 'settings', label: 'Settings', icon: SettingsIcon, target: 'Settings' },
+  { key: 'profile', label: 'Profile', icon: User, target: 'ProfileMain' },
   { key: 'change-password', label: 'Change Password', icon: Lock, target: 'ChangePassword', registeredOnly: true },
+  { key: 'analytics', label: 'Analytics', icon: TrendingUp, target: 'Analytics' },
 ];
 
 export default function MoreMenuScreen() {

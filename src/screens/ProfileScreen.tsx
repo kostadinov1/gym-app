@@ -28,6 +28,7 @@ import {
 } from '../services/GhostMigrationService';
 import { PasswordStrengthBar } from '../components/ui/PasswordStrengthBar';
 import { PasswordInput } from '../components/ui/PasswordInput';
+import { ConsentCheckbox } from '../components/ui/ConsentCheckbox';
 import {
   validateAuthFields,
   getPasswordStrength,
@@ -49,6 +50,8 @@ export default function ProfileScreen() {
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regErrors, setRegErrors] = useState<AuthFieldErrors & { confirmPassword?: string }>({});
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [consentError, setConsentError] = useState('');
   const [migrationStep, setMigrationStep] = useState<'idle' | 'registering' | 'migrating' | 'done'>('idle');
   const regPasswordStrength = getPasswordStrength(regPassword);
 
@@ -94,6 +97,8 @@ export default function ProfileScreen() {
     setMigrationStep('idle');
     setRegConfirmPassword('');
     setRegErrors({});
+    setConsentChecked(false);
+    setConsentError('');
   };
 
   // ── Ghost migration ──────────────────────────────────────────────────────
@@ -106,7 +111,12 @@ export default function ProfileScreen() {
       setRegErrors(fieldErrors);
       return;
     }
+    if (!consentChecked) {
+      setConsentError('You must agree to the Privacy Policy and Terms of Service.');
+      return;
+    }
     setRegErrors({});
+    setConsentError('');
     const existing = await getMigrationRecord();
     if (existing) {
       Toast.show({ type: 'info', text1: 'Already migrated', text2: 'Your data is already synced.', position: 'top' });
@@ -203,6 +213,13 @@ export default function ProfileScreen() {
               {regErrors.confirmPassword && (
                 <Text style={[styles.fieldError, { color: theme.colors.error }]}>{regErrors.confirmPassword}</Text>
               )}
+
+              <ConsentCheckbox
+                checked={consentChecked}
+                onToggle={() => { setConsentChecked(v => !v); setConsentError(''); }}
+                error={consentError}
+                style={{ marginTop: 12, marginBottom: 4 }}
+              />
 
               <TouchableOpacity
                 style={[styles.ctaButton, { backgroundColor: theme.colors.primary, marginTop: 8 }]}

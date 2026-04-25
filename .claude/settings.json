@@ -38,7 +38,22 @@
       "Bash(PIPAPI_PYTHON_LOCATION=.venv/bin/python uv tool run pip-audit)",
       "Bash(uv tool *)",
       "Read(//home/gencho/Android/Sdk/cmdline-tools/**)",
-      "Bash(java -version)"
+      "Bash(java -version)",
+      "Bash(~/Android/Sdk/cmdline-tools/latest/bin/sdkmanager \"emulator\" \"system-images;android-34;google_apis;x86_64\")",
+      "Bash(grep -rn --include=\"*.md\" -E \"\\([0-9]{1,3}\\\\.\\){3}[0-9]{1,3}\" /home/gencho/Web_Development/gym-app/docs/)",
+      "Bash(grep -rn --include=\"*.md\" -E \"\\(appl_|ca-app|AIza|AKIA|sk-|rk_live|pk_live|[0-9a-f]{32,}\\)\" /home/gencho/Web_Development/gym-app/docs/ -i)",
+      "Bash(grep -rn -E \"\\(secret|password|token|key|api_key|bearer|192\\\\.168\\\\.|[0-9a-f]{32,}|sk-|pk_|appl_|AIza|AKIA\\)\" /home/gencho/Web_Development/gym-app/scripts/ -i)",
+      "Bash('~/Android/Sdk/cmdline-tools/latest/bin/avdmanager' create *)",
+      "Bash(~/Android/Sdk/cmdline-tools/latest/bin/avdmanager list *)",
+      "Bash(~/Android/Sdk/emulator/emulator -avd GymLogic -no-snapshot-load)",
+      "Bash(echo \"Emulator launching in background \\(PID $!\\)\")",
+      "Bash(adb wait-for-device *)",
+      "Bash(adb shell *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(mkdir -p /media/gencho/Local_Storage_B/android-avd)",
+      "Bash(mv ~/.android/avd/GymLogic.avd /media/gencho/Local_Storage_B/android-avd/)",
+      "Bash(ln -s /media/gencho/Local_Storage_B/android-avd/GymLogic.avd ~/.android/avd/GymLogic.avd)",
+      "Bash(echo \"Emulator starting \\(PID $!\\)\")"
     ],
     "additionalDirectories": [
       "/home/gencho/Web_Development/gym-backend",

@@ -15,6 +15,7 @@ import { PasswordInput } from '../../components/ui/PasswordInput';
 import Toast from 'react-native-toast-message';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PasswordStrengthBar } from '../../components/ui/PasswordStrengthBar';
+import { ConsentCheckbox } from '../../components/ui/ConsentCheckbox';
 import {
   validateAuthFields,
   getPasswordStrength,
@@ -36,6 +37,8 @@ export default function LoginScreen({ onForgotPassword }: Props) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<AuthFieldErrors & { confirmPassword?: string }>({});
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [consentError, setConsentError] = useState('');
 
   // Account linking state — shown when Google email matches an existing account
   const [linkModalVisible, setLinkModalVisible] = useState(false);
@@ -150,7 +153,12 @@ export default function LoginScreen({ onForgotPassword }: Props) {
       setErrors(fieldErrors);
       return;
     }
+    if (isRegistering && !consentChecked) {
+      setConsentError('You must agree to the Privacy Policy and Terms of Service.');
+      return;
+    }
     clearErrors();
+    setConsentError('');
     if (isRegistering) registerMutation.mutate();
     else loginMutation.mutate();
   };
@@ -159,6 +167,8 @@ export default function LoginScreen({ onForgotPassword }: Props) {
     setIsRegistering(!isRegistering);
     setPassword('');
     setConfirmPassword('');
+    setConsentChecked(false);
+    setConsentError('');
     clearErrors();
   };
 
@@ -309,6 +319,12 @@ export default function LoginScreen({ onForgotPassword }: Props) {
               {errors.confirmPassword && (
                 <Text style={[styles.fieldError, { color: theme.colors.error }]}>{errors.confirmPassword}</Text>
               )}
+              <ConsentCheckbox
+                checked={consentChecked}
+                onToggle={() => { setConsentChecked(v => !v); setConsentError(''); }}
+                error={consentError}
+                style={{ marginTop: 12, marginBottom: 4 }}
+              />
             </>
           )}
 

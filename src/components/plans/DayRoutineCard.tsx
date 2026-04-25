@@ -70,13 +70,7 @@ export const DayRoutineCard = ({ dayName, routine, currentWeek, onPress, onAddPr
               </View>
             </View>
 
-            {isRest ? (
-              <View style={{ marginTop: 4 }}>
-                <Text style={{ color: theme.colors.success, fontSize: 13, fontStyle: 'italic' }}>
-                  Active Recovery • Mobility • Sleep
-                </Text>
-              </View>
-            ) : (
+            {isRest ? null : (
               <View style={{ marginTop: 4 }}>
                 {exercises.length === 0 && (
                   <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>No exercises yet.</Text>
