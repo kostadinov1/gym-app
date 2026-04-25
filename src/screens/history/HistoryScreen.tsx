@@ -17,7 +17,11 @@ export default function HistoryScreen() {
   const theme = useTheme();
   const db = useStorage();
   const navigation = useNavigation<any>();
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const today = new Date().toISOString().split('T')[0];
+  const currentMonth = today.slice(0, 7); // YYYY-MM
+  const [selectedDate, setSelectedDate] = useState(today);
+  const [calendarKey, setCalendarKey] = useState(0);
+  const [visibleMonth, setVisibleMonth] = useState(currentMonth);
 
   const currentYear = new Date().getFullYear();
   const startDate = `${currentYear - 1}-01-01T00:00:00Z`;
@@ -68,9 +72,10 @@ export default function HistoryScreen() {
       />
 
       <Calendar
-        key={theme.mode}
+        key={`${theme.mode}-${calendarKey}`}
         current={selectedDate}
         onDayPress={(day: any) => setSelectedDate(day.dateString)}
+        onMonthChange={(month: any) => setVisibleMonth(month.dateString.slice(0, 7))}
         markedDates={markedDates}
         hideExtraDays={false}
         theme={buildCalendarTheme(theme.colors) as any}
@@ -78,7 +83,21 @@ export default function HistoryScreen() {
       />
 
       <View style={styles.listContainer}>
-        <SectionTitle title={`Workouts on ${selectedDate}`} style={{ marginBottom: 12 }} />
+        <View style={styles.sectionRow}>
+          <SectionTitle title={`Workouts on ${selectedDate}`} style={{ marginBottom: 0 }} />
+          {(selectedDate !== today || visibleMonth !== currentMonth) && (
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedDate(today);
+                setVisibleMonth(currentMonth);
+                setCalendarKey(k => k + 1);
+              }}
+              style={[styles.todayBtn, { borderColor: theme.colors.primary }]}
+            >
+              <Text style={[theme.typography.caption, { color: theme.colors.primary, fontWeight: '600' }]}>Today</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {isLoading ? (
           <ActivityIndicator color={theme.colors.primary} />
@@ -121,6 +140,8 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   listContainer: { flex: 1, paddingHorizontal: 16, paddingTop: 20 },
+  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  todayBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1 },
   card: {
     padding: 14,
     borderRadius: 12,
