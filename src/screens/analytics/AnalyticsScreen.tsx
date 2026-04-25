@@ -241,7 +241,7 @@ export default function AnalyticsScreen() {
 
     if (isGuest) {
         return (
-            <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <SafeAreaView edges={[]} style={[styles.container, { backgroundColor: theme.colors.background }]}>
                 <ScreenHeader title="Analytics" onBack={() => navigation.goBack()} />
                 <EmptyState
                     icon={TrendingUp}
@@ -254,7 +254,7 @@ export default function AnalyticsScreen() {
     }
 
     return (
-        <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <SafeAreaView edges={[]} style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <ScreenHeader title="Analytics" onBack={() => navigation.goBack()} />
 
             <ScrollView contentContainerStyle={{ padding: 16 }}>

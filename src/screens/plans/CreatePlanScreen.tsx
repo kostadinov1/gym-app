@@ -56,7 +56,7 @@ export default function CreatePlanScreen() {
   ];
 
   return (
-    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={[]} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader title="New Plan" onBack={() => navigation.goBack()} />
 
       <KeyboardAvoidingView
@@ -97,7 +97,13 @@ export default function CreatePlanScreen() {
               dayTextColor: theme.colors.text,
               monthTextColor: theme.colors.text,
               arrowColor: theme.colors.primary,
-            }}
+              textDayFontSize: 13,
+              textMonthFontSize: 13,
+              textDayHeaderFontSize: 11,
+              'stylesheet.calendar.main': {
+                week: { marginTop: 2, marginBottom: 2, flexDirection: 'row', justifyContent: 'space-around' },
+              },
+            } as any}
             style={{ borderRadius: 12 }}
           />
         </ScrollView>

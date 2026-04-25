@@ -33,7 +33,10 @@
       "Bash(identify /home/gencho/Web_Development/gym-app/assets/*.png)",
       "Bash(python3 -c ' *)",
       "WebFetch(domain:gymlogic.io)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(npm audit *)",
+      "Bash(PIPAPI_PYTHON_LOCATION=.venv/bin/python uv tool run pip-audit)",
+      "Bash(uv tool *)"
     ],
     "additionalDirectories": [
       "/home/gencho/Web_Development/gym-backend",

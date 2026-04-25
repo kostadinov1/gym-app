@@ -13,7 +13,7 @@ interface WeekSelectorProps {
 export const WeekSelector = ({ currentWeek, totalWeeks, onPrev, onNext }: WeekSelectorProps) => {
   const theme = useTheme();
   return (
-    <View style={[styles.weekSelector, { backgroundColor: theme.colors.card }]}>
+    <View style={[styles.weekSelector, { backgroundColor: theme.colors.header }]}>
       <TouchableOpacity onPress={onPrev} disabled={currentWeek === 1} style={{ padding: 8 }}>
         <ChevronLeft size={24} color={currentWeek === 1 ? theme.colors.border : theme.colors.primary} />
       </TouchableOpacity>
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     margin: 16,
-    marginBottom: 0,
+    marginBottom: 8,
     borderRadius: 12,
     elevation: 2
   },

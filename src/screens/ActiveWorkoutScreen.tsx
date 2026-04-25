@@ -215,7 +215,7 @@ export default function ActiveWorkoutScreen() {
 
   if (data && exercises.length === 0) {
     return (
-      <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView edges={[]} style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
         <ScreenHeader title={data?.name ?? 'Workout'} onBack={() => navigation.goBack()} />
         <EmptyState
           icon={ClipboardList}
@@ -228,7 +228,7 @@ export default function ActiveWorkoutScreen() {
   }
 
   return (
-    <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView edges={[]} style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader title={data?.name ?? 'Workout'} onBack={() => navigation.goBack()} />
 
       <FlatList

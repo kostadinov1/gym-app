@@ -8,7 +8,6 @@ import { TrendingUp, Calendar as CalendarIcon } from 'lucide-react-native';
 
 import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
-import { AdBanner } from '../../components/AdBanner';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { IconButton } from '../../components/ui/IconButton';
 import { SectionTitle } from '../../components/ui/SectionTitle';
@@ -56,8 +55,13 @@ export default function HistoryScreen() {
         rightElement={
           <IconButton
             icon={TrendingUp}
-            onPress={() => navigation.navigate('More', { screen: 'Analytics' })}
+            onPress={() => navigation.navigate('Analytics')}
             color={theme.colors.primary}
+            style={{
+              backgroundColor: theme.colors.primary + '20',
+              padding: 8,
+              borderRadius: 10,
+            }}
           />
         }
       />
@@ -81,7 +85,13 @@ export default function HistoryScreen() {
           arrowColor: theme.colors.primary,
           monthTextColor: theme.colors.text,
           indicatorColor: theme.colors.primary,
-        }}
+          textDayFontSize: 13,
+          textMonthFontSize: 13,
+          textDayHeaderFontSize: 11,
+          'stylesheet.calendar.main': {
+            week: { marginTop: 2, marginBottom: 2, flexDirection: 'row', justifyContent: 'space-around' },
+          },
+        } as any}
         style={{
           borderRadius: 12,
           marginHorizontal: 16,
@@ -126,7 +136,6 @@ export default function HistoryScreen() {
           />
         )}
       </View>
-      <AdBanner />
     </SafeAreaView>
   );
 }

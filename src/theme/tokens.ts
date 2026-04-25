@@ -50,6 +50,7 @@ export const lightTheme = {
   colors: {
     background:       palette.gray50,
     card:             palette.white,
+    header:           '#E3E3E8',
     surface:          palette.gray300,
     text:             palette.black,
     textSecondary:    '#6B6B6B',
@@ -71,6 +72,7 @@ export const darkTheme = {
   colors: {
     background:       '#000000',
     card:             palette.gray800,
+    header:           '#0A0A0A',
     surface:          palette.gray850,
     text:             palette.white,
     textSecondary:    '#A1A1A6',

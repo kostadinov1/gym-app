@@ -17,7 +17,7 @@ export function ScreenHeader({ title, subtitle, onBack, rightElement }: ScreenHe
   const { top } = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingTop: top + 12 }]}>
+    <View style={[styles.container, { paddingTop: top + 12, backgroundColor: theme.colors.header }]}>
       {/* Left slot: back button or spacer */}
       <View style={styles.side}>
         {onBack && (

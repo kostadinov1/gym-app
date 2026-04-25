@@ -14,6 +14,7 @@ import {
 import { useTheme } from '../../theme';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
+import { AdBanner } from '../../components/AdBanner';
 
 interface MenuRow {
   key: string;
@@ -72,6 +73,7 @@ export default function MoreMenuScreen() {
           );
         })}
       </ScrollView>
+      <AdBanner />
     </SafeAreaView>
   );
 }

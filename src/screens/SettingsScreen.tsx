@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import {
-  Moon, Sun, Weight, FileText, Code2, Share2, Lock,
+  Moon, Sun, FileText, Code2, Lock,
   Shield, CreditCard, Info, RefreshCw, ChevronRight,
 } from 'lucide-react-native';
 
@@ -156,7 +156,7 @@ export default function SettingsScreen() {
   const groupStyle = [styles.group, { backgroundColor: theme.colors.card }];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={[]}>
       <ScreenHeader title="Settings" onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -179,19 +179,43 @@ export default function SettingsScreen() {
         {/* ── APPEARANCE ─────────────────────────────────────────── */}
         <SectionTitle title="Appearance" style={styles.sectionTitle} />
         <View style={groupStyle}>
-          <SettingRow
-            icon={isDark ? Moon : Sun}
-            label="Theme"
-            value={isDark ? 'Dark' : 'Light'}
-            onPress={toggleTheme}
-          />
+          <View style={styles.segmentRow}>
+            <Text style={[styles.segmentLabel, { color: theme.colors.text }]}>Theme</Text>
+            <View style={[styles.segmentControl, { backgroundColor: theme.colors.background }]}>
+              <TouchableOpacity
+                style={[styles.segmentOption, !isDark && { backgroundColor: theme.colors.card }]}
+                onPress={() => isDark && toggleTheme()}
+              >
+                <Sun size={15} color={!isDark ? theme.colors.primary : theme.colors.textSecondary} />
+                <Text style={[styles.segmentText, { color: !isDark ? theme.colors.primary : theme.colors.textSecondary }]}>Light</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.segmentOption, isDark && { backgroundColor: theme.colors.card }]}
+                onPress={() => !isDark && toggleTheme()}
+              >
+                <Moon size={15} color={isDark ? theme.colors.primary : theme.colors.textSecondary} />
+                <Text style={[styles.segmentText, { color: isDark ? theme.colors.primary : theme.colors.textSecondary }]}>Dark</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
           <Separator />
-          <SettingRow
-            icon={Weight}
-            label="Units"
-            value={isMetric ? 'Metric (kg)' : 'Imperial (lbs)'}
-            onPress={toggleUnit}
-          />
+          <View style={styles.segmentRow}>
+            <Text style={[styles.segmentLabel, { color: theme.colors.text }]}>Units</Text>
+            <View style={[styles.segmentControl, { backgroundColor: theme.colors.background }]}>
+              <TouchableOpacity
+                style={[styles.segmentOption, isMetric && { backgroundColor: theme.colors.card }]}
+                onPress={() => !isMetric && toggleUnit()}
+              >
+                <Text style={[styles.segmentText, { color: isMetric ? theme.colors.primary : theme.colors.textSecondary }]}>kg</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.segmentOption, !isMetric && { backgroundColor: theme.colors.card }]}
+                onPress={() => isMetric && toggleUnit()}
+              >
+                <Text style={[styles.segmentText, { color: !isMetric ? theme.colors.primary : theme.colors.textSecondary }]}>lbs</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         {/* ── EXPORT DATA ────────────────────────────────────────── */}
@@ -296,4 +320,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   proNoteText: { fontSize: 12 },
+  segmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    minHeight: 48,
+  },
+  segmentLabel: { fontSize: 15 },
+  segmentControl: {
+    flexDirection: 'row',
+    borderRadius: 8,
+    padding: 3,
+    gap: 2,
+  },
+  segmentOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  segmentText: { fontSize: 14, fontWeight: '600' },
 });

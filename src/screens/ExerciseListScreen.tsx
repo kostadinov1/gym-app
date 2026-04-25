@@ -3,7 +3,9 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -238,6 +240,7 @@ export default function ExerciseListScreen() {
       />
 
       <Modal visible={isModalVisible} animationType="slide" transparent onRequestClose={closeModal}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Pressable style={styles.modalOverlay} onPress={closeModal}>
           <Pressable onPress={(e) => e.stopPropagation()}>
             <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
@@ -264,6 +267,7 @@ export default function ExerciseListScreen() {
             </View>
           </Pressable>
         </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -271,7 +275,7 @@ export default function ExerciseListScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  searchWrapper: { paddingHorizontal: 16, marginBottom: 8 },
+  searchWrapper: { paddingHorizontal: 16, marginTop: 8, marginBottom: 8 },
   segmentRow: { flexDirection: 'row', gap: 8, marginBottom: 12, paddingHorizontal: 16 },
   segmentBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1 },
   card: {

@@ -144,18 +144,29 @@ const NavigationWrapper = () => {
 // Root app
 // ---------------------------------------------------------------------------
 
+function ThemedStatusBar() {
+  const theme = useTheme();
+  return (
+    <StatusBar
+      translucent
+      backgroundColor="transparent"
+      barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'}
+    />
+  );
+}
+
 function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <AuthProvider>
           <ThemeProvider>
+            <ThemedStatusBar />
             <UnitsProvider>
               <QueryClientProvider client={queryClient}>
                 <StorageProvider>
                   <EntitlementProvider>
                     <AdsProvider>
-                      <StatusBar barStyle="default" />
                       <NavigationWrapper />
                     </AdsProvider>
                   </EntitlementProvider>

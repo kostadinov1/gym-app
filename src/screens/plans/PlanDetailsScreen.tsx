@@ -7,6 +7,7 @@ import { Calendar } from 'react-native-calendars'; // <--- Restored Import
 
 import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
+import { AdBanner } from '../../components/AdBanner';
 import { Container } from '../../components/common/Container';
 import { SwipeWrapper } from '../../components/common/SwipeWrapper';
 
@@ -102,22 +103,23 @@ export default function PlanDetailsScreen() {
     );
 
     return (
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <PlanHeader
+                title={data.name}
+                subtitle={`${data.duration_weeks} Weeks Plan`}
+                onBack={() => navigation.goBack()}
+                onSettings={handleEditPlanPress}
+            />
+
+            <WeekSelector
+                currentWeek={currentWeek}
+                totalWeeks={data.duration_weeks}
+                onPrev={() => changeWeek('prev')}
+                onNext={() => changeWeek('next')}
+            />
+
         <SwipeWrapper onSwipeLeft={() => changeWeek('next')} onSwipeRight={() => changeWeek('prev')}>
-            <Container isScrollable={true}>
-
-                <PlanHeader
-                    title={data.name}
-                    subtitle={`${data.duration_weeks} Weeks Plan`}
-                    onBack={() => navigation.goBack()}
-                    onSettings={handleEditPlanPress} // <--- Restored Link
-                />
-
-                <WeekSelector
-                    currentWeek={currentWeek}
-                    totalWeeks={data.duration_weeks}
-                    onPrev={() => changeWeek('prev')}
-                    onNext={() => changeWeek('next')}
-                />
+            <Container isScrollable={true} edges={[]}>
 
                 <View style={{ padding: 16 }}>
                     {DAYS.map((dayName, index) => {
@@ -141,7 +143,6 @@ export default function PlanDetailsScreen() {
 
                 {/* --- 1. EDIT PLAN MODAL (Restored) --- */}
                 <Modal visible={isEditModalVisible} animationType="slide" transparent onRequestClose={() => setEditModalVisible(false)}>
-                    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                     <Pressable style={styles.modalOverlay} onPress={() => setEditModalVisible(false)}>
                         <Pressable onPress={(e) => e.stopPropagation()}>
                             <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
@@ -159,8 +160,18 @@ export default function PlanDetailsScreen() {
                                     current={editDate}
                                     onDayPress={(day: any) => setEditDate(day.dateString)}
                                     markedDates={{ [editDate]: { selected: true, selectedColor: theme.colors.primary } }}
-                                    theme={{ calendarBackground: theme.colors.card, dayTextColor: theme.colors.text, arrowColor: theme.colors.primary }}
-                                    style={{ borderRadius: 8, marginBottom: 16, height: 320 }}
+                                    theme={{
+                                        calendarBackground: theme.colors.card,
+                                        dayTextColor: theme.colors.text,
+                                        arrowColor: theme.colors.primary,
+                                        textDayFontSize: 13,
+                                        textMonthFontSize: 13,
+                                        textDayHeaderFontSize: 11,
+                                        'stylesheet.calendar.main': {
+                                            week: { marginTop: 2, marginBottom: 2, flexDirection: 'row', justifyContent: 'space-around' },
+                                        },
+                                    } as any}
+                                    style={{ borderRadius: 8, marginBottom: 16 }}
                                 />
 
                                 <View style={styles.modalButtons}>
@@ -174,7 +185,6 @@ export default function PlanDetailsScreen() {
                             </View>
                         </Pressable>
                     </Pressable>
-                    </KeyboardAvoidingView>
                 </Modal>
 
                 {/* --- 2. CREATE ROUTINE MODAL --- */}
@@ -235,6 +245,8 @@ export default function PlanDetailsScreen() {
 
             </Container>
         </SwipeWrapper>
+        <AdBanner />
+        </View>
     );
 }
 

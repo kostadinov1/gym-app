@@ -24,12 +24,7 @@
       },
       "env": {
         "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://gym-api-m6vx.onrender.com",
-        "EXPO_PUBLIC_ADMOB_APP_ID": "ca-app-pub-3940256099942544~3347511713",
-        "EXPO_PUBLIC_ADMOB_BANNER_ID": "ca-app-pub-3940256099942544/6300978111",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "57630423623-9aseluerobm3l30djdmhej38bof4meig.apps.googleusercontent.com",
-        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "57630423623-jv5dnqshba415h2k0tobhd7t391on90u.apps.googleusercontent.com",
-        "EXPO_PUBLIC_GOOGLE_REDIRECT_URI": "https://auth.expo.io/@gencho/gymlogic"
+        "EXPO_PUBLIC_API_URL": "https://gym-api-m6vx.onrender.com"
       }
     }
   },

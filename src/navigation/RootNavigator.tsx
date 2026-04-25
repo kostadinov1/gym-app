@@ -55,6 +55,7 @@ function HistoryStackNavigator() {
             <HistoryStack.Screen name="HistoryList" component={HistoryScreen} />
             <HistoryStack.Screen name="HistoryDetails" component={HistoryDetailsScreen} />
             <HistoryStack.Screen name="SessionEditor" component={SessionEditorScreen} />
+            <HistoryStack.Screen name="Analytics" component={AnalyticsScreen} />
         </HistoryStack.Navigator>
     );
 }
@@ -85,7 +86,7 @@ function TabNavigator() {
             screenOptions={({ route }) => ({
                 headerShown: false,
                 tabBarStyle: {
-                    backgroundColor: theme.colors.card,
+                    backgroundColor: theme.colors.header,
                     borderTopColor: theme.colors.border,
                     paddingBottom: bottom + 5,
                 },

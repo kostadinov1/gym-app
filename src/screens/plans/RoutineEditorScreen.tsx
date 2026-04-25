@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, Pressable, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, Pressable, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -247,7 +247,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
 );
 
     return (
-        <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <SafeAreaView edges={[]} style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <ScreenHeader
                 title={currentRoutine?.name || routineName}
                 subtitle="Manage Exercises"
@@ -465,6 +465,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
             </Modal>
             {/* --- RENAME ROUTINE MODAL --- */}
             <Modal visible={isRenameModalVisible} transparent animationType="fade" onRequestClose={() => setRenameModalVisible(false)}>
+                <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                 <Pressable style={styles.modalOverlay} onPress={() => setRenameModalVisible(false)}>
                     <Pressable onPress={(e) => e.stopPropagation()}>
                         <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
@@ -497,6 +498,7 @@ const renderItem = ({ item, index }: { item: any; index: number }) => (
                         </View>
                     </Pressable>
                 </Pressable>
+                </KeyboardAvoidingView>
             </Modal>
         </SafeAreaView>
     );
