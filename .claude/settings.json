@@ -36,7 +36,9 @@
       "Bash(git stash *)",
       "Bash(npm audit *)",
       "Bash(PIPAPI_PYTHON_LOCATION=.venv/bin/python uv tool run pip-audit)",
-      "Bash(uv tool *)"
+      "Bash(uv tool *)",
+      "Read(//home/gencho/Android/Sdk/cmdline-tools/**)",
+      "Bash(java -version)"
     ],
     "additionalDirectories": [
       "/home/gencho/Web_Development/gym-backend",

@@ -67,31 +67,22 @@ Everything needed before uploading to Google Play Console.
 
 ## 5. Code: Replace Placeholder URLs
 
-Two files have `https://your-domain.com/privacy` hardcoded — replace after hosting the policy:
-
-- [ ] `src/screens/PaywallScreen.tsx` line 88:
-  ```ts
-  Linking.openURL('https://your-domain.com/privacy');
-  // → replace with your real privacy policy URL
-  ```
-- [ ] `src/screens/ProfileScreen.tsx` line 330:
-  ```ts
-  onPress={() => Linking.openURL('https://your-domain.com/privacy')}
-  // → replace with your real privacy policy URL
-  ```
+- [x] Privacy policy URL updated to `https://gymlogic.io/privacy` in `PaywallScreen.tsx` and `SettingsScreen.tsx`
 
 ---
 
-## 6. Fill .env.production
+## 6. Configure production build secrets
 
-All four values must be filled before the production EAS build:
+`EXPO_PUBLIC_SENTRY_DSN` and `EXPO_PUBLIC_REVENUECAT_API_KEY` are stored as **EAS encrypted secrets** (not in any file — set once, injected at build time):
+```bash
+eas secret:list   # confirm both are present
+```
 
-```
-EXPO_PUBLIC_SENTRY_DSN=https://xxxx@oXXX.ingest.sentry.io/YYYY     ← from step 1
-EXPO_PUBLIC_REVENUECAT_API_KEY=appl_PROD_KEY_HERE                   ← from step 2
-EXPO_PUBLIC_ADMOB_APP_ID=ca-app-pub-REAL~APPID                      ← from step 3
-EXPO_PUBLIC_ADMOB_BANNER_ID=ca-app-pub-REAL/BANNERID                ← from step 3
-```
+The remaining vars go in `eas.json` under the `production` profile `env` block (already configured):
+- `EXPO_PUBLIC_ADMOB_APP_ID` — swap test ID for real AdMob App ID (step 3)
+- `EXPO_PUBLIC_ADMOB_BANNER_ID` — swap test ID for real banner unit ID (step 3)
+
+> `EXPO_PUBLIC_ENV`, `EXPO_PUBLIC_API_URL`, and Google OAuth IDs are already set in `eas.json`.
 
 ---
 

@@ -35,7 +35,8 @@ App.tsx
               └── NavigationContainer
                     ├── LoginScreen (unauthenticated)
                     └── RootNavigator (authenticated or guest)
-                          ├── Tab: Workout / History / Plans / Exercises / Profile
+                          ├── Tab: Workout / History / Plans / Exercises / More
+                          │         More stack: MoreMenuScreen → ProfileMain / Analytics / Settings / ChangePassword
                           └── Modal: PaywallScreen
 ```
 

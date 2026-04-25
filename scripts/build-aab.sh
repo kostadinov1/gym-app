@@ -5,13 +5,13 @@
 #   - EXPO_PUBLIC_ENV=production → Sentry enabled, real AdMob IDs, real RevenueCat key
 #   - API: Render production server
 #
-# Before running, ensure .env.production is fully filled out:
-#   EXPO_PUBLIC_SENTRY_DSN
-#   EXPO_PUBLIC_REVENUECAT_API_KEY  (prod key)
-#   EXPO_PUBLIC_ADMOB_APP_ID        (real AdMob App ID)
-#   EXPO_PUBLIC_ADMOB_BANNER_ID     (real banner unit ID)
-#
-# Also ensure app.json has the real AdMob androidAppId (not the test ID).
+# Before running, ensure the following are configured:
+#   EAS secrets (run `eas secret:list` to verify both are present):
+#     EXPO_PUBLIC_SENTRY_DSN
+#     EXPO_PUBLIC_REVENUECAT_API_KEY
+#   eas.json production env (swap test IDs before production track upload):
+#     EXPO_PUBLIC_ADMOB_APP_ID        (real AdMob App ID)
+#     EXPO_PUBLIC_ADMOB_BANNER_ID     (real banner unit ID)
 # See docs/PRE_PRODUCTION_CHECKLIST.md for the full checklist.
 #
 # After the build:
