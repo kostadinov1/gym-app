@@ -62,7 +62,7 @@ export default function PlansScreen() {
       <ScreenHeader title="My Plans" />
 
       <FlatList
-        data={data}
+        data={data?.slice().sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())}
         keyExtractor={(item) => item.id}
         contentContainerStyle={[styles.list, (!data || data.length === 0) && { flex: 1 }]}
         ListEmptyComponent={

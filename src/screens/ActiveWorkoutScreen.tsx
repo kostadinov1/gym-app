@@ -220,8 +220,14 @@ export default function ActiveWorkoutScreen() {
         <EmptyState
           icon={ClipboardList}
           title="Routine is empty"
-          subtitle="Add exercises in the Plans editor to get started."
-          action={{ label: 'Go to Plans', onPress: () => navigation.navigate('Plans') }}
+          subtitle="Add exercises to this routine to get started."
+          action={{
+            label: 'Edit Routine',
+            onPress: () => navigation.navigate('Plans', {
+              screen: 'RoutineEditor',
+              params: { routineId, routineName: data?.name },
+            }),
+          }}
         />
       </SafeAreaView>
     );
