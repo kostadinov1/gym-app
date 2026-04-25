@@ -52,7 +52,6 @@ export async function clearLocalUserData(): Promise<void> {
     // Reset the sync pull cursor so the next user starts a fresh pull from the server.
     await AsyncStorage.removeItem(LAST_PULL_AT_KEY);
 
-    console.log('[DB] Local user data cleared');
   } catch (e) {
     // Log but do not re-throw — sign-out must always succeed.
     console.error('[DB] clearLocalUserData failed:', e);

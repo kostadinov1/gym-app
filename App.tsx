@@ -6,7 +6,7 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { StorageProvider } from './src/context/StorageContext';
 import { EntitlementProvider } from './src/context/EntitlementContext';
 import { AdsProvider } from './src/components/ConsentManager';
-import { useTheme } from './src/theme';
+import { useTheme, useThemeReady } from './src/theme';
 import RootNavigator from './src/navigation/RootNavigator';
 import LoginScreen from './src/screens/auth/LoginScreen';
 import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
@@ -78,6 +78,7 @@ type UnauthScreen = 'login' | 'forgotPassword' | 'resetPassword';
 const NavigationWrapper = () => {
   const { userToken, isGuest, isLoading } = useAuth();
   const theme = useTheme();
+  const isThemeLoaded = useThemeReady();
   useSyncQueryInvalidator();
 
   const [unauthScreen, setUnauthScreen] = useState<UnauthScreen>('login');
@@ -102,7 +103,7 @@ const NavigationWrapper = () => {
     return () => sub.remove();
   }, []);
 
-  if (isLoading) {
+  if (isLoading || !isThemeLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
         <ActivityIndicator size="large" color={theme.colors.primary} />

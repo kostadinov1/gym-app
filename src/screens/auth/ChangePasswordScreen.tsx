@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme';
 import { changePassword } from '../../api/auth';
 import { PrimaryButton } from '../../components/ui/PrimaryButton';
+import { PasswordInput } from '../../components/ui/PasswordInput';
 import { PasswordStrengthBar } from '../../components/ui/PasswordStrengthBar';
 import { getPasswordStrength, isPasswordValid } from '../../utils/validation';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
@@ -69,13 +70,12 @@ export default function ChangePasswordScreen() {
         <Text style={[theme.typography.label, styles.label, { color: theme.colors.textSecondary }]}>
           Current Password
         </Text>
-        <TextInput
+        <PasswordInput
           style={inputStyle(!!errors.current)}
           placeholder="Current password"
           placeholderTextColor={theme.colors.textSecondary}
           value={current}
           onChangeText={(v) => { setCurrent(v); setErrors(e => ({ ...e, current: undefined })); }}
-          secureTextEntry
         />
         {errors.current && (
           <Text style={[styles.fieldError, { color: theme.colors.error }]}>{errors.current}</Text>
@@ -85,13 +85,12 @@ export default function ChangePasswordScreen() {
         <Text style={[theme.typography.label, styles.label, { color: theme.colors.textSecondary }]}>
           New Password
         </Text>
-        <TextInput
+        <PasswordInput
           style={inputStyle(!!errors.newPw)}
           placeholder="New password"
           placeholderTextColor={theme.colors.textSecondary}
           value={newPw}
           onChangeText={(v) => { setNewPw(v); setErrors(e => ({ ...e, newPw: undefined })); }}
-          secureTextEntry
         />
         {errors.newPw && (
           <Text style={[styles.fieldError, { color: theme.colors.error }]}>{errors.newPw}</Text>
@@ -102,13 +101,12 @@ export default function ChangePasswordScreen() {
         <Text style={[theme.typography.label, styles.label, { color: theme.colors.textSecondary }]}>
           Confirm New Password
         </Text>
-        <TextInput
+        <PasswordInput
           style={inputStyle(!!errors.confirm)}
           placeholder="Confirm new password"
           placeholderTextColor={theme.colors.textSecondary}
           value={confirm}
           onChangeText={(v) => { setConfirm(v); setErrors(e => ({ ...e, confirm: undefined })); }}
-          secureTextEntry
         />
         {errors.confirm && (
           <Text style={[styles.fieldError, { color: theme.colors.error }]}>{errors.confirm}</Text>

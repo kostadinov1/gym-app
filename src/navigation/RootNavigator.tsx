@@ -4,7 +4,7 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Dumbbell, Calendar, LayoutList, Layers, User } from 'lucide-react-native';
+import { Dumbbell, Calendar, LayoutList, Layers, Menu } from 'lucide-react-native';
 
 import ActiveWorkoutScreen from '../screens/ActiveWorkoutScreen';
 import ExerciseListScreen from '../screens/ExerciseListScreen';
@@ -21,6 +21,7 @@ import AnalyticsScreen from '../screens/analytics/AnalyticsScreen';
 import PaywallScreen from '../screens/PaywallScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ChangePasswordScreen from '../screens/auth/ChangePasswordScreen';
+import MoreMenuScreen from '../screens/more/MoreMenuScreen';
 import { navigationRef } from './navigationRef';
 
 // ── Tab stacks ────────────────────────────────────────────────────────────
@@ -54,20 +55,20 @@ function HistoryStackNavigator() {
             <HistoryStack.Screen name="HistoryList" component={HistoryScreen} />
             <HistoryStack.Screen name="HistoryDetails" component={HistoryDetailsScreen} />
             <HistoryStack.Screen name="SessionEditor" component={SessionEditorScreen} />
-            <HistoryStack.Screen name="Analytics" component={AnalyticsScreen} />
         </HistoryStack.Navigator>
     );
 }
 
-const ProfileStack = createNativeStackNavigator();
-function ProfileStackNavigator() {
+const MoreStack = createNativeStackNavigator();
+function MoreStackNavigator() {
     return (
-        <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
-            <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
-            <ProfileStack.Screen name="Settings" component={SettingsScreen} />
-            <ProfileStack.Screen name="Analytics" component={AnalyticsScreen} />
-            <ProfileStack.Screen name="ChangePassword" component={ChangePasswordScreen} />
-        </ProfileStack.Navigator>
+        <MoreStack.Navigator screenOptions={{ headerShown: false }}>
+            <MoreStack.Screen name="MoreMenu" component={MoreMenuScreen} />
+            <MoreStack.Screen name="ProfileMain" component={ProfileScreen} />
+            <MoreStack.Screen name="Settings" component={SettingsScreen} />
+            <MoreStack.Screen name="Analytics" component={AnalyticsScreen} />
+            <MoreStack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+        </MoreStack.Navigator>
     );
 }
 
@@ -96,7 +97,7 @@ function TabNavigator() {
                         History:   Calendar,
                         Plans:     LayoutList,
                         Exercises: Layers,
-                        Profile:   User,
+                        More:      Menu,
                     };
                     const Icon = TAB_ICONS[route.name as keyof typeof TAB_ICONS];
                     return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 1.5} />;
@@ -107,7 +108,7 @@ function TabNavigator() {
             <Tab.Screen name="History"   component={HistoryStackNavigator} />
             <Tab.Screen name="Plans"     component={PlansStackNavigator} />
             <Tab.Screen name="Exercises" component={ExerciseListScreen} />
-            <Tab.Screen name="Profile"   component={ProfileStackNavigator} />
+            <Tab.Screen name="More"      component={MoreStackNavigator} />
         </Tab.Navigator>
     );
 }

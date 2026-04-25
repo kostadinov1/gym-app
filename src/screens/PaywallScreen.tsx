@@ -84,7 +84,7 @@ export default function PaywallScreen() {
   };
 
   const handlePrivacyPolicy = () => {
-    Linking.openURL('https://gymlogic.app/privacy');
+    Linking.openURL('https://gymlogic.io/privacy');
   };
 
   // ── Render ────────────────────────────────────────────────────────────────

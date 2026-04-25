@@ -8,6 +8,7 @@ type ThemeType = typeof lightTheme;
 interface ThemeContextType {
   theme: ThemeType;
   isDark: boolean;
+  isThemeLoaded: boolean;
   toggleTheme: () => void;
 }
 
@@ -16,6 +17,7 @@ const ThemeContext = createContext<ThemeContextType>({} as ThemeContextType);
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const systemScheme = useColorScheme(); // 'light' or 'dark' from OS
   const [isDark, setIsDark] = useState(systemScheme === 'dark');
+  const [isThemeLoaded, setIsThemeLoaded] = useState(false);
 
   // 1. Load saved preference on startup
   useEffect(() => {
@@ -23,11 +25,12 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const savedTheme = await AsyncStorage.getItem('userTheme');
         if (savedTheme !== null) {
-          // If user saved a preference, use it
           setIsDark(savedTheme === 'dark');
         }
       } catch (e) {
-        console.log('Failed to load theme');
+        console.warn('Failed to load theme');
+      } finally {
+        setIsThemeLoaded(true);
       }
     };
     loadTheme();
@@ -44,7 +47,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const activeTheme = isDark ? darkTheme : lightTheme;
 
   return (
-    <ThemeContext.Provider value={{ theme: activeTheme, isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: activeTheme, isDark, isThemeLoaded, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -64,3 +67,9 @@ export const useThemeToggle = () => {
     const context = useContext(ThemeContext);
     return { isDark: context.isDark, toggleTheme: context.toggleTheme };
 }
+
+// Hook to check if the saved theme has finished loading from storage
+export const useThemeReady = () => {
+  const context = useContext(ThemeContext);
+  return context.isThemeLoaded;
+};

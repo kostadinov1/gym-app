@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, Text, TextInput, TouchableOpacity, ActivityIndicator, Pressable } from 'react-native';
+import { View, StyleSheet, Modal, Text, TextInput, TouchableOpacity, ActivityIndicator, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
@@ -60,12 +60,7 @@ export default function PlanDetailsScreen() {
 
 
     const createRoutineMutation = useMutation({
-        mutationFn: () => {
-            // DEBUG: This confirms what we send to the API function
-            console.log("Creating Routine:", { routineName, selectedDayIndex, routineType });
-            return db.createRoutine(planId, routineName, selectedDayIndex!, routineType);
-
-        },
+        mutationFn: () => db.createRoutine(planId, routineName, selectedDayIndex!, routineType),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['planDetails', planId] });
             setRoutineModalVisible(false);
@@ -146,6 +141,7 @@ export default function PlanDetailsScreen() {
 
                 {/* --- 1. EDIT PLAN MODAL (Restored) --- */}
                 <Modal visible={isEditModalVisible} animationType="slide" transparent onRequestClose={() => setEditModalVisible(false)}>
+                    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                     <Pressable style={styles.modalOverlay} onPress={() => setEditModalVisible(false)}>
                         <Pressable onPress={(e) => e.stopPropagation()}>
                             <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
@@ -178,10 +174,12 @@ export default function PlanDetailsScreen() {
                             </View>
                         </Pressable>
                     </Pressable>
+                    </KeyboardAvoidingView>
                 </Modal>
 
                 {/* --- 2. CREATE ROUTINE MODAL --- */}
                 <Modal visible={isRoutineModalVisible} transparent animationType="fade" onRequestClose={() => setRoutineModalVisible(false)}>
+                    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                     <Pressable style={styles.modalOverlay} onPress={() => setRoutineModalVisible(false)}>
                         <Pressable onPress={(e) => e.stopPropagation()}>
                             <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
@@ -232,6 +230,7 @@ export default function PlanDetailsScreen() {
                             </View>
                         </Pressable>
                     </Pressable>
+                    </KeyboardAvoidingView>
                 </Modal>
 
             </Container>

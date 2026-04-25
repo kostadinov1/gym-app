@@ -3,4 +3,4 @@
 // circular import (ThemeContext imports tokens; screens import from here).
 
 export { lightTheme, darkTheme } from './tokens';
-export { useTheme } from '../context/ThemeContext';
+export { useTheme, useThemeReady } from '../context/ThemeContext';

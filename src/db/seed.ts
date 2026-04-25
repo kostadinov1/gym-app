@@ -70,5 +70,4 @@ export async function seedSystemExercises(): Promise<void> {
     await db.insert(exercises).values(rows.slice(i, i + BATCH));
   }
 
-  console.log(`[seed] Inserted ${rows.length} system exercises.`);
 }

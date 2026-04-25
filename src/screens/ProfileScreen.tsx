@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
   TouchableOpacity, Alert, ActivityIndicator, Modal, Pressable,
-  TextInput,
+  TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -27,6 +27,7 @@ import {
   runGhostMigration,
 } from '../services/GhostMigrationService';
 import { PasswordStrengthBar } from '../components/ui/PasswordStrengthBar';
+import { PasswordInput } from '../components/ui/PasswordInput';
 import {
   validateAuthFields,
   getPasswordStrength,
@@ -154,6 +155,7 @@ export default function ProfileScreen() {
 
       {/* ── Register modal ─────────────────────────────────────────────── */}
       <Modal visible={showRegisterModal} transparent animationType="slide" onRequestClose={closeRegisterModal}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Pressable style={styles.modalOverlay} onPress={closeRegisterModal}>
           <Pressable style={styles.modalCardWrapper} onPress={(e) => e.stopPropagation()}>
             <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
@@ -176,14 +178,13 @@ export default function ProfileScreen() {
                 <Text style={[styles.fieldError, { color: theme.colors.error }]}>{regErrors.email}</Text>
               )}
 
-              <TextInput
+              <PasswordInput
                 style={[styles.input, { color: theme.colors.text, backgroundColor: theme.colors.inputBackground,
                   borderColor: regErrors.password ? theme.colors.error : theme.colors.border }]}
                 placeholder="Password"
                 placeholderTextColor={theme.colors.textSecondary}
                 value={regPassword}
                 onChangeText={(v) => { setRegPassword(v); if (regErrors.password) setRegErrors(e => ({ ...e, password: undefined })); }}
-                secureTextEntry
               />
               {regErrors.password && (
                 <Text style={[styles.fieldError, { color: theme.colors.error }]}>{regErrors.password}</Text>
@@ -191,14 +192,13 @@ export default function ProfileScreen() {
 
               <PasswordStrengthBar strength={regPasswordStrength} />
 
-              <TextInput
+              <PasswordInput
                 style={[styles.input, { color: theme.colors.text, backgroundColor: theme.colors.inputBackground,
                   borderColor: regErrors.confirmPassword ? theme.colors.error : theme.colors.border }]}
                 placeholder="Confirm Password"
                 placeholderTextColor={theme.colors.textSecondary}
                 value={regConfirmPassword}
                 onChangeText={(v) => { setRegConfirmPassword(v); if (regErrors.confirmPassword) setRegErrors(e => ({ ...e, confirmPassword: undefined })); }}
-                secureTextEntry
               />
               {regErrors.confirmPassword && (
                 <Text style={[styles.fieldError, { color: theme.colors.error }]}>{regErrors.confirmPassword}</Text>
@@ -217,6 +217,7 @@ export default function ProfileScreen() {
             </View>
           </Pressable>
         </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}

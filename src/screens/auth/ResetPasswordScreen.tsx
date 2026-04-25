@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { resetPassword } from '../../api/auth';
 import { PrimaryButton } from '../../components/ui/PrimaryButton';
+import { PasswordInput } from '../../components/ui/PasswordInput';
 import { PasswordStrengthBar } from '../../components/ui/PasswordStrengthBar';
 import { getPasswordStrength, isPasswordValid } from '../../utils/validation';
 
@@ -63,7 +64,7 @@ export default function ResetPasswordScreen({ token, onDone }: Props) {
               Choose a new strong password.
             </Text>
 
-            <TextInput
+            <PasswordInput
               style={[styles.input, {
                 color: theme.colors.text,
                 borderColor: errors.password ? theme.colors.error : theme.colors.border,
@@ -73,7 +74,6 @@ export default function ResetPasswordScreen({ token, onDone }: Props) {
               placeholderTextColor={theme.colors.textSecondary}
               value={password}
               onChangeText={(v) => { setPassword(v); setErrors(e => ({ ...e, password: undefined })); }}
-              secureTextEntry
               autoFocus
             />
             {errors.password && (
@@ -82,7 +82,7 @@ export default function ResetPasswordScreen({ token, onDone }: Props) {
 
             <PasswordStrengthBar strength={strength} />
 
-            <TextInput
+            <PasswordInput
               style={[styles.input, {
                 color: theme.colors.text,
                 borderColor: errors.confirm ? theme.colors.error : theme.colors.border,
@@ -92,7 +92,6 @@ export default function ResetPasswordScreen({ token, onDone }: Props) {
               placeholderTextColor={theme.colors.textSecondary}
               value={confirm}
               onChangeText={(v) => { setConfirm(v); setErrors(e => ({ ...e, confirm: undefined })); }}
-              secureTextEntry
             />
             {errors.confirm && (
               <Text style={[styles.fieldError, { color: theme.colors.error }]}>{errors.confirm}</Text>

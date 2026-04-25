@@ -56,7 +56,7 @@ export default function HistoryScreen() {
         rightElement={
           <IconButton
             icon={TrendingUp}
-            onPress={() => navigation.navigate('Analytics')}
+            onPress={() => navigation.navigate('More', { screen: 'Analytics' })}
             color={theme.colors.primary}
           />
         }

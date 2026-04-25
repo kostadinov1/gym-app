@@ -32,7 +32,8 @@
       "Bash(file /home/gencho/Web_Development/gym-app/assets/*.png)",
       "Bash(identify /home/gencho/Web_Development/gym-app/assets/*.png)",
       "Bash(python3 -c ' *)",
-      "WebFetch(domain:gymlogic.io)"
+      "WebFetch(domain:gymlogic.io)",
+      "Bash(git stash *)"
     ],
     "additionalDirectories": [
       "/home/gencho/Web_Development/gym-backend",

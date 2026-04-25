@@ -89,7 +89,7 @@ async function syncCycle(): Promise<void> {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     // Network errors are expected when offline — log but don't surface to user.
-    console.log('[Sync] cycle failed (offline?):', msg);
+    console.warn('[Sync] cycle failed (offline?):', msg);
     emit({ isSyncing: false, lastError: msg });
   }
 }
@@ -109,8 +109,6 @@ async function push(): Promise<void> {
 
   emit({ pendingCount: totalPending });
   if (totalPending === 0) return;
-
-  console.log(`[Sync] pushing ${totalPending} records`);
 
   const response = await client<PushResponse>('/sync/push', {
     method: 'POST',
@@ -138,8 +136,6 @@ async function push(): Promise<void> {
     setIds:             pending.sets.map(r => r.id),
     settingsIds:        pending.settings.map(r => r.id),
   });
-
-  console.log(`[Sync] pushed ${response.accepted} records`);
 }
 
 async function pull(): Promise<void> {
@@ -160,7 +156,6 @@ async function pull(): Promise<void> {
     response.changes.settings.length;
 
   if (totalChanges > 0) {
-    console.log(`[Sync] applying ${totalChanges} server changes`);
     await _service.applyServerChanges(response.changes);
   }
 
@@ -186,8 +181,6 @@ export const SyncService = {
 
     _appStateSub = AppState.addEventListener('change', onAppStateChange);
     _intervalId  = setInterval(syncCycle, SYNC_INTERVAL_MS);
-
-    console.log('[Sync] started');
   },
 
   updateToken(token: string): void {
@@ -200,7 +193,6 @@ export const SyncService = {
     _token   = null;
     _service = null;
     emit({ isSyncing: false, pendingCount: 0, lastError: null });
-    console.log('[Sync] stopped');
   },
 
   /** Manually kick off a sync cycle — e.g., from a UI button or after finishing a workout. */

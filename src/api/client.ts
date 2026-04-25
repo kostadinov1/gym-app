@@ -8,7 +8,6 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 if (!BASE_URL) {
   throw new Error("🚨 EXPO_PUBLIC_API_URL is missing! The app cannot connect.");
 }
-console.log(`[API] URL: ${BASE_URL}`);
 
 class ApiError extends Error {
   status: number;
@@ -65,8 +64,6 @@ async function client<T>(endpoint: string, options?: RequestInit): Promise<T> {
     return data as T;
 
   } catch (error) {
-    // FIX: Change console.error to console.log so the Red Box doesn't pop up
-    console.log('API Call Failed:', error);
     throw error;
   }
 

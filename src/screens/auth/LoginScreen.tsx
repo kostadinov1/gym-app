@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ScrollView,
   TouchableOpacity, Modal, Pressable,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
@@ -10,6 +11,7 @@ import { useTheme } from '../../theme';
 import { login, register, googleSignIn, googleLink } from '../../api/auth';
 import { useAuth } from '../../context/AuthContext';
 import { PrimaryButton } from '../../components/ui/PrimaryButton';
+import { PasswordInput } from '../../components/ui/PasswordInput';
 import Toast from 'react-native-toast-message';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PasswordStrengthBar } from '../../components/ui/PasswordStrengthBar';
@@ -65,10 +67,8 @@ export default function LoginScreen({ onForgotPassword }: Props) {
 
   useEffect(() => {
     if (!googleResponse) return;
-    console.log('[Google v3] type:', googleResponse.type);
     if (googleResponse.type === 'success') {
       const accessToken = googleResponse.authentication?.accessToken;
-      console.log('[Google v3] has accessToken:', !!accessToken);
       if (accessToken) handleGoogleToken(accessToken);
     } else if (googleResponse.type === 'error') {
       console.warn('[Google v3] error:', googleResponse.error);
@@ -186,6 +186,10 @@ export default function LoginScreen({ onForgotPassword }: Props) {
         animationType="slide"
         onRequestClose={() => setLinkModalVisible(false)}
       >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
         <Pressable style={styles.modalOverlay} onPress={() => setLinkModalVisible(false)}>
           <Pressable style={styles.modalCardWrap} onPress={(e) => e.stopPropagation()}>
             <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
@@ -198,7 +202,7 @@ export default function LoginScreen({ onForgotPassword }: Props) {
                 {'\n'}Enter your password to link your Google account.
               </Text>
 
-              <TextInput
+              <PasswordInput
                 style={[styles.modalInput, {
                   color: theme.colors.text,
                   backgroundColor: theme.colors.background,
@@ -208,7 +212,6 @@ export default function LoginScreen({ onForgotPassword }: Props) {
                 placeholderTextColor={theme.colors.textSecondary}
                 value={linkPassword}
                 onChangeText={(v) => { setLinkPassword(v); setLinkError(''); }}
-                secureTextEntry
                 autoFocus
               />
               {linkError ? (
@@ -233,6 +236,7 @@ export default function LoginScreen({ onForgotPassword }: Props) {
             </View>
           </Pressable>
         </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       <ScrollView
@@ -263,13 +267,12 @@ export default function LoginScreen({ onForgotPassword }: Props) {
           )}
 
           {/* Password */}
-          <TextInput
+          <PasswordInput
             style={inputStyle(!!errors.password)}
             placeholder="Password"
             placeholderTextColor={theme.colors.textSecondary}
             value={password}
             onChangeText={(v) => { setPassword(v); if (errors.password) setErrors(e => ({ ...e, password: undefined })); }}
-            secureTextEntry
           />
           {errors.password && (
             <Text style={[styles.fieldError, { color: theme.colors.error }]}>{errors.password}</Text>
@@ -296,13 +299,12 @@ export default function LoginScreen({ onForgotPassword }: Props) {
           {/* Confirm password — registration only */}
           {isRegistering && (
             <>
-              <TextInput
+              <PasswordInput
                 style={inputStyle(!!errors.confirmPassword)}
                 placeholder="Confirm Password"
                 placeholderTextColor={theme.colors.textSecondary}
                 value={confirmPassword}
                 onChangeText={(v) => { setConfirmPassword(v); if (errors.confirmPassword) setErrors(e => ({ ...e, confirmPassword: undefined })); }}
-                secureTextEntry
               />
               {errors.confirmPassword && (
                 <Text style={[styles.fieldError, { color: theme.colors.error }]}>{errors.confirmPassword}</Text>

@@ -228,7 +228,7 @@ export default function SettingsScreen() {
           <SettingRow
             icon={Shield}
             label="Privacy Policy"
-            onPress={() => Linking.openURL('https://gymlogic.app/privacy')}
+            onPress={() => Linking.openURL('https://gymlogic.io/privacy')}
           />
           {!isGuest && (
             <>
