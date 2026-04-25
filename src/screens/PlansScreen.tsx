@@ -13,6 +13,32 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Badge } from '../components/ui/Badge';
 
+const formatPlanDate = (dateStr: string) =>
+  new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+type PlanStatus = 'active' | 'upcoming' | 'completed';
+
+function getPlanStatus(startDate: string, endDate: string): PlanStatus {
+  const now = Date.now();
+  if (now < new Date(startDate).getTime()) return 'upcoming';
+  if (now > new Date(endDate).getTime()) return 'completed';
+  return 'active';
+}
+
+const STATUS_SORT_ORDER: Record<PlanStatus, number> = { active: 0, upcoming: 1, completed: 2 };
+
+function sortPlans<T extends { start_date: string; end_date: string }>(plans: T[]): T[] {
+  return plans.slice().sort((a, b) => {
+    const sa = getPlanStatus(a.start_date, a.end_date);
+    const sb = getPlanStatus(b.start_date, b.end_date);
+    if (sa !== sb) return STATUS_SORT_ORDER[sa] - STATUS_SORT_ORDER[sb];
+    // Within ACTIVE/UPCOMING: earliest start first
+    // Within COMPLETED: most recently ended first
+    if (sa === 'completed') return new Date(b.end_date).getTime() - new Date(a.end_date).getTime();
+    return new Date(a.start_date).getTime() - new Date(b.start_date).getTime();
+  });
+}
+
 export default function PlansScreen() {
   const navigation = useNavigation<any>();
   const theme = useTheme();
@@ -62,7 +88,7 @@ export default function PlansScreen() {
       <ScreenHeader title="My Plans" />
 
       <FlatList
-        data={data?.slice().sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())}
+        data={data ? sortPlans(data) : undefined}
         keyExtractor={(item) => item.id}
         contentContainerStyle={[styles.list, (!data || data.length === 0) && { flex: 1 }]}
         ListEmptyComponent={
@@ -87,9 +113,15 @@ export default function PlansScreen() {
                 {item.name}
               </Text>
               <Text style={[theme.typography.caption, { color: theme.colors.textSecondary, marginBottom: 8 }]}>
-                {item.duration_weeks} weeks · starts {new Date(item.start_date).toLocaleDateString()}
+                {item.duration_weeks} {item.duration_weeks === 1 ? 'week' : 'weeks'} · {formatPlanDate(item.start_date)} – {formatPlanDate(item.end_date)}
               </Text>
-              <Badge label={item.is_active ? 'ACTIVE' : 'ARCHIVED'} variant={item.is_active ? 'success' : 'muted'} />
+              {(() => {
+                const status = getPlanStatus(item.start_date, item.end_date);
+                return <Badge
+                  label={status === 'active' ? 'ACTIVE' : status === 'upcoming' ? 'UPCOMING' : 'COMPLETED'}
+                  variant={status === 'active' ? 'success' : status === 'upcoming' ? 'primary' : 'muted'}
+                />;
+              })()}
             </TouchableOpacity>
 
             <TouchableOpacity

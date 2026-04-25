@@ -60,6 +60,7 @@ export interface UpdatePlanDto {
   name?: string;
   description?: string;
   start_date?: string;
+  duration_weeks?: number;
   is_active?: boolean;
 }
 

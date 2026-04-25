@@ -426,15 +426,18 @@ export class LocalService implements IAppService {
     if (data.description !== undefined) set.description = data.description;
     if (data.is_active   !== undefined) set.is_active   = data.is_active;
 
-    if (data.start_date !== undefined) {
-      set.start_date = data.start_date;
+    if (data.start_date !== undefined || data.duration_weeks !== undefined) {
       const [existing] = await db
-        .select({ duration_weeks: workout_plans.duration_weeks })
+        .select({ start_date: workout_plans.start_date, duration_weeks: workout_plans.duration_weeks })
         .from(workout_plans)
         .where(eq(workout_plans.id, id))
         .limit(1);
       if (existing) {
-        set.end_date = addWeeks(data.start_date, existing.duration_weeks);
+        const newStart = data.start_date ?? existing.start_date;
+        const newWeeks = data.duration_weeks ?? existing.duration_weeks;
+        if (data.start_date !== undefined) set.start_date = newStart;
+        if (data.duration_weeks !== undefined) set.duration_weeks = newWeeks;
+        set.end_date = addWeeks(newStart, newWeeks);
       }
     }
 

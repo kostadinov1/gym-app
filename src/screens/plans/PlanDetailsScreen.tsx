@@ -33,6 +33,7 @@ export default function PlanDetailsScreen() {
     const [isEditModalVisible, setEditModalVisible] = useState(false);
     const [editName, setEditName] = useState('');
     const [editDate, setEditDate] = useState('');
+    const [editDurationWeeks, setEditDurationWeeks] = useState(4);
 
     // Create Routine Modal State
     const [isRoutineModalVisible, setRoutineModalVisible] = useState(false);
@@ -48,7 +49,7 @@ export default function PlanDetailsScreen() {
 
     // 2. MUTATIONS
     const updatePlanMutation = useMutation({
-        mutationFn: () => db.updatePlan(planId, { name: editName, start_date: editDate }),
+        mutationFn: () => db.updatePlan(planId, { name: editName, start_date: editDate, duration_weeks: editDurationWeeks }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['planDetails', planId] });
             // Invalidate routines so Active Workout recalculates math immediately
@@ -92,6 +93,7 @@ export default function PlanDetailsScreen() {
         if (data) {
             setEditName(data.name);
             setEditDate(data.start_date.split('T')[0]);
+            setEditDurationWeeks(data.duration_weeks);
             setEditModalVisible(true);
         }
     };
@@ -154,6 +156,25 @@ export default function PlanDetailsScreen() {
                                     value={editName}
                                     onChangeText={setEditName}
                                 />
+
+                                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Duration</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 16 }}>
+                                    <TouchableOpacity
+                                        onPress={() => setEditDurationWeeks(w => Math.max(1, w - 1))}
+                                        style={[styles.stepperBtn, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
+                                    >
+                                        <Text style={{ color: theme.colors.text, fontSize: 20, lineHeight: 24 }}>−</Text>
+                                    </TouchableOpacity>
+                                    <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '600', minWidth: 80, textAlign: 'center' }}>
+                                        {editDurationWeeks} {editDurationWeeks === 1 ? 'week' : 'weeks'}
+                                    </Text>
+                                    <TouchableOpacity
+                                        onPress={() => setEditDurationWeeks(w => Math.min(52, w + 1))}
+                                        style={[styles.stepperBtn, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
+                                    >
+                                        <Text style={{ color: theme.colors.text, fontSize: 20, lineHeight: 24 }}>+</Text>
+                                    </TouchableOpacity>
+                                </View>
 
                                 <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Start Date</Text>
                                 <Calendar
@@ -257,5 +278,6 @@ const styles = StyleSheet.create({
     label: { fontSize: 16, fontWeight: '600', marginBottom: 8, marginTop: 8 },
     input: { borderWidth: 1, borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16 },
     modalButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 24 },
-    typeButton: { flex: 1, padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#ccc', alignItems: 'center' }
+    typeButton: { flex: 1, padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#ccc', alignItems: 'center' },
+    stepperBtn: { width: 40, height: 40, borderRadius: 8, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
 });
