@@ -72,8 +72,9 @@ project_context.txt
 CLAUDE.md
 .claude/
 
-# Internal planning and store listing docs
+# Internal planning, scripts, and store listing docs
 docs/
+scripts/
 
 # Vim swap files
 *.swp
