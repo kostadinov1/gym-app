@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
-import { Text, StyleSheet, TextInput, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TextInput, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Calendar } from 'react-native-calendars';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useTheme } from '../../theme';
 import { useStorage } from '../../context/StorageContext';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { PinnedFooter } from '../../components/ui/PinnedFooter';
 import { PrimaryButton } from '../../components/ui/PrimaryButton';
+import {
+  buildCalendarTheme, CALENDAR_STYLE,
+  buildPeriodMarks, planColor, parseLocalDate, dateKey,
+} from '../../utils/calendarTheme';
 
 export default function CreatePlanScreen() {
   const theme = useTheme();
@@ -20,6 +24,34 @@ export default function CreatePlanScreen() {
   const [name, setName] = useState('');
   const [weeks, setWeeks] = useState('4');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+
+  const { data: existingPlans } = useQuery({
+    queryKey: ['plans'],
+    queryFn: () => db.getPlans(),
+  });
+
+  const previewEndDate = useMemo(() => {
+    const duration = parseInt(weeks);
+    if (isNaN(duration) || duration < 1) return null;
+    const start = parseLocalDate(startDate);
+    const end = new Date(start);
+    end.setDate(end.getDate() + duration * 7 - 1);
+    return dateKey(end);
+  }, [startDate, weeks]);
+
+  const markedDates = useMemo(() => {
+    const marks: Record<string, any> = {};
+    if (existingPlans?.length) {
+      Object.assign(marks, buildPeriodMarks(existingPlans, p => planColor(p.id)));
+    }
+    if (previewEndDate) {
+      Object.assign(marks, buildPeriodMarks(
+        [{ id: 'preview', start_date: startDate, end_date: previewEndDate }],
+        () => theme.colors.primary,
+      ));
+    }
+    return marks;
+  }, [existingPlans, startDate, previewEndDate, theme.colors.primary]);
 
   const mutation = useMutation({
     mutationFn: (data: Parameters<typeof db.createPlan>[0]) => db.createPlan(data),
@@ -85,26 +117,25 @@ export default function CreatePlanScreen() {
             keyboardType="numeric"
           />
 
-          <Text style={[theme.typography.label, styles.label, { color: theme.colors.textSecondary }]}>
-            Start Date
-          </Text>
+          <View style={styles.dateRow}>
+            <Text style={[theme.typography.label, styles.label, { color: theme.colors.textSecondary }]}>
+              Start Date
+            </Text>
+            {previewEndDate && (
+              <Text style={[theme.typography.caption, { color: theme.colors.textSecondary }]}>
+                ends {new Date(previewEndDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </Text>
+            )}
+          </View>
           <Calendar
+            key={theme.mode}
+            markingType="period"
             current={startDate}
             onDayPress={(day: any) => setStartDate(day.dateString)}
-            markedDates={{ [startDate]: { selected: true, selectedColor: theme.colors.primary } }}
-            theme={{
-              calendarBackground: theme.colors.card,
-              dayTextColor: theme.colors.text,
-              monthTextColor: theme.colors.text,
-              arrowColor: theme.colors.primary,
-              textDayFontSize: 13,
-              textMonthFontSize: 13,
-              textDayHeaderFontSize: 11,
-              'stylesheet.calendar.main': {
-                week: { marginTop: 2, marginBottom: 2, flexDirection: 'row', justifyContent: 'space-around' },
-              },
-            } as any}
-            style={{ borderRadius: 12 }}
+            markedDates={markedDates}
+            hideExtraDays={false}
+            theme={buildCalendarTheme(theme.colors) as any}
+            style={[CALENDAR_STYLE, { marginHorizontal: 0 }]}
           />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -124,6 +155,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 16, paddingBottom: 24 },
   label: { marginBottom: 8, marginTop: 20 },
+  dateRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   input: {
     height: 48,
     borderWidth: 1,

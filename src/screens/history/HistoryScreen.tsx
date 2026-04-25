@@ -11,6 +11,7 @@ import { useStorage } from '../../context/StorageContext';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { IconButton } from '../../components/ui/IconButton';
 import { SectionTitle } from '../../components/ui/SectionTitle';
+import { buildCalendarTheme, CALENDAR_STYLE } from '../../utils/calendarTheme';
 
 export default function HistoryScreen() {
   const theme = useTheme();
@@ -72,31 +73,8 @@ export default function HistoryScreen() {
         onDayPress={(day: any) => setSelectedDate(day.dateString)}
         markedDates={markedDates}
         hideExtraDays={false}
-        theme={{
-          calendarBackground: theme.colors.card,
-          textSectionTitleColor: theme.colors.textSecondary,
-          selectedDayBackgroundColor: theme.colors.primary,
-          selectedDayTextColor: '#ffffff',
-          todayTextColor: theme.colors.primary,
-          dayTextColor: theme.colors.text,
-          textDisabledColor: theme.colors.border,
-          dotColor: theme.colors.primary,
-          selectedDotColor: '#ffffff',
-          arrowColor: theme.colors.primary,
-          monthTextColor: theme.colors.text,
-          indicatorColor: theme.colors.primary,
-          textDayFontSize: 13,
-          textMonthFontSize: 13,
-          textDayHeaderFontSize: 11,
-          'stylesheet.calendar.main': {
-            week: { marginTop: 2, marginBottom: 2, flexDirection: 'row', justifyContent: 'space-around' },
-          },
-        } as any}
-        style={{
-          borderRadius: 12,
-          marginHorizontal: 16,
-          overflow: 'hidden',
-        }}
+        theme={buildCalendarTheme(theme.colors) as any}
+        style={CALENDAR_STYLE}
       />
 
       <View style={styles.listContainer}>

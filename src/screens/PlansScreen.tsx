@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Calendar } from 'react-native-calendars';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { LayoutList, Trash2 } from 'lucide-react-native';
@@ -12,6 +13,12 @@ import { FAB } from '../components/common/FAB';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Badge } from '../components/ui/Badge';
+import {
+  buildCalendarTheme, CALENDAR_STYLE,
+  buildPeriodMarks, planColor, parseLocalDate,
+} from '../utils/calendarTheme';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 const formatPlanDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -32,12 +39,12 @@ function sortPlans<T extends { start_date: string; end_date: string }>(plans: T[
     const sa = getPlanStatus(a.start_date, a.end_date);
     const sb = getPlanStatus(b.start_date, b.end_date);
     if (sa !== sb) return STATUS_SORT_ORDER[sa] - STATUS_SORT_ORDER[sb];
-    // Within ACTIVE/UPCOMING: earliest start first
-    // Within COMPLETED: most recently ended first
     if (sa === 'completed') return new Date(b.end_date).getTime() - new Date(a.end_date).getTime();
     return new Date(a.start_date).getTime() - new Date(b.start_date).getTime();
   });
 }
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function PlansScreen() {
   const navigation = useNavigation<any>();
@@ -55,6 +62,21 @@ export default function PlansScreen() {
     onError: (err) => Alert.alert('Error', (err as Error).message),
   });
 
+  const sortedPlans = useMemo(() => (data ? sortPlans(data) : []), [data]);
+
+  const markedDates = useMemo(
+    () => buildPeriodMarks(sortedPlans, p => planColor(p.id)),
+    [sortedPlans],
+  );
+
+  const handleDayPress = (day: { dateString: string }) => {
+    const pressed = parseLocalDate(day.dateString).getTime();
+    const plan = sortedPlans.find(
+      p => parseLocalDate(p.start_date).getTime() <= pressed && pressed <= parseLocalDate(p.end_date).getTime(),
+    );
+    if (plan) navigation.navigate('PlanDetails', { planId: plan.id });
+  };
+
   const handleDelete = (id: string, name: string) => {
     Alert.alert('Delete Plan', `Delete "${name}"?`, [
       { text: 'Cancel', style: 'cancel' },
@@ -67,16 +89,11 @@ export default function PlansScreen() {
   if (isError) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
-        <Text style={[theme.typography.body, { color: theme.colors.error, marginBottom: 8 }]}>
-          Failed to load plans
-        </Text>
+        <Text style={[theme.typography.body, { color: theme.colors.error, marginBottom: 8 }]}>Failed to load plans</Text>
         <Text style={[theme.typography.caption, { color: theme.colors.textSecondary, marginBottom: 20 }]}>
           {(error as Error).message}
         </Text>
-        <TouchableOpacity
-          onPress={() => refetch()}
-          style={{ padding: 10, backgroundColor: theme.colors.card, borderRadius: 8 }}
-        >
+        <TouchableOpacity onPress={() => refetch()} style={{ padding: 10, backgroundColor: theme.colors.card, borderRadius: 8 }}>
           <Text style={{ color: theme.colors.primary }}>Try Again</Text>
         </TouchableOpacity>
       </View>
@@ -87,58 +104,68 @@ export default function PlansScreen() {
     <SafeAreaView edges={[]} style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader title="My Plans" />
 
+      {/* Fixed calendar — always visible above the scrollable list */}
+      <Calendar
+        key={theme.mode}
+        markingType="period"
+        markedDates={markedDates}
+        onDayPress={handleDayPress}
+        hideExtraDays={false}
+        theme={buildCalendarTheme(theme.colors) as any}
+        style={[CALENDAR_STYLE, { marginBottom: 12 }]}
+      />
+
       <FlatList
-        data={data ? sortPlans(data) : undefined}
+        style={{ flex: 1 }}
+        data={sortedPlans}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.list, (!data || data.length === 0) && { flex: 1 }]}
+        contentContainerStyle={[styles.list, sortedPlans.length === 0 && { flex: 1 }]}
         ListEmptyComponent={
           <EmptyState
             icon={LayoutList}
             title="No Plans Yet"
             subtitle="Create a macro-cycle to track your progressive overload."
-            action={{
-              label: 'Create First Plan',
-              onPress: () => navigation.navigate('CreatePlan'),
-            }}
+            action={{ label: 'Create First Plan', onPress: () => navigation.navigate('CreatePlan') }}
           />
         }
-        renderItem={({ item }) => (
-          <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-            <TouchableOpacity
-              style={{ flex: 1 }}
-              onPress={() => navigation.navigate('PlanDetails', { planId: item.id })}
-              activeOpacity={0.7}
-            >
-              <Text style={[theme.typography.title, { color: theme.colors.text, marginBottom: 4 }]}>
-                {item.name}
-              </Text>
-              <Text style={[theme.typography.caption, { color: theme.colors.textSecondary, marginBottom: 8 }]}>
-                {item.duration_weeks} {item.duration_weeks === 1 ? 'week' : 'weeks'} · {formatPlanDate(item.start_date)} – {formatPlanDate(item.end_date)}
-              </Text>
-              {(() => {
-                const status = getPlanStatus(item.start_date, item.end_date);
-                return <Badge
-                  label={status === 'active' ? 'ACTIVE' : status === 'upcoming' ? 'UPCOMING' : 'COMPLETED'}
-                  variant={status === 'active' ? 'success' : status === 'upcoming' ? 'primary' : 'muted'}
-                />;
-              })()}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => handleDelete(item.id, item.name)}
-              style={styles.deleteBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Trash2 size={20} color={theme.colors.error} />
-            </TouchableOpacity>
-          </View>
-        )}
+        renderItem={({ item }) => {
+          const status = getPlanStatus(item.start_date, item.end_date);
+          const dot = planColor(item.id);
+          return (
+            <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                onPress={() => navigation.navigate('PlanDetails', { planId: item.id })}
+                activeOpacity={0.7}
+              >
+                <View style={styles.nameRow}>
+                  <View style={[styles.colorDot, { backgroundColor: dot }]} />
+                  <Text style={[theme.typography.title, { color: theme.colors.text }]}>{item.name}</Text>
+                </View>
+                <Text style={[theme.typography.caption, { color: theme.colors.textSecondary, marginBottom: 8, marginLeft: 18 }]}>
+                  {item.duration_weeks} {item.duration_weeks === 1 ? 'week' : 'weeks'} · {formatPlanDate(item.start_date)} – {formatPlanDate(item.end_date)}
+                </Text>
+                <View style={{ marginLeft: 18 }}>
+                  <Badge
+                    label={status === 'active' ? 'ACTIVE' : status === 'upcoming' ? 'UPCOMING' : 'COMPLETED'}
+                    variant={status === 'active' ? 'success' : status === 'upcoming' ? 'primary' : 'muted'}
+                  />
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleDelete(item.id, item.name)}
+                style={styles.deleteBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Trash2 size={20} color={theme.colors.error} />
+              </TouchableOpacity>
+            </View>
+          );
+        }}
       />
 
       <AdBanner />
-      {data && data.length > 0 && (
-        <FAB onPress={() => navigation.navigate('CreatePlan')} />
-      )}
+      {sortedPlans.length > 0 && <FAB onPress={() => navigation.navigate('CreatePlan')} />}
     </SafeAreaView>
   );
 }
@@ -154,8 +181,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 10,
   },
-  deleteBtn: {
-    padding: 8,
-    marginLeft: 8,
-  },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 },
+  colorDot: { width: 10, height: 10, borderRadius: 5, flexShrink: 0 },
+  deleteBtn: { padding: 8, marginLeft: 8 },
 });
