@@ -9,7 +9,6 @@ export interface AuthResponse {
 export interface UserMe {
   id: string;
   email: string;
-  full_name: string | null;
   is_email_verified: boolean;
   has_password: boolean;
 }
