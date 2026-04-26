@@ -8,8 +8,13 @@ import {
   Settings as SettingsIcon,
   TrendingUp,
   Lock,
-  ChevronRight,
   RefreshCw,
+  Scale,
+  Dumbbell,
+  Ruler,
+  Camera,
+  Flame,
+  Zap,
   LucideIcon,
 } from 'lucide-react-native';
 
@@ -25,6 +30,8 @@ interface MenuRow {
   icon: LucideIcon;
   target: string;
   registeredOnly?: boolean;
+  comingSoon?: boolean;
+  isPro?: boolean;
 }
 
 const ROWS: MenuRow[] = [
@@ -32,6 +39,12 @@ const ROWS: MenuRow[] = [
   { key: 'profile', label: 'Profile', icon: User, target: 'ProfileMain' },
   { key: 'change-password', label: 'Change Password', icon: Lock, target: 'ChangePassword', registeredOnly: true },
   { key: 'analytics', label: 'Analytics', icon: TrendingUp, target: 'Analytics' },
+  { key: 'plates-calculator', label: 'Plates Calculator', icon: Scale, target: '', comingSoon: true, isPro: true },
+  { key: '1rm-estimator', label: '1-Rep Max Estimator', icon: Dumbbell, target: '', comingSoon: true, isPro: true },
+  { key: 'warmup-calculator', label: 'Warm-up Calculator', icon: Zap, target: '', comingSoon: true },
+  { key: 'body-measurements', label: 'Body Measurements', icon: Ruler, target: '', comingSoon: true, isPro: true },
+  { key: 'progress-photos', label: 'Progress Photos', icon: Camera, target: '', comingSoon: true },
+  { key: 'streaks', label: 'Streaks & Consistency', icon: Flame, target: '', comingSoon: true },
 ];
 
 export default function MoreMenuScreen() {
@@ -82,6 +95,8 @@ export default function MoreMenuScreen() {
         {visibleRows.map((row, idx) => {
           const Icon = row.icon;
           const isLast = idx === visibleRows.length - 1;
+          const dimmed = row.comingSoon;
+
           return (
             <TouchableOpacity
               key={row.key}
@@ -91,10 +106,11 @@ export default function MoreMenuScreen() {
                   backgroundColor: theme.colors.card,
                   borderBottomColor: theme.colors.border,
                   borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
+                  opacity: dimmed ? 0.6 : 1,
                 },
               ]}
-              onPress={() => navigation.navigate(row.target)}
-              activeOpacity={0.7}
+              onPress={dimmed ? undefined : () => navigation.navigate(row.target)}
+              activeOpacity={dimmed ? 1 : 0.7}
             >
               <View style={[styles.iconWrap, { backgroundColor: theme.colors.background }]}>
                 <Icon size={20} color={theme.colors.primary} strokeWidth={2} />
@@ -102,7 +118,18 @@ export default function MoreMenuScreen() {
               <Text style={[theme.typography.body, styles.label, { color: theme.colors.text }]}>
                 {row.label}
               </Text>
-              <ChevronRight size={20} color={theme.colors.textSecondary} />
+              {dimmed ? (
+                <View style={styles.badges}>
+                  {row.isPro && (
+                    <View style={[styles.badge, { backgroundColor: theme.colors.primary }]}>
+                      <Text style={styles.badgeTextPro}>PRO</Text>
+                    </View>
+                  )}
+                  <View style={[styles.badge, { backgroundColor: theme.colors.surface }]}>
+                    <Text style={[styles.badgeTextSoon, { color: theme.colors.textSecondary }]}>Soon</Text>
+                  </View>
+                </View>
+              ) : null}
             </TouchableOpacity>
           );
         })}
@@ -130,4 +157,12 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   label: { flex: 1, fontWeight: '500' },
+  badges: { flexDirection: 'row', gap: 6 },
+  badge: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  badgeTextPro: { fontSize: 10, fontWeight: '700', color: '#fff', letterSpacing: 0.4 },
+  badgeTextSoon: { fontSize: 10, fontWeight: '600' },
 });
