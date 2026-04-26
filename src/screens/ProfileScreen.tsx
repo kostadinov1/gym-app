@@ -241,6 +241,7 @@ export default function ProfileScreen() {
       <ScreenHeader
         title="Profile"
         subtitle={subtitle}
+        onBack={() => navigation.goBack()}
         rightElement={
           <IconButton
             icon={Settings2}

@@ -53,7 +53,9 @@
       "Bash(mkdir -p /media/gencho/Local_Storage_B/android-avd)",
       "Bash(mv ~/.android/avd/GymLogic.avd /media/gencho/Local_Storage_B/android-avd/)",
       "Bash(ln -s /media/gencho/Local_Storage_B/android-avd/GymLogic.avd ~/.android/avd/GymLogic.avd)",
-      "Bash(echo \"Emulator starting \\(PID $!\\)\")"
+      "Bash(echo \"Emulator starting \\(PID $!\\)\")",
+      "Bash(.venv/bin/alembic upgrade *)",
+      "Bash(.venv/bin/python -c \"from app.routers.sync import router; from app.db.models import WorkoutPlan, WorkoutRoutine, RoutineExercise, WorkoutSession, SessionSet, Exercise, UserSettings; print\\('imports OK'\\)\")"
     ],
     "additionalDirectories": [
       "/home/gencho/Web_Development/gym-backend",

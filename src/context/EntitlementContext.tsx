@@ -70,7 +70,7 @@ export const EntitlementProvider = ({ children }: { children: React.ReactNode })
       setIsLoading(true);
       try {
         if (configuredUserRef.current === null) {
-          Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.WARN : LOG_LEVEL.ERROR);
+          Purchases.setLogLevel(LOG_LEVEL.ERROR);
           Purchases.configure({ apiKey, appUserID: userEmail });
         } else {
           await Purchases.logIn(userEmail);

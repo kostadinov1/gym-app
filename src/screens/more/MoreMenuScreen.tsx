@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -8,6 +9,7 @@ import {
   TrendingUp,
   Lock,
   ChevronRight,
+  RefreshCw,
   LucideIcon,
 } from 'lucide-react-native';
 
@@ -15,6 +17,7 @@ import { useTheme } from '../../theme';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { AdBanner } from '../../components/AdBanner';
+import { SyncService } from '../../services/SyncService';
 
 interface MenuRow {
   key: string;
@@ -35,15 +38,46 @@ export default function MoreMenuScreen() {
   const theme = useTheme();
   const navigation = useNavigation<any>();
   const { isGuest, hasPassword } = useAuth();
+  const [isSyncing, setIsSyncing] = useState(false);
+  const manualSync = useRef(false);
+
+  useEffect(() => {
+    if (isGuest) return;
+    return SyncService.subscribe(status => {
+      setIsSyncing(prev => {
+        if (prev && !status.isSyncing && manualSync.current) {
+          manualSync.current = false;
+          if (status.lastError) {
+            Toast.show({ type: 'error', text1: 'Sync failed', text2: status.lastError, position: 'top' });
+          } else {
+            Toast.show({ type: 'success', text1: 'Synced', text2: 'Your data is up to date.', position: 'top' });
+          }
+        }
+        return status.isSyncing;
+      });
+    });
+  }, [isGuest]);
 
   const visibleRows = ROWS.filter(row => {
     if (!row.registeredOnly) return true;
     return !isGuest && hasPassword;
   });
 
+  const syncButton = !isGuest ? (
+    <TouchableOpacity
+      onPress={() => { manualSync.current = true; SyncService.trigger(); }}
+      disabled={isSyncing}
+      hitSlop={8}
+    >
+      {isSyncing
+        ? <ActivityIndicator size={20} color={theme.colors.primary} />
+        : <RefreshCw size={20} color={theme.colors.primary} strokeWidth={2} />}
+    </TouchableOpacity>
+  ) : null;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.background }]} edges={[]}>
-      <ScreenHeader title="More" />
+      <ScreenHeader title="More" rightElement={syncButton} />
       <ScrollView contentContainerStyle={styles.content}>
         {visibleRows.map((row, idx) => {
           const Icon = row.icon;

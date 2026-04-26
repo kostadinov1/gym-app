@@ -127,14 +127,23 @@ async function push(): Promise<void> {
     console.warn('[Sync] push errors:', response.errors);
   }
 
+  // Extract IDs that the server rejected so we don't mark them as synced.
+  // Format is "<entity> <id>: <message>" — parse out the ID token.
+  const failedIds = new Set<string>(
+    response.errors.map(e => e.split(':')[0].trim().split(' ').pop() ?? '')
+  );
+
+  const keep = <T extends { id: string }>(records: T[]) =>
+    records.filter(r => !failedIds.has(r.id)).map(r => r.id);
+
   await _service.markSynced({
-    exerciseIds:        pending.exercises.map(r => r.id),
-    planIds:            pending.plans.map(r => r.id),
-    routineIds:         pending.routines.map(r => r.id),
-    routineExerciseIds: pending.routineExercises.map(r => r.id),
-    sessionIds:         pending.sessions.map(r => r.id),
-    setIds:             pending.sets.map(r => r.id),
-    settingsIds:        pending.settings.map(r => r.id),
+    exerciseIds:        keep(pending.exercises),
+    planIds:            keep(pending.plans),
+    routineIds:         keep(pending.routines),
+    routineExerciseIds: keep(pending.routineExercises),
+    sessionIds:         keep(pending.sessions),
+    setIds:             keep(pending.sets),
+    settingsIds:        keep(pending.settings),
   });
 }
 
